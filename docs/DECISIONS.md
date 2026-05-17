@@ -151,6 +151,78 @@ The agent must read this file at the start of every phase and consult it before 
 
 ---
 
+## 2026-05-17 (later) — Tuner supports both sequential and chromatic modes from Phase 5
+
+**Decision.** The Guitar Tuner ships with two operating modes in its first release: a **sequential mode** (start at the lowest string, advance string-by-string as each is brought in tune) and a **chromatic mode** (also called "free mode" — the app continuously identifies which string of the current tuning is closest to the played note and shows cents-off relative to that target). Both modes are implemented in Phase 5 and switchable in the UI. After all strings are tuned in sequential mode, the tuner automatically transitions to chromatic mode so the user can fine-tune.
+
+**Alternatives considered.**
+- *Sequential mode only in v1, chromatic mode in a later phase.* Rejected — the underlying pitch-detection and cents-conversion machinery is identical for both modes; only the "which target to compare against" logic differs. Deferring chromatic mode would mean revisiting the use case and ViewModel later to retrofit it, which is more work than implementing both at once.
+- *Chromatic mode only.* Rejected — sequential mode gives clear progress feedback for users tuning a guitar from scratch and is the more discoverable default.
+
+**Rationale.** Chromatic mode is the standard fine-tuning workflow on every real tuner and a real user need, not a stretch feature. The marginal cost to add it in Phase 5 is small; the cost to retrofit later is non-trivial. Sequential mode remains the default entry point because it's more guided.
+
+**Consequences.**
+- Phase 5.3 implements both modes within `DetectTunedStringUseCase` (or a renamed equivalent), and `TunerUiState` carries a `TunerMode` field.
+- The UI surface for switching modes is decided in Phase 5.4 (likely a small toggle near the string selector).
+- The `ALL_STRINGS_TUNED` status from `Phase2-REQUIREMENTS.md` triggers the success animation and then transitions the mode automatically rather than being a terminal state.
+
+---
+
+## 2026-05-17 (later) — Reference-pitch toggle UI placement: sun-icon button → settings sheet
+
+**Decision.** The A4 = 440 / 432 Hz toggle is exposed via a sun-icon button in the top-right of the Tuner screen (the icon already present but unbound in the mockup). Tapping the icon opens a small settings sheet from the bottom containing the toggle, plus any future tuner-scoped settings.
+
+**Alternatives considered** (all from `DESIGN.md` §14 Q1):
+- *(a) Long-press the `A4 = 440 HZ` kicker line itself.* Rejected — long-press is undiscoverable for a setting users actively look for.
+- *(b) A small inline toggle button next to the preset chip.* Rejected — adds visual noise to the most-used area of the screen for a setting most users never change.
+- *(c) Sun-icon button → settings sheet.* Chosen.
+
+**Rationale.** The sun icon is already in the mockup and is the most discoverable affordance. A settings sheet scales: 432 Hz toggle today, auto-advance toggle tomorrow, anything else later — all in one place that doesn't clutter the main readout.
+
+**Consequences.**
+- Phase 5.4 implements the sun-icon button, the bottom sheet, and the toggle inside it.
+- The reference pitch value is read by the ViewModel; changing it updates all target frequencies for the current tuning live.
+
+---
+
+## 2026-05-17 (later) — Microphone permission-denied state: standard single-card screen
+
+**Decision.** When `RECORD_AUDIO` is denied, the Tuner screen displays a single `ToniqoCard` containing: a microphone icon (24dp), a short two-line explanation of why the permission is needed, and a primary-styled "Grant access" button that opens system app settings via `Settings.ACTION_APPLICATION_DETAILS_SETTINGS`. The rest of the Tuner UI (preset chip, readout well, string selector) is not rendered.
+
+**Alternatives considered** (all from `DESIGN.md` §14 Q2):
+- *Inline banner above the readout.* Rejected — leaves a non-functional readout visible, which is confusing.
+- *Modal dialog.* Rejected — feels like a system pop-up and lets the user dismiss it back into a non-functional screen.
+- *Single-card screen.* Chosen.
+
+**Rationale.** Without microphone access the tuner does nothing. The screen should communicate that clearly and give the user one obvious next action. A single card is consistent with the rest of the design system and doesn't require new component primitives.
+
+**Consequences.**
+- Phase 5.4 implements the permission-denied state.
+- The button uses the existing `btn.primary` style from `DESIGN.md` §6.1 (without the 24dp glow — that's reserved for the metronome Start button per §10).
+- The screen also handles the "permanently denied" case (where the system permission dialog can no longer be shown) by opening app settings rather than re-requesting.
+
+---
+
+## 2026-05-17 (later) — Tuner preset catalog: modern-metal additions
+
+**Decision.** The preset catalog defined in `APP_SPECIFICATION.md` is extended with four modern metal tunings for Phase 5 coverage:
+- 6-string: Drop A#/Bb (A#1, F2, A#2, D#3, G3, C4)
+- 7-string: Drop F# (F#1, C#2, F#2, B2, E3, G#3, C#4)
+- 8-string: Drop C# (C#1, G#1, C#2, F#2, B2, E3, G#3, C#4)
+- 8-string: Drop C (C1, G1, C2, F2, A#2, D#3, G3, C4)
+
+**Alternatives considered.**
+- *Leave the catalog as-is.* Rejected — modern metal is part of the target audience and these tunings are not exotic outliers in their respective scenes.
+- *Add more (e.g., Open B, Open F on 6-string).* Rejected — those tunings exist but are rare enough that they add scroll burden without proportional value.
+
+**Rationale.** Four targeted additions extend coverage to genuinely-used modern metal tunings without ballooning the list. The total catalog stays at roughly 30 presets, which is the UX comfort ceiling.
+
+**Consequences.**
+- The total count of presets ships at ~30 — still tractable in a grouped picker.
+- Drop C (8-string) tunes the lowest string to C1 (≈32.7 Hz), which is at the boundary of reliable pitch detection on a phone microphone. Phase 5.2 must validate detection on this pitch with real audio; if unreliable, document the limitation in the help section rather than removing the preset.
+
+---
+
 ## (Template for future entries)
 
 ## YYYY-MM-DD — Short title of decision

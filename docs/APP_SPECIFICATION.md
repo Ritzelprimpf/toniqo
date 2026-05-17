@@ -28,7 +28,7 @@ Helps a guitarist tune their instrument by listening to a string played on the g
 
 ### Tuning Presets
 
-The tuner ships with the following presets, organized by string count and category. Notes are listed **from lowest string to highest** — the order in which the tuner cycles through them.
+The tuner ships with the following presets, organized by string count and category. Notes are listed **from lowest string to highest** — the order in which the tuner cycles through them in sequential mode.
 
 #### 6-string
 
@@ -51,6 +51,7 @@ The tuner ships with the following presets, organized by string count and catego
 - Drop C#: C#2, G#2, C#3, F#3, A#3, D#4
 - Drop C: C2, G2, C3, F3, A3, D4
 - Drop B: B1, F#2, B2, E3, G#3, C#4
+- Drop A#/Bb: A#1, F2, A#2, D#3, G3, C4
 - Drop A: A1, E2, A2, D3, F#3, B3
 
 #### 7-string
@@ -68,6 +69,7 @@ The tuner ships with the following presets, organized by string count and catego
 - Drop A (7-string): A1, E2, A2, D3, G3, B3, E4
 - Drop G# / Ab: G#1, D#2, G#2, C#3, F#3, A#3, D#4
 - Drop G: G1, D2, G2, C3, F3, A3, D4
+- Drop F#: F#1, C#2, F#2, B2, E3, G#3, C#4
 
 #### 8-string
 
@@ -83,38 +85,53 @@ The tuner ships with the following presets, organized by string count and catego
 - Drop E (8-string): E1, B1, E2, A2, D3, G3, B3, E4
 - Drop D# / Eb (8-string): D#1, A#1, D#2, G#2, C#3, F#3, A#3, D#4
 - Drop D (8-string): D1, A1, D2, G2, C3, F3, A3, D4
+- Drop C# (8-string): C#1, G#1, C#2, F#2, B2, E3, G#3, C#4
+- Drop C (8-string): C1, G1, C2, F2, A#2, D#3, G3, C4
 
 > **Implementation note.** Each preset is identified by a stable string ID (e.g., `six_string_standard_e`) so presets can be referenced from saved state and analytics without depending on display names. Presets are hardcoded constants for the initial release. User-defined presets are out of scope until a future phase.
 
+> **Low-fundamental caveat.** Tunings with a lowest string at or below C1 (≈32.7 Hz) — currently `Drop C (8-string)` — push the boundary of what microphone-based pitch detection can reliably resolve on a phone. Fundamental energy is weak at this pitch and harmonic confusion is more likely. The preset ships anyway; if detection proves unreliable on real hardware during Phase 5.2, document the limitation rather than removing the preset.
+
 ### Tuning Flow
+
+The tuner supports two operating modes, both available within the same session:
+
+**Sequential mode** (default when a tuning is first selected):
 
 1. The user selects a tuning from the categorized list.
 2. The tuner targets the **lowest string first** and advances string by string upward.
 3. The device microphone listens for audio input continuously.
-4. The app detects the fundamental frequency of the incoming audio using a pitch-detection algorithm (YIN is the chosen default; see Phase 4 plan).
-5. The detected frequency is compared to the target frequency for the current string.
-6. **Visual feedback** is displayed showing:
-   - Whether the current pitch is **flat**, **in tune**, or **sharp**
-   - How far off the pitch is, in cents, via a needle/gauge metaphor and a color indicator
-7. When the detected pitch is within the in-tune tolerance for a sustained moment (see below), the tuner advances to the next string.
-8. After all strings are tuned, a success state is shown.
-9. The user can also tap a specific string in the UI to jump to it out of order.
+4. The app detects the fundamental frequency of the incoming audio using a pitch-detection algorithm (YIN; see Phase 5 plan).
+5. The detected frequency is converted into a **cents offset** from the target frequency (`cents = 1200 × log2(f_detected / f_target)`), and the result is displayed as flat / in tune / sharp via the needle gauge per `DESIGN.md` §8.1.
+6. When the cents offset stays within **±5 cents for at least 500 ms** of continuous detection, the tuner advances to the next string.
+7. The user can also tap any string pill in the selector to jump to it out of order at any time.
+
+**Chromatic mode** (also referred to as "free mode"):
+
+8. After all strings have been tuned once — or at any time, via a mode toggle — the user can switch to chromatic mode.
+9. In chromatic mode, the app continuously detects the played pitch and automatically identifies which string of the *currently selected tuning* is closest to the detected note. The needle then shows the cents offset from that closest target.
+10. This supports fine-tuning out of order: the user can pluck whichever string they want to check, and the tuner figures out which target to compare against.
+11. The mode toggle is exposed in the UI; the specific placement is decided in Phase 5.4.
+
+After the final string is brought in tune in sequential mode, the success state from `DESIGN.md` §8.1 plays once, and the tuner automatically switches into chromatic mode so the user can fine-tune without further interaction.
 
 ### Reference Pitch & Tolerance
 
-- **Reference pitch:** A4 = **440 Hz** by default. The user can optionally select A4 = 432 Hz from the tuner settings.
-- **In-tune tolerance:** **±5 cents**. To advance to the next string, the pitch must remain within tolerance for **at least 500 ms** of continuous detection (to avoid spurious advances from transients).
+- **Reference pitch:** A4 = **440 Hz** by default. The user can optionally select A4 = 432 Hz from the tuner settings sheet (opened via the sun-icon button in the top-right of the screen; see `DESIGN.md` §14 Q1 — resolved).
+- **In-tune tolerance:** **±5 cents**. To advance to the next string in sequential mode, the pitch must remain within tolerance for **at least 500 ms** of continuous detection (to avoid spurious advances from transients).
+- **Frequency-to-cents conversion** is the standard formula: `cents = 1200 × log2(f_detected / f_target)`. Cents are used (not raw Hz) because the human perception of "in tune" is scale-invariant: ±5 cents feels equally tight at E2 (~82 Hz) and at E4 (~330 Hz), where the corresponding Hz tolerances are very different.
 
 ### Permissions
 
 - Requires `RECORD_AUDIO` permission (must be requested at runtime via the Activity Result API).
-- If permission is denied, display a clear explanation and a prompt to grant it from system settings.
+- If permission is denied, the Tuner screen displays a single card with a microphone icon, a short explanation of why the permission is needed, and a **"Grant access"** button that opens the system app settings (via `Settings.ACTION_APPLICATION_DETAILS_SETTINGS` intent). No tuner UI is shown until permission is granted.
 
 ### Technical Notes
 
-- Frequency for any equal-tempered semitone offset `n` from A4: `f = 440 × 2^(n / 12)`.
+- Frequency for any equal-tempered semitone offset `n` from A4: `f = referencePitchHz × 2^(n / 12)`.
 - Pitch detection runs on a background coroutine; results are posted to UI via `StateFlow`.
 - Target accuracy: detect pitch within ±1 cent under normal playing conditions on the open strings of a standard guitar.
+- Audio capture parameters (sample rate, buffer size, mono / stereo) are confirmed in Phase 5.2 and recorded in `DECISIONS.md`. The plan-of-record baseline is 44.1 kHz, mono, 16-bit PCM, with a buffer size derived from `AudioRecord.getMinBufferSize()` (floor 2048 frames).
 
 ---
 

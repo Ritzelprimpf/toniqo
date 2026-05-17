@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">toniqo</string>
+    <string name="phase_1_placeholder">Phase 3 will replace this.</string>
 </resources>
