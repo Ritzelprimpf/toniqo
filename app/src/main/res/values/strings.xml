@@ -1,4 +1,67 @@
 <resources>
-    <string name="app_name">toniqo</string>
-    <string name="phase_1_placeholder">Phase 3 will replace this.</string>
+    <string name="app_name">Toniqo</string>
+
+    <!-- Bottom navigation labels (uppercase, MonoMicro style) -->
+    <string name="nav_label_tuner">TUNER</string>
+    <string name="nav_label_metronome">METRO</string>
+    <string name="nav_label_keyfinder">KEYS</string>
+    <string name="nav_label_chordfinder">CHORDS</string>
+    <string name="nav_label_more">MORE</string>
+
+    <!-- Bottom navigation content descriptions (for accessibility) -->
+    <string name="nav_cd_tuner">Guitar Tuner</string>
+    <string name="nav_cd_metronome">Metronome</string>
+    <string name="nav_cd_keyfinder">Key Finder</string>
+    <string name="nav_cd_chordfinder">Chord Finder</string>
+    <string name="nav_cd_more">More</string>
+
+    <!-- Tuner module -->
+    <string name="tuner_title">Guitar Tuner</string>
+    <string name="tuner_description">Chromatic and preset-driven guitar tuner using your device microphone</string>
+
+    <!-- Metronome module -->
+    <string name="metronome_title">Metronome</string>
+    <string name="metronome_description">Audible click track at a user-defined tempo and time signature</string>
+
+    <!-- Key Finder module -->
+    <string name="keyfinder_title">Key Finder</string>
+    <string name="keyfinder_description">Identifies musical keys and modes from a set of input notes</string>
+
+    <!-- Chord Finder module -->
+    <string name="chordfinder_title">Chord Finder</string>
+    <string name="chordfinder_description">Shows diatonic chords for a selected musical key and mode</string>
+
+    <!-- Info / More section -->
+    <string name="info_title">Info</string>
+    <string name="info_item_help">Help</string>
+    <string name="info_item_privacy">Privacy Policy</string>
+    <string name="info_item_licenses">Open Source Licenses</string>
+    <string name="info_item_rate">Rate the App</string>
+    <string name="info_item_share">Share the App</string>
+
+    <!-- Help screen -->
+    <string name="help_title">Help</string>
+    <string name="help_section_tuner">Guitar Tuner</string>
+    <string name="help_placeholder_tuner">Help for the Guitar Tuner will be added here.</string>
+    <string name="help_section_metronome">Metronome</string>
+    <string name="help_placeholder_metronome">Help for the Metronome will be added here.</string>
+    <string name="help_section_keyfinder">Key Finder</string>
+    <string name="help_placeholder_keyfinder">Help for the Key Finder will be added here.</string>
+    <string name="help_section_chordfinder">Chord Finder</string>
+    <string name="help_placeholder_chordfinder">Help for the Chord Finder will be added here.</string>
+
+    <!-- Privacy Policy screen -->
+    <string name="privacy_title">Privacy Policy</string>
+    <string name="privacy_placeholder">Privacy policy content will be added here.</string>
+
+    <!-- Licenses screen -->
+    <string name="licenses_title">Open Source Licenses</string>
+    <string name="licenses_placeholder">Open source license attributions will be listed here.</string>
+
+    <!-- Rate &amp; Share screen -->
+    <string name="rate_share_title">Rate &amp; Share</string>
+    <string name="rate_app_label">Rate the App</string>
+    <string name="share_app_label">Share the App</string>
+    <string name="snackbar_rate">Will open Google Play</string>
+    <string name="snackbar_share">Will open share sheet</string>
 </resources>
