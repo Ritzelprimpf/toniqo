@@ -1,14 +1,12 @@
 package de.ritzelprimpf.toniqo.tuner
 
 import de.ritzelprimpf.toniqo.tuner.data.TunerPresetRepositoryImpl
-import de.ritzelprimpf.toniqo.tuner.data.YinPitchDetector
 import de.ritzelprimpf.toniqo.tuner.domain.model.TunerCategory
 import de.ritzelprimpf.toniqo.tuner.domain.model.TunerPreset
 import de.ritzelprimpf.toniqo.tuner.domain.usecase.GetTunerPresetsUseCase
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -34,16 +32,6 @@ class TunerStubsTest {
     fun `GetTunerPresetsUseCase returns presets from repository`() = runBlocking {
         val useCase = GetTunerPresetsUseCase(repository = TunerPresetRepositoryImpl())
         assertTrue(useCase().isNotEmpty())
-    }
-
-    // ── YinPitchDetector (Phase 5.2 stub) ────────────────────────────────────────
-
-    @Test
-    fun `YinPitchDetector can be constructed and throws on detectPitch`() {
-        val detector = YinPitchDetector()
-        assertThrows(NotImplementedError::class.java) {
-            detector.detectPitch(audioBuffer = FloatArray(size = 0), sampleRateHz = 44100)
-        }
     }
 
     // ── TunerPreset data class ────────────────────────────────────────────────────

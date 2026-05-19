@@ -22,3 +22,21 @@ Each entry records what was deferred, why, and what a future implementation woul
 **Affected modules.** Key Finder (results display), Chord Finder (chord labels), and any future transposition feature. The Guitar Tuner's chromatic readout does **not** need this — flat/sharp is a user preference there, handled separately.
 
 **Prerequisite.** Context-aware spelling should only be added once a module actually needs it (likely when the Chord Finder or Key Finder display layer is implemented).
+
+---
+
+## YIN internal buffer pooling to reduce GC pressure
+
+**Current behaviour.** `YinPitchDetector.detectPitch()` allocates two `DoubleArray` instances per call — one for the difference function and one for the CMND (each of size `bufferSize / 2`). At 44 100 Hz with a 4096-frame buffer, each call allocates two 2048-element arrays (16 KB total). At the detection rate of roughly 10+ calls per second in steady state, this generates meaningful GC pressure.
+
+**Why deferred.** Allocating per-call is the correct starting point: it makes `YinPitchDetector` trivially thread-safe (no shared mutable state) and avoids premature optimisation. Profiling on a real device in Phase 5.4 will determine whether GC pause times from these allocations are actually observable in Logcat or the UI jank metrics.
+
+**What a future implementation looks like.**
+
+1. Add a `ThreadLocal<DoubleArray>` cache (or a simple `@GuardedBy` buffer with a lock) inside `YinPitchDetector` for the diff and CMND arrays.
+2. Reuse the cached array if its size matches `bufferSize / 2`; allocate a new one otherwise (buffer size can vary if `AudioRecord.getMinBufferSize` returns different values on different devices).
+3. Add a benchmark (JMH or Android `@Rule`-based) to verify the improvement before shipping.
+
+**Trade-off.** Pooling makes the class stateful. Either use `ThreadLocal` (safe but one allocation per thread) or an explicit lock (safe but adds contention overhead). Only worth doing if profiling shows GC is a bottleneck.
+
+**Prerequisite.** Real-device profiling in Phase 5.4. Do not pool without data showing it is necessary.

@@ -292,6 +292,93 @@ The agent must read this file at the start of every phase and consult it before 
 
 ---
 
+## 2026-05-19 — Phase 5.2: Audio capture parameters locked in
+
+**Decision.** Microphone capture uses **44 100 Hz sample rate, mono (CHANNEL_IN_MONO), PCM 16-bit (ENCODING_PCM_16BIT)**. The buffer size in frames is `max(4096, AudioRecord.getMinBufferSize() / 2)`, guaranteeing a minimum of 4096 frames regardless of hardware.
+
+**Alternatives considered.**
+- *48 000 Hz.* The Android preferred rate; slightly better frequency resolution at the cost of slightly higher CPU. Rejected — 44 100 Hz is standard for music, and the difference is negligible for guitar pitch detection.
+- *Smaller buffer (2048 frames).* Lower latency but higher risk of detection noise on low-frequency strings. Rejected.
+
+**Rationale.** 44 100 Hz gives sub-cent frequency resolution across the full guitar range. 4096 frames is large enough to hold roughly 3–4 periods of E2 (82 Hz), which is the minimum needed for reliable YIN detection.
+
+---
+
+## 2026-05-19 — Phase 5.2: Audio source preference — UNPROCESSED preferred, MIC fallback
+
+**Decision.** `MicrophoneAudioSourceImpl` first attempts `MediaRecorder.AudioSource.UNPROCESSED`. If the recorder is not in `STATE_INITIALIZED` after that attempt, it falls back to `MediaRecorder.AudioSource.MIC`. The source actually opened is reported in `CaptureEvent.Listening` and logged at INFO level.
+
+**Alternatives considered.**
+- *MIC only.* Simpler, but MIC applies AGC and noise reduction on many devices, which can distort the waveform and degrade YIN accuracy.
+- *VOICE_RECOGNITION.* Targets speech-optimized processing; not appropriate for musical pitch.
+
+**Rationale.** UNPROCESSED delivers the raw microphone signal — exactly what YIN needs. On devices that do not support it (STATE_UNINITIALIZED), falling back to MIC is the correct graceful degradation.
+
+---
+
+## 2026-05-19 — Phase 5.2: YIN threshold — 0.15
+
+**Decision.** The YIN cumulative-mean-normalized-difference threshold is **0.15**, the value recommended by de Cheveigné & Kawahara (2002). Stored as `YinConfig.DEFAULT_THRESHOLD`.
+
+**Alternatives considered.**
+- *0.10.* More strict — fewer spurious detections but misses quiet or slightly inharmonic notes. Rejected as too aggressive for the use case.
+- *0.20.* More permissive — picks up more notes but risks false detections on noise. Rejected.
+
+**Rationale.** 0.15 is the paper's own recommendation and the empirical baseline across YIN implementations. The frequency-range guard (`absoluteMinFrequencyHz = 30 Hz`, `absoluteMaxFrequencyHz = 2000 Hz`) provides an additional safety net against edge-case false positives.
+
+**Supersession trigger.** End-to-end real-device testing in Phase 5.4. If detection is unreliable on specific strings or tunings, the threshold (or the range guards) may be tuned and a new entry added.
+
+---
+
+## 2026-05-19 — Phase 5.2: MicrophoneAudioSource API shape — Flow<CaptureEvent>, no start/stop
+
+**Decision.** `MicrophoneAudioSource` exposes a single `fun samples(): Flow<CaptureEvent>` method. There are no `start()` / `stop()` methods and no mutable state on the interface or the implementation. The `AudioRecord` lifecycle is entirely contained within the `callbackFlow` body; it is created on collection and released on cancellation.
+
+**Alternatives considered.**
+- *start()/stop() lifecycle methods.* Stateful lifecycle management. Rejected — makes the source harder to test and introduces the possibility of calls out of order (start/start, stop before start, etc.).
+- *SharedFlow with a shared AudioRecord.* Allows multiple collectors to share one recorder. Rejected — adds complexity and was not needed for Phase 5.
+
+**Rationale.** A cold `Flow` with no external lifecycle is the simplest, most composable shape. The coroutine scope of the collector is the lifecycle; cancelling the scope releases audio resources with no extra API surface.
+
+---
+
+## 2026-05-19 — Phase 5.2: callbackFlow for AudioRecord lifetime safety
+
+**Decision.** `MicrophoneAudioSourceImpl.samples()` is implemented using `callbackFlow { ... }.flowOn(Dispatchers.IO)`. The `AudioRecord` is wrapped in a `try/finally` block inside the flow body; `record.stop()` and `record.release()` are called unconditionally in `finally`, ensuring release even when the collector cancels or an exception is thrown.
+
+**Alternatives considered.**
+- *`flow { }` + `launch { }` + `Channel`.* More boilerplate for the same semantics; `callbackFlow` is the idiomatic Kotlin coroutines solution for callback/blocking-I/O sources.
+- *`produce { }` coroutine builder.* Experimental API; `callbackFlow` is stable.
+
+**Rationale.** `callbackFlow` was designed for exactly this pattern: wrapping a blocking or callback-based source as a coroutine flow, with `awaitClose` guaranteeing cleanup. The `try/finally` around the read loop adds an explicit inner safety net so cleanup is not solely dependent on `awaitClose` being reached.
+
+---
+
+## 2026-05-19 — Phase 5.2: AudioPermissionChecker abstraction in common/permission/
+
+**Decision.** A `AudioPermissionChecker` interface is placed in `common/permission/`. The Android implementation (`AndroidAudioPermissionChecker`) uses `ContextCompat.checkSelfPermission` with the application context and is bound via `CommonModule`. The interface is used by `MicrophoneAudioSourceImpl` rather than calling `ContextCompat` directly.
+
+**Alternatives considered.**
+- *Call `ContextCompat.checkSelfPermission` directly inside `MicrophoneAudioSourceImpl`.* Simpler, but makes the permission-denied path impossible to test without a real Android context.
+- *Put the interface in `tuner/` instead of `common/`.* Would be acceptable for a single-module use; `common/` was chosen because other modules may eventually need the same check (e.g., a future voice-input Key Finder).
+
+**Rationale.** The abstraction is essential for the only testable path in `MicrophoneAudioSourceImpl` (the permission-denied branch). Placing it in `common/` keeps the door open for reuse.
+
+---
+
+## 2026-05-19 — Phase 5.2: PitchDetector interface moved to common/util/
+
+**Decision.** The `PitchDetector` interface is moved from `tuner/domain/repository/PitchDetector.kt` to `common/util/PitchDetector.kt`. The Phase 2 stub `YinPitchDetector` in `tuner/data/` is deleted; the full implementation lives in `common/util/YinPitchDetector.kt`.
+
+**Alternatives considered.**
+- *Keep the interface in `tuner/domain/repository/` and only move the implementation.* Acceptable, but the interface and its sole concrete implementation would live in different top-level packages, which is more confusing than useful.
+
+**Rationale.** The YIN implementation is pure Kotlin with no Android dependencies, making it naturally a `common/util/` resident. The interface belongs alongside its implementation. If a future module needs pitch detection (e.g., for a vocal tuner), it can depend on `common/util/PitchDetector` without coupling to the tuner module.
+
+**Consequences.** All import sites updated: `TunerModule`, `DetectTunedStringUseCase`. The old `tuner/domain/repository/PitchDetector.kt` file is deleted.
+
+---
+
 ## (Template for future entries)
 
 ## YYYY-MM-DD — Short title of decision

@@ -1,11 +1,15 @@
-package de.ritzelprimpf.toniqo.tuner.domain.repository
+package de.ritzelprimpf.toniqo.common.util
 
 /**
  * Estimates the fundamental frequency of a captured audio buffer.
  *
- * Defined as a domain interface so the rest of the tuner stack compiles independently of any
- * specific algorithm. The concrete pitch-detection algorithm is locked in `DECISIONS.md` during
- * Phase 5.1 and implemented in `data/`.
+ * Defined as a domain interface so callers depend on an abstraction rather than any specific
+ * algorithm. The concrete implementation is [YinPitchDetector]; the choice is locked in
+ * `DECISIONS.md` during Phase 5.2.
+ *
+ * Moved from `tuner/domain/repository/` to `common/util/` in Phase 5.2, because the
+ * implementation lives in `common/util/` (pure Kotlin, no Android dependencies) and the
+ * interface belongs alongside it. Decision recorded in `DECISIONS.md`.
  */
 interface PitchDetector {
 

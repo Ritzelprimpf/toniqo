@@ -2,7 +2,7 @@ package de.ritzelprimpf.toniqo.tuner.domain.usecase
 
 import de.ritzelprimpf.toniqo.common.model.Note
 import de.ritzelprimpf.toniqo.tuner.domain.model.TuningStatus
-import de.ritzelprimpf.toniqo.tuner.domain.repository.PitchDetector
+import de.ritzelprimpf.toniqo.common.util.PitchDetector
 import javax.inject.Inject
 
 /**
