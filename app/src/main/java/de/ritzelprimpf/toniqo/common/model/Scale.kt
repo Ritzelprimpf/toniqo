@@ -1,28 +1,34 @@
 package de.ritzelprimpf.toniqo.common.model
 
 /**
- * A scale anchored at a root [Note], described by its interval pattern.
+ * A diatonic scale anchored at a root [Note] and shaped by a [Mode].
  *
- * The [notes] property is a *derived* view of the scale: the result of applying each entry of
- * [intervals] to [root]. It is exposed as a computed property rather than a constructor field
- * so that equality and hash code depend only on `(root, intervals)` — the two values that
- * uniquely identify a scale.
+ * [notes] is a derived property: the 7 pitches produced by applying [mode.intervalsFromRoot] to
+ * [root], with automatic octave wrapping (when a cumulative offset crosses 12, the note rises
+ * into the next octave).
  *
- * @property root The lowest note of the scale (the tonic).
- * @property intervals The cumulative semitone offsets from [root] for each scale degree. The
- *   first entry is the unison; the last entry is typically the octave.
+ * Equality and hash code depend only on [root] and [mode].
+ *
+ * @property root The tonic of the scale.
+ * @property mode The diatonic mode whose interval pattern defines the scale.
  */
 data class Scale(
     val root: Note,
-    val intervals: List<Interval>,
+    val mode: Mode,
 ) {
 
     /**
-     * The notes that make up this scale, in ascending order from [root]. Each note is obtained
-     * by transposing [root] by the corresponding entry of [intervals].
+     * The 7 notes that make up this scale, in ascending order from [root].
      *
-     * Computed on access — not part of equals/hashCode. Throws [NotImplementedError] in Phase 2.
+     * Each note is computed by adding the corresponding entry from [mode.intervalsFromRoot] to
+     * [root] chromatically, advancing the octave whenever the cumulative semitone offset causes
+     * the pitch class to cross the C boundary.
      */
-    val notes: List<Note>
-        get() = TODO("Not yet implemented")
+    val notes: List<Note> = mode.intervalsFromRoot.map { semitones ->
+        val totalSemitonesFromC = root.name.semitonesFromC + semitones
+        Note(
+            name = NoteName.entries[totalSemitonesFromC % Note.SEMITONES_PER_OCTAVE],
+            octave = root.octave + totalSemitonesFromC / Note.SEMITONES_PER_OCTAVE,
+        )
+    }
 }

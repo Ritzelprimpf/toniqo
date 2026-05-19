@@ -8,75 +8,78 @@ package de.ritzelprimpf.toniqo.common.model
  * helpers in the companion object handle both spellings.
  */
 enum class NoteName {
-    /** The pitch class C, also known as B# in some contexts. */
+    /** The pitch class C. */
     C,
-
     /** The pitch class C# / Db. */
     CSharp,
-
     /** The pitch class D. */
     D,
-
     /** The pitch class D# / Eb. */
     DSharp,
-
-    /** The pitch class E, also known as Fb in some contexts. */
+    /** The pitch class E. */
     E,
-
-    /** The pitch class F, also known as E# in some contexts. */
+    /** The pitch class F. */
     F,
-
     /** The pitch class F# / Gb. */
     FSharp,
-
     /** The pitch class G. */
     G,
-
     /** The pitch class G# / Ab. */
     GSharp,
-
     /** The pitch class A. */
     A,
-
     /** The pitch class A# / Bb. */
     ASharp,
-
-    /** The pitch class B, also known as Cb in some contexts. */
+    /** The pitch class B. */
     B;
 
-    /**
-     * The semitone offset of this pitch class relative to C (C = 0, C# = 1, …, B = 11).
-     *
-     * Throws [NotImplementedError] in Phase 2.
-     */
+    /** Semitone offset above C (C = 0, C# = 1, …, B = 11). */
     val semitonesFromC: Int
-        get() = TODO("Not yet implemented")
+        get() = ordinal
 
     /**
-     * Returns the sharp-form display string for this pitch class (e.g. `C`, `C#`, `D`).
-     *
-     * Throws [NotImplementedError] in Phase 2.
+     * Sharp-spelled display string for this pitch class.
+     * Natural notes return their single letter; accidentals use `#` (e.g. `"C#"`, `"F#"`).
      */
-    fun displaySharp(): String = TODO("Not yet implemented")
+    val sharpName: String
+        get() = SHARP_NAMES[ordinal]
 
     /**
-     * Returns the flat-form display string for this pitch class (e.g. `C`, `Db`, `D`).
-     *
-     * Naturals are returned unchanged; only accidentals differ between the two forms.
-     *
-     * Throws [NotImplementedError] in Phase 2.
+     * Flat-spelled display string for this pitch class.
+     * Natural notes are identical to [sharpName]; accidentals use `b` (e.g. `"Db"`, `"Gb"`).
      */
-    fun displayFlat(): String = TODO("Not yet implemented")
+    val flatName: String
+        get() = FLAT_NAMES[ordinal]
 
     companion object {
+        private val SHARP_NAMES = arrayOf("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B")
+        private val FLAT_NAMES  = arrayOf("C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B")
+
+        /** Maps every recognised token (both spellings, case-insensitive, trimmed) to a [NoteName]. */
+        private val PARSE_MAP: Map<String, NoteName> = buildMap {
+            put("C", C)
+            put("C#", CSharp); put("DB", CSharp)
+            put("D", D)
+            put("D#", DSharp); put("EB", DSharp)
+            put("E", E)
+            put("F", F)
+            put("F#", FSharp); put("GB", FSharp)
+            put("G", G)
+            put("G#", GSharp); put("AB", GSharp)
+            put("A", A)
+            put("A#", ASharp); put("BB", ASharp)
+            put("B", B)
+        }
+
         /**
-         * Parses a note-name token (either sharp or flat spelling, case-insensitive) into the
-         * corresponding [NoteName]. Recognised tokens include `C`, `C#`, `Db`, `D`, `D#`, `Eb`, …, `B`.
+         * Parses a note-name token (sharp or flat spelling, case-insensitive) into the
+         * corresponding [NoteName]. Recognised tokens: `C`, `C#`, `Db`, `D`, `D#`, `Eb`, …, `B`.
          *
-         * Returns `null` for unrecognised input rather than throwing.
-         *
-         * Throws [NotImplementedError] in Phase 2.
+         * @return The matching [NoteName], or `null` for unrecognised input.
          */
-        fun fromString(token: String): NoteName? = TODO("Not yet implemented")
+        fun parse(input: String): NoteName? {
+            val normalised = input.trim().uppercase()
+            return PARSE_MAP[normalised]
+        }
     }
 }

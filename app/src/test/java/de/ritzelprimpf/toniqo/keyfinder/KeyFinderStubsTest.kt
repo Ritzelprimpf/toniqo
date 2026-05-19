@@ -54,7 +54,7 @@ class KeyFinderStubsTest {
 
     @Test
     fun `KeyFinderResult data class equality holds for matching fields`() {
-        val scale = Scale(root = cNote, intervals = Mode.IONIAN.intervalsFromRoot)
+        val scale = Scale(root = cNote, mode = Mode.IONIAN)
         val a = KeyFinderResult(
             scale = scale,
             modeName = "C Major (Ionian)",

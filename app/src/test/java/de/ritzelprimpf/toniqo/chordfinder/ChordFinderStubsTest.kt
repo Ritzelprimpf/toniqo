@@ -57,11 +57,7 @@ class ChordFinderStubsTest {
 
     @Test
     fun `DegreeChord data class equality holds for matching fields`() {
-        val chord = Chord(
-            root = cNote,
-            quality = ChordQuality.MAJOR,
-            notes = listOf(cNote),
-        )
+        val chord = Chord(root = cNote, quality = ChordQuality.MAJOR)
         val a = DegreeChord(degree = 1, romanNumeral = "I", chord = chord)
         val b = a.copy()
 
@@ -71,11 +67,7 @@ class ChordFinderStubsTest {
 
     @Test
     fun `ChordFinderResult data class equality holds for matching fields`() {
-        val chord = Chord(
-            root = cNote,
-            quality = ChordQuality.MAJOR,
-            notes = listOf(cNote),
-        )
+        val chord = Chord(root = cNote, quality = ChordQuality.MAJOR)
         val degree = DegreeChord(degree = 1, romanNumeral = "I", chord = chord)
         val a = ChordFinderResult(chords = listOf(degree))
         val b = a.copy()

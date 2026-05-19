@@ -9,57 +9,56 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class TunerStubsTest {
 
-    @Test
-    fun `TunerPresetRepositoryImpl can be constructed and throws on getPresets`() {
-        val repo = TunerPresetRepositoryImpl()
+    // ── TunerPresetRepositoryImpl ─────────────────────────────────────────────────
 
-        assertThrows(NotImplementedError::class.java) { runBlocking { repo.getPresets() } }
+    @Test
+    fun `TunerPresetRepositoryImpl getPresets returns a non-empty list`() = runBlocking {
+        val repo = TunerPresetRepositoryImpl()
+        assertTrue(repo.getPresets().isNotEmpty())
     }
 
     @Test
-    fun `TunerPresetRepositoryImpl throws on getPresetById`() {
+    fun `TunerPresetRepositoryImpl getPresetById returns null for unknown id`() = runBlocking {
         val repo = TunerPresetRepositoryImpl()
-
-        assertThrows(NotImplementedError::class.java) {
-            runBlocking { repo.getPresetById(id = "anything") }
-        }
+        assertEquals(null, repo.getPresetById("does_not_exist"))
     }
+
+    // ── GetTunerPresetsUseCase ────────────────────────────────────────────────────
+
+    @Test
+    fun `GetTunerPresetsUseCase returns presets from repository`() = runBlocking {
+        val useCase = GetTunerPresetsUseCase(repository = TunerPresetRepositoryImpl())
+        assertTrue(useCase().isNotEmpty())
+    }
+
+    // ── YinPitchDetector (Phase 5.2 stub) ────────────────────────────────────────
 
     @Test
     fun `YinPitchDetector can be constructed and throws on detectPitch`() {
         val detector = YinPitchDetector()
-
         assertThrows(NotImplementedError::class.java) {
             detector.detectPitch(audioBuffer = FloatArray(size = 0), sampleRateHz = 44100)
         }
     }
 
-    @Test
-    fun `GetTunerPresetsUseCase propagates the repository stub's NotImplementedError`() {
-        val useCase = GetTunerPresetsUseCase(repository = TunerPresetRepositoryImpl())
-
-        assertThrows(NotImplementedError::class.java) { runBlocking { useCase() } }
-    }
+    // ── TunerPreset data class ────────────────────────────────────────────────────
 
     @Test
     fun `TunerPreset data class equality holds for matching fields`() {
         val a = SAMPLE_PRESET
         val b = SAMPLE_PRESET.copy()
-
         assertEquals(a, b)
         assertEquals(a.hashCode(), b.hashCode())
     }
 
     @Test
     fun `TunerPreset data class differs when id differs`() {
-        val a = SAMPLE_PRESET
-        val b = SAMPLE_PRESET.copy(id = "different")
-
-        assertNotEquals(a, b)
+        assertNotEquals(SAMPLE_PRESET, SAMPLE_PRESET.copy(id = "different"))
     }
 
     companion object {

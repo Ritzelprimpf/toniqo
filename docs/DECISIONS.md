@@ -223,6 +223,75 @@ The agent must read this file at the start of every phase and consult it before 
 
 ---
 
+## 2026-05-19 — Phase 5.1: diatonic seventh-chord harmonization
+
+**Decision.** Each scale degree gets its musically correct diatonic seventh quality. For C Ionian: `[Cmaj7, Dm7, Em7, Fmaj7, G7, Am7, Bm7♭5]`. Fully-diminished sevenths (`dim7`) are included in `ChordQuality` for completeness but do not appear in standard diatonic harmonization.
+
+**Alternatives considered.**
+- *Triads only (no sevenths in Phase 5.1).* Rejected — the Chord Finder spec includes a seventh-chord toggle; building the logic now avoids a future retrofit.
+- *Context-aware seventh spelling (e.g. B° with a true diminished seventh A♭).* Rejected for Phase 5.1 — deferred to `FUTURE_IMPROVEMENTS.md` because it requires key-aware enharmonic resolution.
+
+**Rationale.** Diatonic sevenths are the standard reference for the Chord Finder module. Landing them in 5.1 alongside the music-theory primitives means Phases 6+ can use `MusicTheory.buildSeventhChords` without modification.
+
+---
+
+## 2026-05-19 — Phase 5.1: frequencyToNote defaults to sharp spelling
+
+**Decision.** `MusicTheory.frequencyToNote()` always returns accidentals in sharp form (e.g. `C#4` rather than `Db4`). The return type is `Note?` (nullable); `null` is returned for frequencies outside the valid range or that are non-musical inputs (≤ 0, NaN, Infinity, pitches outside C0–B9).
+
+**Alternatives considered.**
+- *Context-aware spelling* (choose flat or sharp based on the surrounding key). Rejected for Phase 5.1 — deferred to `FUTURE_IMPROVEMENTS.md`. Requires knowing the musical key at call time, which the pitch-detection path does not have.
+- *Always flat.* No preference; sharp was chosen arbitrarily as the common default for chromatic displays.
+
+**Rationale.** The tuner needs a consistent, key-independent spelling for its chromatic readout. Sharp is the more common convention on real-world tuners.
+
+**Supersession trigger.** If the Key Finder or Chord Finder need enharmonic-correct display, revisit at that point.
+
+---
+
+## 2026-05-19 — Phase 5.1: centsBetween added to MusicTheory
+
+**Decision.** `MusicTheory.centsBetween(referenceFrequencyHz, detectedFrequencyHz): Double` is added as a new method. Formula: `1200 × log₂(detected / reference)`. Positive = sharp, negative = flat.
+
+**Rationale.** Phase 5.3 (Tuner ViewModel) needs this computation on every detection cycle. Landing it alongside the other frequency math in 5.1 keeps all music-theory arithmetic in one tested place and avoids Phase 5.3 having to duplicate it.
+
+---
+
+## 2026-05-19 — Phase 5.1: getPresetsGrouped added to TunerPresetRepository
+
+**Decision.** `TunerPresetRepository` gains a third method: `suspend fun getPresetsGrouped(): Map<Int, Map<TunerCategory, List<TunerPreset>>>`. The outer key is string count (6, 7, 8); the inner key is `TunerCategory`.
+
+**Rationale.** The preset picker UI (Phase 5.4) renders presets in a categorized list. Pre-grouping in the repository keeps the grouping logic co-located with the data and avoids repeating it in the ViewModel. The `suspend` keyword matches the other two methods for interface consistency.
+
+---
+
+## 2026-05-19 — Phase 5.1: Scale constructor changed — intervals field removed
+
+**Decision.** `Scale` changes from `Scale(root: Note, intervals: List<Interval>)` to `Scale(root: Note, mode: Mode)`. The `notes: List<Note>` property is now derived from `root` and `mode.intervalsFromRoot` at construction time. The `intervals` field is gone.
+
+**Alternatives considered.**
+- *Keep intervals as a separate field alongside mode.* Rejected — intervals are fully determined by mode; carrying both is redundant and creates a consistency hazard.
+- *Keep Scale taking an arbitrary interval list.* Rejected — the only legitimate source of interval patterns is `Mode`. Encoding this directly makes Scale safer.
+
+**Rationale.** Mode already carries the canonical interval pattern. Passing the same data twice as separate arguments was a Phase 2 stub artefact. This change also unifies the derivation path: `Scale.notes` is always the result of applying `mode.intervalsFromRoot` to `root`.
+
+**Consequences.** All Phase 2 call sites that used `Scale(root, intervals = Mode.X.intervalsFromRoot)` are updated to `Scale(root, Mode.X)`. Test files updated accordingly.
+
+---
+
+## 2026-05-19 — Phase 5.1: Chord constructor changed — explicit notes field removed
+
+**Decision.** `Chord` changes from `Chord(root: Note, quality: ChordQuality, notes: List<Note>)` to `Chord(root: Note, quality: ChordQuality)`. The `notes: List<Note>` property is now derived from `root` and `quality.intervalsFromRoot` at construction time.
+
+**Alternatives considered.**
+- *Keep notes as a constructor parameter* to allow custom voicings (inversions, doublings). Rejected — voicing is not modelled in Phase 5 or 6; the extra parameter invited incorrect usage where callers could pass notes inconsistent with the quality.
+
+**Rationale.** Chord quality fully determines which pitch classes appear in the chord. Deriving notes from the quality removes the possibility of constructing a logically inconsistent Chord, and simplifies all call sites.
+
+**Consequences.** `MusicTheory.buildTriads` and `buildSeventhChords` now simply pass the root note and classified quality; note lists are derived automatically. All Phase 2 call sites updated. `Chord.displayName()` uses `root.name.sharpName` (not `root.displayName()`) so chord symbols omit the octave number (e.g. `"Cmaj7"`, not `"C4maj7"`).
+
+---
+
 ## (Template for future entries)
 
 ## YYYY-MM-DD — Short title of decision

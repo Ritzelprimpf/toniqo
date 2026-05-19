@@ -1,31 +1,26 @@
 package de.ritzelprimpf.toniqo.tuner.data
 
+import de.ritzelprimpf.toniqo.tuner.domain.model.TunerCategory
 import de.ritzelprimpf.toniqo.tuner.domain.model.TunerPreset
 import de.ritzelprimpf.toniqo.tuner.domain.repository.TunerPresetRepository
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Stub implementation of [TunerPresetRepository].
+ * Hardcoded implementation of [TunerPresetRepository].
  *
- * Per the 2026-05-17 decision in `DECISIONS.md`, the production implementation will expose
- * hardcoded preset constants. Phase 5.1 fills in the catalogue and the lookup logic; until then
- * both methods throw [NotImplementedError].
+ * All data comes from [TunerPresets], which holds the full catalog as compiled-in constants.
+ * Functions are `suspend` to satisfy the interface contract and remain compatible with a future
+ * Room-backed implementation if user-defined presets are added.
  */
 @Singleton
 class TunerPresetRepositoryImpl @Inject constructor() : TunerPresetRepository {
 
-    /**
-     * Stub. Returns the hardcoded preset catalogue once Phase 5.1 lands.
-     *
-     * Throws [NotImplementedError] in Phase 2.
-     */
-    override suspend fun getPresets(): List<TunerPreset> = TODO("Not yet implemented")
+    override suspend fun getPresets(): List<TunerPreset> = TunerPresets.all
 
-    /**
-     * Stub. Returns the matching preset (or `null`) once Phase 5.1 lands.
-     *
-     * Throws [NotImplementedError] in Phase 2.
-     */
-    override suspend fun getPresetById(id: String): TunerPreset? = TODO("Not yet implemented")
+    override suspend fun getPresetById(id: String): TunerPreset? =
+        TunerPresets.all.firstOrNull { it.id == id }
+
+    override suspend fun getPresetsGrouped(): Map<Int, Map<TunerCategory, List<TunerPreset>>> =
+        TunerPresets.grouped
 }
