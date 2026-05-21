@@ -115,6 +115,40 @@ The tuner supports two operating modes, both available within the same session:
 
 After the final string is brought in tune in sequential mode, the success state from `DESIGN.md` §8.1 plays once, and the tuner automatically switches into chromatic mode so the user can fine-tune without further interaction.
 
+### Chromatic Mode
+
+Chromatic mode (also called "free mode") is a secondary operating mode of the tuner. It runs alongside the sequential preset-string mode and is the default state after all strings have been tuned once in a session.
+
+**Entry conditions:**
+- Automatically entered after the last string satisfies the sustained-tune condition in sequential mode (after a 1.2 s success hold per `DESIGN.md` §8.1).
+- Explicitly entered by the user via the mode toggle in the UI (Phase 5.4).
+
+**Behavior in chromatic mode:**
+- The tuner does not target a specific string from the preset. Instead, for each audio buffer, the nearest equal-tempered note to the detected fundamental frequency is computed via `MusicTheory.frequencyToNote(detectedHz, referencePitchHz)`.
+- The needle shows the cents offset between the detected frequency and that nearest note's target frequency.
+- If `frequencyToNote` returns `null` (frequency out of musical range or no fundamental detected), the frame is skipped and the display stays on the previous state.
+- No auto-advance. The user plays whichever string they wish; the tuner automatically determines the target each frame.
+- `tunedStringIndices` is cleared when chromatic mode is entered.
+- `currentStringIndex` is set to 0 but is meaningless in this mode; the UI should not highlight a specific string pill.
+
+**Exit conditions:**
+- Tapping any preset in the picker (including the current one) re-arms `PRESET` mode at string 0.
+- Tapping a specific string pill re-arms `PRESET` mode at that string's index.
+
+**Implementation note.** The chromatic target is resolved inside `DetectTunedStringUseCase` when `TunerInput.mode == TunerMode.CHROMATIC`. The ViewModel supplies a null `targetNote` for chromatic inputs; the use case fills it per-frame. This is new behavior introduced in Phase 5.3 and is not reflected in the Phase 2 backend outline.
+
+---
+
+### Operating Modes
+
+The tuner operates in one of two modes within a session.
+
+**Preset mode** is the default when a tuning is selected. The tuner targets the lowest string of the chosen preset and advances through the strings in order. The current string can be jumped to by tapping its pill in the string selector; auto-advance then continues from the tapped string forward.
+
+**Chromatic mode** can be entered explicitly via the mode selector on the preset chip, or automatically after all strings of the current preset have been confirmed in tune. In chromatic mode the tuner does not target a specific string — it identifies the nearest equal-tempered note to whatever pitch is detected and shows cents-off relative to that note. Auto-advance does not apply. The user returns to preset mode either by tapping the "Preset" item in the mode selector (which restores the string they were on before entering chromatic mode, if the entry was user-initiated; otherwise resets to the lowest string) or by tapping any string in the string selector (which jumps directly to that string).
+
+---
+
 ### Reference Pitch & Tolerance
 
 - **Reference pitch:** A4 = **440 Hz** by default. The user can optionally select A4 = 432 Hz from the tuner settings sheet (opened via the sun-icon button in the top-right of the screen; see `DESIGN.md` §14 Q1 — resolved).
@@ -124,7 +158,8 @@ After the final string is brought in tune in sequential mode, the success state 
 ### Permissions
 
 - Requires `RECORD_AUDIO` permission (must be requested at runtime via the Activity Result API).
-- If permission is denied, the Tuner screen displays a single card with a microphone icon, a short explanation of why the permission is needed, and a **"Grant access"** button that opens the system app settings (via `Settings.ACTION_APPLICATION_DETAILS_SETTINGS` intent). No tuner UI is shown until permission is granted.
+- If `RECORD_AUDIO` permission is not granted when the tuner is opened, the readout area is replaced with a permission-explainer card and a **"Grant access"** button. The button triggers the system permission prompt on first use; after a permanent denial, it opens the system app-settings screen instead. The card's body copy stays consistent across both states.
+- If permission is denied permanently, the **"Grant access"** button opens the system app settings (via `Settings.ACTION_APPLICATION_DETAILS_SETTINGS` intent). The string selector and preset chip remain browsable while the card is shown.
 
 ### Technical Notes
 

@@ -7,9 +7,11 @@ import android.util.Log
 import de.ritzelprimpf.toniqo.common.permission.AudioPermissionChecker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.isActive
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -43,6 +45,7 @@ class MicrophoneAudioSourceImpl @Inject constructor(
     private val permissionChecker: AudioPermissionChecker,
 ) : MicrophoneAudioSource {
 
+    @androidx.annotation.RequiresPermission(android.Manifest.permission.RECORD_AUDIO)
     override fun samples(): Flow<CaptureEvent> = callbackFlow {
         // Permission check is the first gate. If denied, the flow is terminal.
         if (!permissionChecker.hasRecordAudioPermission()) {
@@ -50,6 +53,12 @@ class MicrophoneAudioSourceImpl @Inject constructor(
             close()
             return@callbackFlow
         }
+
+        // Allow any previous AudioRecord instance to finish its current blocking read() call
+        // and release hardware resources. Without this pause the new AudioRecord's read()
+        // returns AudioRecord.ERROR_INVALID_OPERATION continuously, producing no audio.
+        // A single 4096-frame buffer at 44 100 Hz takes ~93 ms to fill; 150 ms is a safe margin.
+        delay(AUDIO_RECORD_SETTLE_MS)
 
         val minBufferBytes = AudioRecord.getMinBufferSize(
             SAMPLE_RATE_HZ,
@@ -81,7 +90,7 @@ class MicrophoneAudioSourceImpl @Inject constructor(
             val shortBuffer = ShortArray(frames)
             val floatBuffer = FloatArray(frames)
 
-            while (!isClosedForSend) {
+            while (isActive) {
                 val read = record.read(shortBuffer, 0, frames)
                 if (read <= 0) continue  // Negative values are AudioRecord error codes; skip.
 
@@ -115,6 +124,7 @@ class MicrophoneAudioSourceImpl @Inject constructor(
      * @return A pair of the initialised recorder and the source kind used, or `null` if both
      *   attempts fail to produce a recorder in [AudioRecord.STATE_INITIALIZED].
      */
+    @androidx.annotation.RequiresPermission(android.Manifest.permission.RECORD_AUDIO)
     private fun buildRecorder(frames: Int): Pair<AudioRecord, AudioSourceKind>? {
         val audioFormat = AudioFormat.Builder()
             .setSampleRate(SAMPLE_RATE_HZ)
@@ -158,5 +168,6 @@ class MicrophoneAudioSourceImpl @Inject constructor(
         const val BUFFER_FRAMES_DEFAULT = 4_096
         const val BYTES_PER_SAMPLE = 2           // PCM 16-bit = 2 bytes per sample
         const val SHORT_MAX_AS_FLOAT = 32_768.0f // Short.MAX_VALUE + 1 for normalisation to [-1, 1]
+        const val AUDIO_RECORD_SETTLE_MS = 300L  // safety margin for previous AudioRecord to release hardware
     }
 }

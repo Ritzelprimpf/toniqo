@@ -19,6 +19,62 @@
     <string name="tuner_title">Guitar Tuner</string>
     <string name="tuner_description">Chromatic and preset-driven guitar tuner using your device microphone</string>
 
+    <!-- Tuner screen — header kicker (uppercase required: Kicker type has no textAllCaps) -->
+    <string name="tuner_kicker_440">TUNER · A4 = 440 HZ</string>
+    <string name="tuner_kicker_432">TUNER · A4 = 432 HZ</string>
+    <string name="tuner_cd_settings">Tuner settings</string>
+
+    <!-- Tuner screen — status line (uppercase required) -->
+    <string name="tuner_status_flat">FLAT</string>
+    <string name="tuner_status_in_tune">IN TUNE</string>
+    <string name="tuner_status_sharp">SHARP</string>
+    <string name="tuner_status_all_tuned">ALL TUNED</string>
+    <string name="tuner_status_listening">LISTENING</string>
+
+    <!-- Tuner screen — Hz readout pair (uppercase labels required) -->
+    <string name="tuner_label_detected">DETECTED</string>
+    <string name="tuner_label_target">TARGET</string>
+    <string name="tuner_hz_null">&#x2014; Hz</string>
+
+    <!-- Tuner screen — string selector pills -->
+    <!-- %1$s is the note name, e.g. "E2" -->
+    <string name="tuner_cd_string_tuned">%1$s, tuned</string>
+
+    <!-- Tuner screen — preset chip and mode popover -->
+    <string name="tuner_cd_mode_menu">Mode selector</string>
+    <string name="tuner_mode_preset">Preset</string>
+    <string name="tuner_mode_chromatic">Chromatic</string>
+
+    <!-- Tuner screen — MIC LIVE indicator (uppercase required) -->
+    <string name="tuner_mic_live">MIC LIVE</string>
+
+    <!-- Tuner screen — permission denied card -->
+    <string name="tuner_permission_heading">Microphone access needed</string>
+    <string name="tuner_permission_body">Toniqo listens to your guitar to detect pitch. We don\'t record or store audio — everything stays on your device.</string>
+    <string name="tuner_permission_button">Grant access</string>
+
+    <!-- Tuner screen — preset picker sheet (uppercase titles required) -->
+    <string name="tuner_picker_title">SELECT TUNING</string>
+    <string name="tuner_cd_close_sheet">Close</string>
+    <!-- %1$d is the string count, e.g. 6 → "6-STRING" -->
+    <string name="tuner_string_count_label">%1$d-STRING</string>
+    <string name="tuner_category_standard">STANDARD</string>
+    <string name="tuner_category_open">OPEN</string>
+    <string name="tuner_category_dropped">DROPPED</string>
+
+    <!-- Tuner screen — settings sheet (uppercase title required) -->
+    <string name="tuner_settings_title">TUNER SETTINGS</string>
+    <string name="tuner_settings_ref_pitch_label">Reference pitch</string>
+    <!-- %1$d is the reference pitch in Hz as an integer, e.g. 440 → "A4 = 440 Hz" -->
+    <string name="tuner_settings_ref_pitch_current">A4 = %1$d Hz</string>
+    <string name="tuner_settings_440">440</string>
+    <string name="tuner_settings_432">432</string>
+    <string name="tuner_settings_auto_advance_label">Auto-advance strings</string>
+    <string name="tuner_settings_auto_advance_desc">Advance automatically when a string is in tune.</string>
+
+    <!-- Tuner screen — capture failed error -->
+    <string name="tuner_capture_failed">Audio capture failed. Try restarting the screen.</string>
+
     <!-- Metronome module -->
     <string name="metronome_title">Metronome</string>
     <string name="metronome_description">Audible click track at a user-defined tempo and time signature</string>

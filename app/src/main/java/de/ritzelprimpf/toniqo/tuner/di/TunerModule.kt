@@ -10,6 +10,8 @@ import de.ritzelprimpf.toniqo.common.util.YinConfig
 import de.ritzelprimpf.toniqo.common.util.YinPitchDetector
 import de.ritzelprimpf.toniqo.tuner.data.MicrophoneAudioSource
 import de.ritzelprimpf.toniqo.tuner.data.MicrophoneAudioSourceImpl
+import de.ritzelprimpf.toniqo.tuner.data.TunerPreferences
+import de.ritzelprimpf.toniqo.tuner.data.TunerPreferencesImpl
 import de.ritzelprimpf.toniqo.tuner.data.TunerPresetRepositoryImpl
 import de.ritzelprimpf.toniqo.tuner.domain.repository.TunerPresetRepository
 import javax.inject.Singleton
@@ -46,6 +48,18 @@ abstract class TunerModule {
     abstract fun bindMicrophoneAudioSource(
         impl: MicrophoneAudioSourceImpl,
     ): MicrophoneAudioSource
+
+    /**
+     * Binds [TunerPreferencesImpl] as the singleton implementation of [TunerPreferences].
+     *
+     * Added in Phase 5.3. [TunerPreferencesImpl] is backed by DataStore and requires the
+     * application context (injected via `@ApplicationContext` in its constructor).
+     */
+    @Binds
+    @Singleton
+    abstract fun bindTunerPreferences(
+        impl: TunerPreferencesImpl,
+    ): TunerPreferences
 
     companion object {
 

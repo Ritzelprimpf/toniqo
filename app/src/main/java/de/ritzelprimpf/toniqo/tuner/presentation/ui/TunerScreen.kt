@@ -1,77 +1,216 @@
 package de.ritzelprimpf.toniqo.tuner.presentation.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.GraphicEq
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import de.ritzelprimpf.toniqo.R
+import de.ritzelprimpf.toniqo.tuner.domain.model.TuningStatus
+import de.ritzelprimpf.toniqo.tuner.presentation.mapping.toSignalColor
+import de.ritzelprimpf.toniqo.tuner.presentation.ui.components.DetectedNoteHero
+import de.ritzelprimpf.toniqo.tuner.presentation.ui.components.HzReadoutPair
+import de.ritzelprimpf.toniqo.tuner.presentation.ui.components.NeedleGauge
+import de.ritzelprimpf.toniqo.tuner.presentation.ui.components.PermissionDeniedCard
+import de.ritzelprimpf.toniqo.tuner.presentation.ui.components.PresetChipRow
+import de.ritzelprimpf.toniqo.tuner.presentation.ui.components.PresetPickerSheet
+import de.ritzelprimpf.toniqo.tuner.presentation.ui.components.ReadoutWell
+import de.ritzelprimpf.toniqo.tuner.presentation.ui.components.ReferencePitchKicker
+import de.ritzelprimpf.toniqo.tuner.presentation.ui.components.StatusLine
+import de.ritzelprimpf.toniqo.tuner.presentation.ui.components.StringSelectorRow
+import de.ritzelprimpf.toniqo.tuner.presentation.ui.components.SuccessRing
+import de.ritzelprimpf.toniqo.tuner.presentation.ui.components.TunerSettingsSheet
+import de.ritzelprimpf.toniqo.tuner.presentation.util.allTunedHaptic
+import de.ritzelprimpf.toniqo.tuner.presentation.util.findActivity
+import de.ritzelprimpf.toniqo.tuner.presentation.util.handleGrantAccess
+import de.ritzelprimpf.toniqo.tuner.presentation.util.tunedStringHaptic
+import de.ritzelprimpf.toniqo.tuner.presentation.viewmodel.TunerEvent
+import de.ritzelprimpf.toniqo.tuner.presentation.viewmodel.TunerScreenViewModel
+import de.ritzelprimpf.toniqo.tuner.presentation.viewmodel.TunerViewModel
+import de.ritzelprimpf.toniqo.ui.components.ToniqoCard
 import de.ritzelprimpf.toniqo.ui.theme.Tq
-import de.ritzelprimpf.toniqo.ui.theme.ToniqoTheme
 
 /**
- * Guitar Tuner placeholder screen.
+ * Full Guitar Tuner screen — wires the audio pipeline (Phases 5.1–5.3) into UI.
  *
- * Phase 4: layout shell only — no pitch detection, no ViewModel, no audio.
- * Full implementation in Phase 5.
+ * Accepts [TunerScreenViewModel] as an interface rather than [TunerViewModel] directly so that
+ * Compose UI tests can inject a fake via `createComposeRule().setContent { TunerScreen(viewModel = fake) }`
+ * without requiring Hilt. In production, the Hilt default is used transparently.
+ *
+ * Event collection uses [LaunchedEffect] keyed on `(viewModel.events, lifecycleOwner)` with an
+ * inner `repeatOnLifecycle(STARTED)`. This prevents duplicate haptics on rotation and avoids
+ * replaying buffered events after resume. See DECISIONS.md entry 8 for the full rationale.
  */
 @Composable
-fun TunerScreen(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Tq.Color.BgBase)
-            .padding(horizontal = Tq.Sp.s5),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        // TODO: Replace with custom `tuner` icon from DESIGN.md §7
-        Icon(
-            imageVector = Icons.Outlined.GraphicEq,
-            contentDescription = null,
-            tint = Tq.Color.FgTertiary,
-            modifier = Modifier.size(Tq.Sp.s8),
+fun TunerScreen(
+    viewModel: TunerScreenViewModel = hiltViewModel<TunerViewModel>(),
+    modifier: Modifier = Modifier,
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val haptic = LocalHapticFeedback.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
+    val activity = context.findActivity() as? Activity
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { viewModel.onPermissionRequested() },
+    )
+
+    // Keys ensure the effect re-launches only on actual identity changes.
+    // repeatOnLifecycle(STARTED) pauses collection while backgrounded and resumes on foreground
+    // without re-running the outer LaunchedEffect, preventing duplicate haptics on rotation.
+    LaunchedEffect(viewModel.events, lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewModel.events.collect { event ->
+                when (event) {
+                    is TunerEvent.StringTuned -> haptic.tunedStringHaptic()
+                    TunerEvent.AllStringsTuned -> haptic.allTunedHaptic()
+                    TunerEvent.EnteredChromaticMode -> Unit
+                }
+            }
+        }
+    }
+
+    // Restart the pipeline when returning to the foreground — covers the "permanently denied,
+    // went to app settings, granted manually" path where onResult never fires.
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) viewModel.onResumed()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    var presetSheetOpen by rememberSaveable { mutableStateOf(false) }
+    var settingsSheetOpen by rememberSaveable { mutableStateOf(false) }
+    var modeMenuExpanded by remember { mutableStateOf(false) }
+
+    Column(modifier = modifier.padding(horizontal = Tq.Sp.s4)) {
+        ReferencePitchKicker(
+            referencePitchHz = uiState.referencePitchHz,
+            presetDisplayName = uiState.selectedPreset?.displayName ?: "—",
+            onSettingsClick = { settingsSheetOpen = true },
         )
-        Spacer(modifier = Modifier.height(Tq.Sp.s4))
-        Text(
-            text = stringResource(R.string.tuner_title),
-            style = Tq.Type.H1,
-            color = Tq.Color.FgPrimary,
-            textAlign = TextAlign.Center,
+        Spacer(Modifier.height(Tq.Sp.s2))
+        PresetChipRow(
+            preset = uiState.selectedPreset,
+            mode = uiState.mode,
+            expanded = modeMenuExpanded,
+            onLabelClick = { presetSheetOpen = true },
+            onChevronClick = { modeMenuExpanded = true },
+            onDismissMenu = { modeMenuExpanded = false },
+            onExitChromaticMode = {
+                viewModel.onExitChromaticMode()
+                modeMenuExpanded = false
+            },
+            onSelectChromaticMode = {
+                viewModel.onEnterChromaticMode()
+                modeMenuExpanded = false
+            },
         )
-        Spacer(modifier = Modifier.height(Tq.Sp.s2))
-        Text(
-            text = stringResource(R.string.tuner_description),
-            style = Tq.Type.Body,
-            color = Tq.Color.FgSecondary,
-            textAlign = TextAlign.Center,
+        Spacer(Modifier.height(Tq.Sp.s3))
+
+        when (uiState.status) {
+            TuningStatus.PERMISSION_DENIED -> PermissionDeniedCard(
+                onGrantAccess = {
+                    handleGrantAccess(
+                        activity = activity,
+                        permissionLauncher = permissionLauncher,
+                        hasRequestedBefore = uiState.hasRequestedAudioPermission,
+                    )
+                },
+            )
+            TuningStatus.CAPTURE_FAILED -> CaptureFailedCard()
+            else -> Box {
+                ReadoutWell {
+                    DetectedNoteHero(
+                        note = uiState.detectedNote,
+                        semanticColor = uiState.status.toSignalColor(),
+                    )
+                    StatusLine(
+                        status = uiState.status,
+                        centsOffTarget = uiState.centsOffTarget,
+                    )
+                    NeedleGauge(
+                        cents = uiState.centsOffTarget,
+                        semanticColor = uiState.status.toSignalColor(),
+                    )
+                    HzReadoutPair(
+                        detectedHz = uiState.detectedFrequencyHz,
+                        targetHz = uiState.targetFrequencyHz,
+                    )
+                }
+                SuccessRing(
+                    visible = uiState.status == TuningStatus.ALL_STRINGS_TUNED,
+                    modifier = Modifier.matchParentSize(),
+                )
+            }
+        }
+
+        Spacer(Modifier.height(Tq.Sp.s4))
+        StringSelectorRow(
+            preset = uiState.selectedPreset,
+            currentStringIndex = uiState.currentStringIndex,
+            tunedStringIndices = uiState.tunedStringIndices,
+            activeSemanticColor = uiState.status.toSignalColor(),
+            mode = uiState.mode,
+            onStringTap = viewModel::onStringSelected,
+        )
+    }
+
+    if (presetSheetOpen) {
+        PresetPickerSheet(
+            grouped = uiState.availablePresets,
+            selectedPresetId = uiState.selectedPreset?.id,
+            onDismiss = { presetSheetOpen = false },
+            onSelect = { id ->
+                viewModel.onPresetSelected(id)
+                presetSheetOpen = false
+            },
+        )
+    }
+    if (settingsSheetOpen) {
+        TunerSettingsSheet(
+            referencePitchHz = uiState.referencePitchHz,
+            autoAdvanceEnabled = uiState.autoAdvanceEnabled,
+            onReferencePitchChanged = viewModel::onReferencePitchChanged,
+            onAutoAdvanceChanged = viewModel::onAutoAdvanceChanged,
+            onDismiss = { settingsSheetOpen = false },
         )
     }
 }
 
-// ─── Previews ─────────────────────────────────────────────────────────────────
-
-@Preview(name = "TunerScreen — Dark", showBackground = true, backgroundColor = 0xFF1A1F22)
 @Composable
-private fun TunerScreenPreviewDark() {
-    ToniqoTheme(useDarkTheme = true) { TunerScreen() }
-}
-
-@Preview(name = "TunerScreen — Light", showBackground = true, backgroundColor = 0xFFF8F9FA)
-@Composable
-private fun TunerScreenPreviewLight() {
-    ToniqoTheme(useDarkTheme = false) { TunerScreen() }
+private fun CaptureFailedCard() {
+    ToniqoCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = stringResource(R.string.tuner_capture_failed),
+            style = Tq.Type.Body,
+            color = Tq.Color.FgSecondary,
+        )
+    }
 }

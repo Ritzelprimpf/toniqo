@@ -23,7 +23,7 @@ import de.ritzelprimpf.toniqo.ui.info.RateAndShareScreen
  * Navigation structure:
  * ```
  * AppNavHost
- * ├── tuner_route        → TunerScreen        (placeholder)
+ * ├── tuner_route        → TunerScreen
  * ├── metronome_route    → MetronomeScreen    (placeholder)
  * ├── keyfinder_route    → KeyFinderScreen    (placeholder)
  * ├── chordfinder_route  → ChordFinderScreen  (placeholder)

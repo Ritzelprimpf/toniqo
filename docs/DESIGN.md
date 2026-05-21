@@ -275,6 +275,8 @@ The shipped design is `icon-label`. Earlier exploration sketches (icon-only, seg
 The set ships these names; ask before adding any new ones:
 `tuner, metronome, key, chord, more, settings, info, play, pause, plus, minus, check, chevron-right, chevron-down, tap, mic, search`
 
+> **Note (Phase 5.4).** No `sun` glyph ships in v1. The tuner uses the `settings` icon for the top-right button that opens the settings sheet. If a dedicated sun icon is desired in a future release, add a new §14 question rather than introducing a one-off SVG.
+
 ---
 
 ## 8. Module-specific specs
@@ -294,7 +296,7 @@ The set ships these names; ask before adding any new ones:
 - Pivot cap: 5dp `bg.elev3` circle with 0.8dp `line` border; 2dp inner dot in semantic colour.
 - Needle transition: 200ms, `cubic-bezier(0.4, 1.2, 0.5, 1)`. No spring physics — the needle settles, it does not bounce.
 
-**Detected-note hero** (above the gauge): 64dp JetBrains Mono Light note letter, 18dp octave subscript, both with a faint semantic glow when not idle.
+**Detected-note hero** (above the gauge): 64dp JetBrains Mono Light note letter, 18dp octave subscript. Both are rendered in `fg.primary` with no glow. The semantic colour is conveyed by the needle and the status line.
 
 **Status line:** kicker-style mono, 11sp, +0.16em tracking, uppercase. Status word and cents value side-by-side.
 
@@ -307,13 +309,21 @@ The set ships these names; ask before adding any new ones:
 - A category chip on the left, e.g. "6-STRING · DROP" in `mono.micro` kicker style.
 - A right-aligned `MIC LIVE` indicator: mint dot plus uppercase mono label.
 
-**Reference pitch chip:** the screen header kicker line displays `TUNER · A4 = 440 HZ` (or `432 HZ`). The toggle to change it is **TBD — see §14, Q1.**
+**Reference pitch chip:** the screen header kicker line displays `TUNER · A4 = 440 HZ` (or `432 HZ`). The toggle to change it is in the **tuner settings sheet**, opened by tapping the `settings`-icon button in the top-right corner of the screen.
 
 **Idle state** (the user has opened the tuner but no audio is detected yet):
 - Needle sits at the centre (0 cents position) in `fg.quaternary`.
 - Detected-note hero shows a single `—` (em dash) in `fg.quaternary`, no octave subscript.
 - Status line reads `LISTENING` in `fg.quaternary`, no cents value.
 - `MIC LIVE` indicator shows the mint dot at full saturation; this is what tells the user the mic is working even when no sound is detected.
+
+**Hz readout pair** (inside the readout well, below the needle gauge): two columns side-by-side. Left column: kicker label `"DETECTED"` in `fg.tertiary` and the detected frequency value (e.g. `"108.86 Hz"`) in `Tq.Type.Body` / `fg.primary`. Right column: kicker label `"TARGET"` and the target frequency value (e.g. `"110.00 Hz"`). When the detected value is unavailable, render `"— Hz"` (em-dash) in place of the numeric value. Both labels are always shown even when values are null.
+
+**Settings sheet** (opened via the `settings`-icon button at top-right): a `ModalBottomSheet` approximately 280dp tall containing:
+- **Reference pitch** row: a `Tq.Type.Body` label on the left, the current value (`A4 = 440 Hz` or `A4 = 432 Hz`) on the right, and a segmented control (`[ 440 | 432 ]`) below the row.
+- **Auto-advance strings** row: a Material 3 `Switch` on the right, `Tq.Type.Body` description below (`"Advance automatically when a string is in tune."`).
+
+**Permission-denied state** (shown when `RECORD_AUDIO` is not granted, replacing the readout well): a `ToniqoCard` (`bg.elev1`, `r.lg`, `sp.4` padding) centred in the well's vertical position. Contents: a 28dp `mic` icon with a diagonal slash overlay (until a dedicated icon exists), an `H2` heading (`"Microphone access needed"`), a `body` description centred (max 3 lines), and a `btn.primary` 40dp variant with the label `"Grant access"`.
 
 **Success state — "all strings tuned":**
 - A `signal.mint` border ring fades in around the readout well over 320ms (ease-out), holds for 1.2s, then fades out.
@@ -501,8 +511,8 @@ Minimum 44×44dp on every interactive element, regardless of visual size. Alread
 
 These need answers before the relevant module is built. The agent must stop and ask rather than improvise.
 
-1. **A4 = 432 Hz UI placement.** The tuner shows `A4 = 440 HZ` in the header kicker line. Where does the user tap to change it? Options: (a) long-press the kicker itself, (b) a small toggle button next to the preset chip, (c) a settings sheet accessed from a sun-icon button in the top-right corner (this icon is already in the mockup but unbound). Recommend (c) for discoverability.
-2. **Permission-denied state for the microphone.** What does the Tuner screen look like when the user has denied `RECORD_AUDIO`? Needs a single-card design with explanation text and a "Grant access" button that opens system settings.
+1. **A4 = 432 Hz UI placement.** ~~Where does the user tap to change the reference pitch?~~ **Resolved (2026-05-20):** A `settings`-icon button in the top-right corner of the Tuner screen opens the tuner settings sheet, which contains the 432 Hz toggle alongside the auto-advance toggle.
+2. **Permission-denied state for the microphone.** ~~What does the Tuner screen look like when the user has denied `RECORD_AUDIO`?~~ **Resolved (2026-05-20):** A single `ToniqoCard` with a 28dp mic icon (slash-overlaid), an explanatory heading and body, and a primary "Grant access" button. The button requests permission on first tap; after permanent denial, opens system app settings.
 3. **Key Finder mockup.** §8.3 is specified in prose but not shown. Confirm interpretation or add a screenshot before Phase 5+.
 4. **Info section content.** §8.5 describes the layout but not the specific cards on the Info home screen. Confirm the list (Help, Privacy Policy, Licenses, Rate the App, Share the App, plus any others) before building.
 5. **Light mode trigger.** System default, manual toggle in settings, or both? Default to system; confirm before building the settings sheet.

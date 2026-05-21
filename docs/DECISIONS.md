@@ -379,6 +379,251 @@ The agent must read this file at the start of every phase and consult it before 
 
 ---
 
+## 2026-05-20 — Phase 5.3: TuningStatus gains PERMISSION_DENIED and CAPTURE_FAILED
+
+**Decision.** The `TuningStatus` enum is extended with two new values: `PERMISSION_DENIED` (capture blocked by missing permission) and `CAPTURE_FAILED` (non-permission hardware failure). Both are surfaced from `DetectTunedStringUseCase` so the ViewModel can map them into observable UI state.
+
+**Rationale.** Phase 2 defined `TuningStatus` with only the happy-path values. Phase 5.3 is the first sub-phase that wires the audio pipeline end-to-end; `MicrophoneAudioSource` can emit `PermissionDenied` and `Failed` events and the ViewModel must have corresponding status values to surface them in UI state. Keeping them in `TuningStatus` (rather than a separate error enum) keeps the state model simple — one field covers every screen state.
+
+---
+
+## 2026-05-20 — Phase 5.3: TunerUiState reshaped for the full pipeline
+
+**Decision.** `TunerUiState` is significantly expanded from the Phase 2 placeholder. New fields: `mode: TunerMode`, `availablePresets: Map<Int, Map<TunerCategory, List<TunerPreset>>>`, `targetNote: Note?`, `targetFrequencyHz: Double?`, `detectedNote: Note?`, `centsOffTarget: Double?`, `tunedStringIndices: Set<Int>`, `referencePitchHz: Double`. The old `availablePresets: List<TunerPreset>` (flat list) is replaced by the grouped map; `centsOffTarget: Float?` becomes `Double?` to match the precision of `MusicTheory.centsBetween`.
+
+**Rationale.** The Phase 2 placeholder held only the minimal fields for an idle state. The real ViewModel needs all detection results, mode tracking, and progress state in one observable snapshot to drive the UI in Phase 5.4 without additional plumbing.
+
+---
+
+## 2026-05-20 — Phase 5.3: Sustained-tone window — size 6, threshold 5, 1-glitch budget
+
+**Decision.** The sustained-tone window is a sliding `ArrayDeque<Boolean>` of capacity 6. A string is considered "in tune" when **the window is full AND at least 5 of the 6 entries are `true`** (within ±5 cents). This gives a 1-glitch-per-window budget: a single missed or out-of-tolerance detection does not reset progress.
+
+**Alternatives considered.**
+- *Strict 6-of-6.* No glitch budget — one transient bad frame drops back to FLAT/SHARP. Too fragile for real microphone input.
+- *5-of-5 (smaller window).* Less glitch tolerance; the window fills faster. Rejected in favour of a larger window with a 1-slot budget.
+
+**Rationale.** Two consecutive out-of-tolerance or null detections leave at most 4/6 `true` entries, which cannot satisfy the ≥5 threshold. This "two nulls reset" behaviour falls naturally out of the arithmetic with no explicit reset logic. The 6-element window with a 5-of-6 threshold balances responsiveness with noise immunity.
+
+**Constants.** `SUSTAINED_WINDOW_SIZE = 6`, `SUSTAINED_MIN_IN_TOLERANCE = 5`, `IN_TUNE_TOLERANCE_CENTS = 5.0` (unchanged from DECISIONS.md 2026-05-17).
+
+---
+
+## 2026-05-20 — Phase 5.3: Auto-advance hold durations — 200 ms and 1200 ms
+
+**Decision.** Two hold durations are used:
+- `STRING_LOCK_HOLD_MS = 200` ms between a string locking in-tune and advancing to the next string. Gives the user a moment to see the in-tune state before the screen changes.
+- `ALL_TUNED_HOLD_MS = 1200` ms between all strings tuned and the chromatic-mode transition. Matches the success-state animation duration from `DESIGN.md` §8.1.
+
+Both are implemented as `viewModelScope.launch { delay(…) }` and are fully cancelable: any user action (preset change, string tap) during a hold cancels the pending job immediately.
+
+**Rationale.** 200 ms is below the threshold of "feels slow" and above the threshold of "blink and miss it." 1200 ms is dictated by the design system's success ring animation duration.
+
+---
+
+## 2026-05-20 — Phase 5.3: Default first-launch preset — six_string_standard_e
+
+**Decision.** On first launch (no saved preset ID in DataStore), the tuner defaults to `six_string_standard_e` (E Standard, 6-string). If the saved ID no longer exists in the catalog (e.g. after a catalog update), the fallback is also `six_string_standard_e`.
+
+**Rationale.** Standard E tuning is by far the most common guitar tuning. A new user who just installed the app will almost certainly start here.
+
+---
+
+## 2026-05-20 — Phase 5.3: DataStore dependency added
+
+**Decision.** `androidx.datastore:datastore-preferences` version 1.1.1 is added as an implementation dependency. It persists `TunerPreferences` (currently one key: `last_used_preset_id`).
+
+**Alternatives considered.**
+- *SharedPreferences.* Synchronous and not coroutine-native. DataStore is the modern replacement.
+- *Room.* Overkill for a single string value.
+
+**Rationale.** DataStore is the recommended replacement for SharedPreferences on modern Android, it integrates cleanly with coroutines via `Flow`, and it avoids the ANR risk of synchronous disk I/O on the main thread.
+
+---
+
+## 2026-05-20 — Phase 5.3: Two-mode operation (TunerMode.PRESET / CHROMATIC)
+
+**Decision.** The `TunerMode` enum has two values: `PRESET` and `CHROMATIC`. In `PRESET` mode the use case compares each detection against the current string's preset note. In `CHROMATIC` mode the use case resolves the target per-frame via `MusicTheory.frequencyToNote(detectedHz, referencePitchHz)`. The sustain window is maintained in both modes, but auto-advance only applies in `PRESET` mode.
+
+(This formalises the two-mode decision from 2026-05-17 at the code level. See that entry for the product rationale.)
+
+---
+
+## 2026-05-20 — Phase 5.3: Re-entry rules from chromatic to preset mode
+
+**Decision.** Two user actions re-arm `PRESET` mode:
+1. **Preset tap** (including re-tapping the current preset): mode = PRESET, currentStringIndex = 0, tunedStringIndices = emptySet(). The auto-advance sweep restarts from the first string.
+2. **String pill tap**: mode = PRESET, currentStringIndex = tapped index, tunedStringIndices = emptySet(). Auto-advance proceeds from the tapped string onward.
+
+In both cases `tunedStringIndices` is cleared — the user is starting a new sweep, not continuing a previous one. Previously-tuned strings are not preserved.
+
+**Rationale.** String selection implies the user wants to re-tune from a specific point; carrying over a stale `tunedStringIndices` set would produce incorrect check marks. Resetting is the clearest semantic.
+
+---
+
+## 2026-05-20 — Phase 5.4: A4 = 432 Hz toggle UI placement
+
+**Decision.** The A4 = 440 / 432 Hz toggle is exposed via a `settings`-icon button in the top-right corner of the Tuner screen. Tapping it opens a small settings sheet containing the toggle alongside any future tuner-scoped settings.
+
+**Alternatives considered.**
+- *(a) Long-press the `A4 = 440 HZ` kicker line itself.* Rejected — long-press is undiscoverable.
+- *(b) A small inline toggle button next to the preset chip.* Rejected — adds noise to the most-used area for a rarely-changed setting.
+
+**Rationale.** The settings button is already present in the mockup (previously unbound). A settings sheet scales gracefully — the 432 Hz toggle today, anything else later — without cluttering the main readout.
+
+**Consequences.** Phase 5.4 implements the settings-icon button, the bottom sheet, and the segmented control inside it. Resolves `DESIGN.md` §14 Q1.
+
+---
+
+## 2026-05-20 — Phase 5.4: Microphone permission-denied screen design
+
+**Decision.** When `RECORD_AUDIO` is denied, the readout-well area is replaced with a single `ToniqoCard` containing: a 28dp `mic` icon with a diagonal slash overlay, a short two-line explanation, and a primary-styled "Grant access" button. The preset chip and string selector remain visible.
+
+**Alternatives considered.**
+- *Inline banner above the readout.* Rejected — leaves a non-functional readout visible.
+- *Modal dialog.* Rejected — lets the user dismiss into a non-functional screen.
+
+**Rationale.** Without microphone access the tuner does nothing; the screen should communicate that clearly with one obvious next action. A single card is consistent with the design system and avoids new component primitives. Resolves `DESIGN.md` §14 Q2.
+
+**Consequences.** The "Grant access" button requests permission on first tap; after permanent denial (detected via `shouldShowRequestPermissionRationale` + `hasRequestedAudioPermission` flag), it opens `Settings.ACTION_APPLICATION_DETAILS_SETTINGS`.
+
+---
+
+## 2026-05-20 — Phase 5.4: Mode toggle UI placement
+
+**Decision.** A `DropdownMenu` anchored to the preset chip's chevron (`▾`) provides two items — "Preset" and "Chromatic" — with a check mark on the current mode. The preset picker opens from the chip's label area (left side). Both tap targets are ≥ 44 × 44 dp via invisible padding.
+
+**Alternatives considered.**
+- *Top-bar segmented control.* Adds a permanent row of chrome for a feature many users never change.
+- *Settings sheet item.* Buried; switching modes mid-session would require opening a sheet.
+
+**Rationale.** Gives the mockup chevron an explicit meaning, keeps the chip's two affordances in one visual element, and avoids adding a persistent row to the screen layout.
+
+---
+
+## 2026-05-20 — Phase 5.4: Chromatic re-entry policy
+
+**Decision.** When the user explicitly enters chromatic mode via the popover, the ViewModel captures `currentStringIndex` into a private field `previousPresetStringIndex: Int?`. When the user taps "Preset" in the popover from chromatic mode, the ViewModel restores that string index. `tunedStringIndices` is not restored. The snapshot is cleared on: auto-success transition, `onPresetSelected`, and `onStringSelected`.
+
+**Alternatives considered.**
+- *Always restore including check marks.* Rejected — makes chromatic mode a saved-state mechanism, which is not the intended use.
+- *Always restart at string 0.* Rejected — loses the user's position when they "peek" at chromatic mode.
+
+**Rationale.** The "I'm peeking" intent: restore position but not progress. Minimal snapshot surface area.
+
+---
+
+## 2026-05-20 — Phase 5.4: Auto-advance toggle persistence
+
+**Decision.** The auto-advance toggle lives in the settings sheet and is persisted via `TunerPreferences.autoAdvanceEnabled` (default `true`). When disabled, `TunerEvent.StringTuned` still fires (haptic + check mark), but `currentStringIndex` is not incremented.
+
+**Alternatives considered.**
+- *Session-only toggle.* Rejected — users who prefer manual advance don't want to re-set it every launch.
+- *On-screen toggle (not in sheet).* Rejected — would add a permanent element to the main readout area.
+
+**Rationale.** Auto-advance preference is sticky; persisting it matches user expectation and adds a natural second tenant to the settings sheet.
+
+---
+
+## 2026-05-20 — Phase 5.4: Reference pitch persistence
+
+**Decision.** Reference pitch is persisted via `TunerPreferences.referencePitchHz` (default `440.0`). Changing it in the settings sheet retunes all targets live (the ViewModel re-emits the active `tunerInput` immediately).
+
+**Alternatives considered.**
+- *Session-only.* Rejected — 432 Hz users expect it to stick.
+
+**Rationale.** Same motivation as auto-advance: a sticky preference that belongs in `TunerPreferences`.
+
+---
+
+## 2026-05-20 — Phase 5.4: Preset picker surface
+
+**Decision.** A Material 3 `ModalBottomSheet` with a segmented control (6-string / 7-string / 8-string) and grouped category sections (STANDARD / OPEN / DROPPED). Each row shows the display name and a note-list summary. The selected preset has a mint indicator dot. Tapping a row dismisses the sheet and calls `onPresetSelected`.
+
+**Alternatives considered.**
+- *Full-screen route.* Adds navigation complexity and breaks the "one active module" feel.
+- *Inline carousel.* Scales poorly to 30+ presets.
+
+**Rationale.** Standard Material 3 affordance that scales to the catalog size without navigation cost and matches the dark surface system.
+
+---
+
+## 2026-05-20 — Phase 5.4: SharedFlow event collection pattern
+
+**Decision.** Events are collected in the screen via:
+```kotlin
+LaunchedEffect(viewModel.events, lifecycleOwner) {
+    lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+        viewModel.events.collect { event -> ... }
+    }
+}
+```
+
+**Alternatives considered.**
+- `LaunchedEffect(Unit)` — restarts on composition, potentially replaying after rotation.
+- `collectAsStateWithLifecycle` — wrong shape for one-shot events.
+
+**Rationale.** `repeatOnLifecycle(STARTED)` pauses collection on `STOPPED` and resumes on `STARTED` without re-running the outer `LaunchedEffect`, preventing duplicate haptics on rotation and invisible event consumption while backgrounded.
+
+---
+
+## 2026-05-20 — Phase 5.4: Needle gauge implementation
+
+**Decision.** Pure Compose `Canvas`, all elements drawn per-frame (sweep arc, ticks, sweet-spot arc, needle, pivot cap). The needle glow uses `drawIntoCanvas { canvas.nativeCanvas }` with `android.graphics.Paint` and `BlurMaskFilter(6.dp.toPx(), NORMAL)`.
+
+**Alternatives considered.**
+- *Pre-rendered `GraphicsLayer` for static elements.* Profile-driven optimisation; not pre-emptive.
+- *SVG asset.* Static; cannot animate the needle.
+
+**Rationale.** Simplest correct implementation. Performance at tuner redraw rates (~10–30 fps) is not a concern; optimisation is deferred to profiling.
+
+---
+
+## 2026-05-20 — Phase 5.4: DESIGN.md §8.1 prose corrections
+
+**Decision.** The detected-note hero letter has no glow. The mockups are authoritative — they show a flat white letter. The needle's 6dp drop-shadow glow (already specified in §8.1) is the only glow on the tuner screen.
+
+**Alternatives considered.**
+- *Add a text-glow exception to §10.* Rejected — mockups don't show it; no exception needed.
+
+**Rationale.** Mockups override prose when they conflict. The §10 flat-design rule is preserved.
+
+---
+
+## 2026-05-20 — Phase 5.4: Sun-icon substitution
+
+**Decision.** The `settings` glyph from the §7 icon set is used for the tuner's top-right button. No one-off `sun` SVG is introduced.
+
+**Alternatives considered.**
+- *Add a `sun` icon to the set.* Would require a new asset outside the scope of Phase 5.4.
+
+**Rationale.** Stays within §7 icon-set discipline. If a dedicated sun is desired, add it as a new §14 question.
+
+---
+
+## 2026-05-20 — Phase 5.4: Compose UI test infrastructure
+
+**Decision.** Compose UI tests use `androidTest` with `createComposeRule()` and `androidx.compose.ui:ui-test-junit4`. A `TunerScreenViewModel` interface is extracted so tests can inject a `FakeTunerScreenViewModel` without Hilt.
+
+**Alternatives considered.**
+- *Robolectric.* Introduces a parallel runtime that complicates Hilt + Compose interactions.
+
+**Rationale.** `androidTest` with `createComposeRule()` is the standard Android Compose test pattern. The interface extraction is the smallest surface needed for fake injection. Cost: tests require a connected emulator or device.
+
+---
+
+## 2026-05-20 — Phase 5.4: hasRequestedAudioPermission preference
+
+**Decision.** A `Boolean` field `hasRequestedAudioPermission` (default `false`) is added to `TunerPreferences` and tracked in `TunerUiState`. It is set to `true` the first time the `RequestPermission` launcher returns a result. The "permanently denied" condition requires `hasRequestedAudioPermission && !canShowRationale && !hasPermission`.
+
+**Alternatives considered.**
+- *SDK-version-specific API.* No reliable cross-version API exists.
+- *Synthesise the state from `shouldShowRequestPermissionRationale` alone.* Fails on first launch where `shouldShowRationale = false` and `hasPermission = false` both hold, incorrectly routing to app settings.
+
+**Rationale.** A single stored bit is the simplest, most robust approach across Android versions.
+
+---
+
 ## (Template for future entries)
 
 ## YYYY-MM-DD — Short title of decision
