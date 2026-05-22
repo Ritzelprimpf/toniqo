@@ -624,6 +624,153 @@ LaunchedEffect(viewModel.events, lifecycleOwner) {
 
 ---
 
+## 2026-05-21 — Metronome clicks synthesized in code, not bundled as audio assets
+
+**Decision.** Metronome click sounds are synthesized at runtime from named constants in
+`ClickSynthesizer`. No audio asset files (WAV/OGG) are bundled.
+
+**Alternatives considered.**
+- *Bundle pre-rendered WAV/OGG assets.* Rejected — no sound designer is available; binary files
+  are opaque and break the "pure Kotlin, version-controlled parameters" convention established by
+  the rest of the project.
+- *Hybrid: generate assets at build time and commit them.* Rejected — adds a build step and a
+  content-management concern for what is fundamentally a small set of numeric parameters.
+
+**Rationale.** Synthesis keeps all audio behavior visible and testable in source code. Every
+synthesis parameter is a named constant — adjusting a click's frequency or amplitude is a one-line
+change. The extensibility benefit (future user-selectable timbres) aligns with the project's
+clean, parametric approach.
+
+**Supersession trigger.** If user-selectable click sounds are added and require professionally
+designed samples that cannot be reasonably synthesized, revisit bundled assets at that time.
+
+---
+
+## 2026-05-21 — Metronome scheduler: anchor-based drift correction over plain delay loop
+
+**Decision.** Beat timing uses an anchor-based drift-corrected `delay()` loop. Each beat target is
+computed from a fixed start anchor:
+`targetNs = startTimeNs + (beatIndex * 60_000_000_000L / bpm)`.
+Nanosecond precision avoids integer-division rounding across many beats.
+
+**Alternatives considered.**
+- *Plain `delay(60_000 / bpm)` per beat.* Drift accumulates audibly over a session; integer
+  division loses BPM precision. Rejected.
+- *Sample-accurate scheduling via direct `AudioTrack` buffer writes.* Excellent timing, but
+  substantially higher complexity (effectively a mini audio mixer). Residual jitter of the
+  anchor approach (1–10 ms typical) is within human perception thresholds for "evenly spaced."
+  Rejected for v1; can be revisited if jitter is audible in practice.
+
+**Rationale.** Anchor-based correction gives no accumulated drift, simple testable code, and
+jitter that matches what commercial metronome apps deliver — a well-understood sweet spot.
+
+**Supersession trigger.** If users report audible jitter at extreme tempos or subdivisions,
+revisit sample-accurate scheduling as a Polish Phase.
+
+---
+
+## 2026-05-21 — Metronome lifecycle: strict screen-scope binding, no foreground service
+
+**Decision.** The metronome player runs only while the metronome screen is `STARTED`. Any
+lifecycle exit (tab change, app backgrounded, audio focus loss) stops playback. Settings are
+preserved; the player never auto-resumes.
+
+**Alternatives considered.**
+- *Keep playing on tab change.* Rejected — playing a click over the tuner or key finder makes
+  no sense in real practice.
+- *Foreground service for background playback.* Rejected — substantial scope (Service,
+  notification channel, audio focus management, Android 14+ foreground-service types) for a
+  marginal use case. Practice flows always involve an explicit restart anyway.
+
+**Rationale.** The one-rule design (screen STARTED ↔ player running) is easy to reason about,
+test, and impossible to violate accidentally. Lifecycle-driven mutual exclusion with the tuner
+comes for free with no coordination code.
+
+**Supersession trigger.** If "phone-in-pocket metronome" becomes a frequently requested feature,
+revisit a foreground service as a separate Phase with its own design and notification spec.
+
+---
+
+## 2026-05-21 — Metronome: no per-beat accent customization in v1
+
+**Decision.** Beat 1 of every bar is always ACCENTED; all other main beats are STANDARD. The
+click-kind mapping is fixed — users cannot toggle per-beat accent levels in Phase 6.
+
+**Alternatives considered.**
+- *Level 1 (binary toggle per beat).* Would require making the beat indicator interactive, adding
+  a reset affordance, extending `MetronomeConfig` with an accent pattern, and substantially
+  growing the test surface. Rejected for v1.
+- *Level 2 (three-state: silent / standard / accent).* Even larger scope. Rejected.
+
+**Rationale.** The accent-on-beat-1 default covers the great majority of practice scenarios. The
+known limitation (6/8 felt-in-2 requires accent customization) is explicitly documented. The
+forward-compatible path is to add an optional `accentPattern: List<AccentLevel>?` field to
+`MetronomeConfig` with `null` meaning "use the v1 default"; existing persisted configs remain valid.
+
+**Supersession trigger.** If felt-in-2 or 7/8 accent grouping becomes a top user request,
+implement Level 1 binary toggle first.
+
+---
+
+## 2026-05-21 — Phase 6.1: Subdivision enum gains `multiplier: Int` property
+
+**Decision.** The Phase 2 `Subdivision` enum is extended with a constructor argument
+`val multiplier: Int`. Values: `NONE(1)`, `EIGHTHS(2)`, `SIXTEENTHS(4)`, `TRIPLETS(3)`.
+
+**Rationale.** The scheduler (Phase 6.2) and the `clicksPerBar` / `clickKindFor` helpers (Phase
+6.1) both need the subdivision's multiplier as a value. Attaching it to the enum eliminates all
+magic numbers from the scheduler's click-interval formula and from the beat-pattern helpers.
+Making it a constructor argument rather than a `when` block in a companion method is idiomatic
+Kotlin and makes the multiplier part of the enum's self-describing contract.
+
+**Consequences.** All existing `Subdivision.X` references continue to compile without changes.
+The only call sites affected are those that now can read `.multiplier` instead of reimplementing
+the lookup.
+
+---
+
+## 2026-05-21 — Phase 6.1: Click synthesis parameters are v1 starting values, explicitly tunable
+
+**Decision.** The numeric synthesis parameters in `ClickParameters` (frequencies, amplitudes,
+envelope duration, decay rate) are documented as **v1 starting values**. After Phase 6.2's first
+manual listening pass, any constant can be adjusted by changing a single named value — no
+architectural review required.
+
+**Alternatives considered.**
+- *Lock parameters permanently.* Rejected — without a hardware setup for A/B testing during
+  design, "correct" values for frequency spacing and amplitude hierarchy require iterative
+  adjustment. Treating them as permanent before a first listen would invite unnecessary git
+  ceremony on what is really a calibration step.
+- *Make parameters configurable at runtime.* Rejected — the synthesizer is used as a pure,
+  deterministic function; runtime configurability adds unnecessary complexity.
+
+**Rationale.** The parameters chosen (1500/1000/800 Hz, 0.70/0.50/0.25 amplitudes, 30 ms / 160.0
+decay) reflect best-practice starting points for a "clean digital tick." Encoding them as named
+constants in `ClickParameters` makes adjustment a one-line diff, keeps the contract stable, and
+allows tests to continue asserting the correct hierarchy and magnitude without re-engineering.
+
+**Supersession trigger.** After Phase 6.2's manual smoke test. Any adjusted values are committed
+alongside a note in `DECISIONS.md`.
+
+---
+
+## 2026-05-21 — Phase 6.1: ClickKind placed in domain/model, not data/audio
+
+**Decision.** `ClickKind` is placed in `metronome/domain/model/ClickKind.kt` rather than
+`metronome/data/audio/` as originally noted in the Phase 6.1 plan.
+
+**Alternatives considered.**
+- *`data/audio/` as the plan originally suggested.* Would require `BeatPattern.kt` in
+  `domain/model/` to import from `data/audio/` — a domain → data dependency, which violates
+  Clean Architecture (domain must not depend on data).
+
+**Rationale.** `ClickKind` is a pure domain concept: "what kind of beat is this?" The synthesizer
+(`data/audio/ClickSynthesizer`) consumes it as input — a data-depends-on-domain relationship,
+which is the correct direction. Placing `ClickKind` in domain allows `BeatPattern.kt` and the
+synthesizer to both reference it without any layering violation.
+
+---
+
 ## (Template for future entries)
 
 ## YYYY-MM-DD — Short title of decision
