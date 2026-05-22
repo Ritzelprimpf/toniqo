@@ -193,10 +193,54 @@ Provides an audible click track at a user-defined tempo and time signature.
 - Time signature and subdivision are adjustable; changing either mid-run restarts the beat cycle from beat 1 on the next downbeat.
 - BPM input: tap to type a value, drag a slider, or use +/− buttons. A "tap tempo" affordance (user taps a button repeatedly to set BPM) is included.
 
+### Tempo Descriptor
+
+The BPM value maps to a read-only Italian tempo label displayed below the numeral:
+
+| Label    | BPM Range  |
+|----------|------------|
+| Adagio   | 1 – 75     |
+| Andante  | 76 – 107   |
+| Moderato | 108 – 119  |
+| Allegro  | 120 – 167  |
+| Presto   | 168 – 300  |
+
+The boundaries are fixed; the user cannot change them.
+
+### Beat unit terminology
+
+The time-signature denominator determines how beats are named in the UI:
+- Denominator **4** → beats are *quarter notes* (2/4, 3/4, 4/4, 5/4)
+- Denominator **8** → beats are *eighth notes* (6/8, 7/8, 9/8, 12/8)
+
+The subdivision value multiplies the main beat. Enabling "Eighth notes" subdivision in a /4 signature adds one click between each quarter-note beat. Enabling "Eighth notes" in a /8 signature has no practical effect (the main beat is already the eighth note) — the app accepts the setting without error.
+
+| Subdivision        | Multiplier |
+|--------------------|------------|
+| None               | ×1         |
+| Eighth notes       | ×2         |
+| Sixteenth notes    | ×4         |
+| Eighth triplets    | ×3         |
+
+### Tap tempo behaviour
+
+The tap-tempo affordance uses a rolling 5-tap window. If the user waits more than 2 seconds between taps, the window resets. The derived BPM is clamped to [1, 300] before being applied. Stopping playback also resets the tap-tempo window.
+
+### Persistence
+
+BPM, time signature, and subdivision are persisted to local storage. The last-used values are restored on next launch. Persistence is debounced (changes written no more than once per 200 ms during rapid input) to avoid write storms during slider drags.
+
+### Lifecycle — screen-on behaviour
+
+While the metronome is playing, the screen is kept awake (`FLAG_KEEP_SCREEN_ON`). The flag is removed when playback stops *or* when the user navigates away from the screen.
+
 ### Visual Feedback
 
-- A visual indicator (flashing element or animated dot) pulses on each beat.
-- The current beat position within the measure is highlighted (e.g., beat 1 of 4 is accented visually).
+- A row of N beat-segment tiles (one per beat of the measure) provides the primary visual indication of beat position.
+- Beat 1 lit: mint-coloured fill plus a soft glow.
+- Beats 2–N lit: mint at reduced opacity.
+- All segments unlit when stopped; beat 1 shows a small mint accent dot to mark its position.
+- The beat indicator animation (80 ms colour flash) is intentionally **not** suppressed by the system reduced-motion setting — it is the primary temporal indicator and must fire regardless.
 
 ### Audio
 
@@ -204,6 +248,7 @@ Provides an audible click track at a user-defined tempo and time signature.
 - Remaining main beats use a **standard click**.
 - Subdivision clicks (if enabled) are quieter and at a different pitch from the main click.
 - Audio must be low-latency. Use `AudioTrack` in streaming mode (see `IMPLEMENTATION_NOTES.md`).
+- Audio errors (start failure, focus loss) surface as a transient snackbar. No dedicated error screen.
 
 ---
 

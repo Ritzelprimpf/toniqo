@@ -79,26 +79,52 @@
     <string name="metronome_title">Metronome</string>
     <string name="metronome_description">Audible click track at a user-defined tempo and time signature</string>
 
-    <!-- Metronome screen — Phase 6.2 debug harness (TODO 6.4: remove) -->
-    <string name="metronome_debug_play">Play</string>
-    <string name="metronome_debug_stop">Stop</string>
-    <!-- %1$d is the one-based beat number within the current bar, e.g. "Beat: 3" -->
-    <string name="metronome_debug_beat_label">Beat: %1$d</string>
+    <!-- Metronome screen — page status kicker (uppercased by composable) -->
+    <!-- "Metronome · Running" / "Metronome · Stopped" — dot separator is the middle dot U+00B7 -->
+    <string name="metronome_status_running">Metronome · Running</string>
+    <string name="metronome_status_stopped">Metronome · Stopped</string>
 
     <!-- Metronome screen — error state -->
-    <string name="metronome_error_audio_unavailable">Audio unavailable. Tap to retry.</string>
+    <string name="metronome_error_audio_unavailable">Audio playback unavailable. Please try again.</string>
 
-    <!-- Metronome screen — Phase 6.3 placeholder (TODO 6.4: replace with real screen strings) -->
-    <!-- %1$d is the tempo in beats per minute, e.g. "120 BPM" -->
-    <string name="metronome_bpm_display">%1$d BPM</string>
-    <!-- %1$d is the numerator, %2$d is the denominator, e.g. "4 / 4" -->
-    <string name="metronome_time_sig_display">%1$d / %2$d</string>
-    <string name="metronome_status_playing">Playing</string>
-    <string name="metronome_status_stopped">Stopped</string>
-    <string name="metronome_play">Play</string>
+    <!-- Metronome screen — kicker labels (uppercased by composable; stored as normal case) -->
+    <string name="metronome_tempo_label">Tempo</string>
+    <string name="metronome_signature_label">Signature</string>
+    <string name="metronome_subdivide_label">Subdivide</string>
+
+    <!-- Metronome screen — beat indicator header -->
+    <!-- %1$d = 1-indexed current beat, %2$d = numerator, e.g. "Beat · 3 / 4" -->
+    <string name="metronome_beat_header_format">Beat · %1$d / %2$d</string>
+    <!-- Beat unit labels (uppercased by composable) -->
+    <string name="metronome_beat_unit_quarter_notes">Quarter notes</string>
+    <string name="metronome_beat_unit_eighth_notes">Eighth notes</string>
+
+    <!-- Metronome screen — play/stop and tap controls -->
+    <string name="metronome_start">Start</string>
     <string name="metronome_stop">Stop</string>
+    <string name="metronome_tap_tempo">Tap</string>
     <string name="metronome_cd_bpm_decrement">Decrease BPM</string>
     <string name="metronome_cd_bpm_increment">Increase BPM</string>
+
+    <!-- Metronome screen — BPM input dialog -->
+    <string name="metronome_bpm_dialog_title">Set BPM</string>
+
+    <!-- Tempo descriptor labels (uppercased by composable) -->
+    <string name="tempo_adagio">Adagio</string>
+    <string name="tempo_andante">Andante</string>
+    <string name="tempo_moderato">Moderato</string>
+    <string name="tempo_allegro">Allegro</string>
+    <string name="tempo_presto">Presto</string>
+
+    <!-- Subdivision labels -->
+    <string name="subdivision_none">None</string>
+    <string name="subdivision_eighths">Eighth notes</string>
+    <string name="subdivision_sixteenths">Sixteenth notes</string>
+    <string name="subdivision_triplets">Eighth triplets</string>
+
+    <!-- Generic dialog actions -->
+    <string name="action_ok">OK</string>
+    <string name="action_cancel">Cancel</string>
 
     <!-- Key Finder module -->
     <string name="keyfinder_title">Key Finder</string>

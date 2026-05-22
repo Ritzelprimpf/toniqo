@@ -331,13 +331,32 @@ The set ships these names; ask before adding any new ones:
 
 ### 8.2 Metronome
 
-- BPM range 1–300, default 120. Display BPM at `display.xl` (96dp mono, fixed — does not scale with user font-size setting).
-- Tempo descriptor (Adagio / Andante / Moderato / Allegro / Presto) below the BPM in `mono.micro`, derived from BPM ranges per the standard Italian tempo map. The user does not edit it.
+**Page status kicker.** A `mono.micro` kicker line sits above the H1 "Metronome" title.
+- Playing: `● METRONOME · RUNNING` — leading mint pulsing dot (~1 s alpha cycle, 100% → 30%).
+- Stopped: `METRONOME · STOPPED` — no dot.
+
+**Tempo card.** BPM display, tempo descriptor, slider, and ±1 buttons are grouped inside a single visually-bounded card. Background `bg.inset`, radius `r.xl` (18dp), 1dp `line.faint` border, `sp.5` × `sp.4` padding (matching readout-well spec §6.6). A `mono.micro` kicker "TEMPO" sits above the BPM numeral inside the card.
+
+- BPM range 1–300, default 120. Display BPM at `display.xl` (96dp mono, fixed — does not scale with user font-size setting). Tapping the BPM number opens an inline number-pad dialog.
+- Tempo descriptor (Adagio / Andante / Moderato / Allegro / Presto) directly below the BPM in `mono.micro`, derived from BPM ranges. Read-only.
 - Slider thumb at the current BPM position, `−` / `+` buttons either side at 36dp.
-- Beat indicator: a row of N segments (one per beat of the signature). Beat 1 lit is `signal.mint` with a 12dp glow; beats 2..N lit are mint at 35% over `bg.elev2`. Unlit beats are `bg.elev1` with `line.faint` border. The beat-1 marker shows a 4dp mint dot inside its unlit cell.
-- Time signature and subdivision are pill-style 44dp dropdowns, side-by-side at 1fr each, with a JetBrains Mono kicker label above each.
-- Tap-tempo button: 60dp circle, `bg.elev2`, with `tap` icon plus uppercase "TAP" `mono.micro`.
-- Start/Stop: pill button, **60dp tall, flex: 1**. Stopped state = mint primary (with the §6.1 24dp glow); running state = `bg.elev3` neutral (no glow).
+
+**Beat indicator header.** A `mono.micro` row sits between the tempo card and the beat segments, split:
+- Left: `BEAT · X / N` where X is the 1-indexed current beat (1 when stopped), N is the numerator.
+- Right: `QUARTER NOTES` for /4 signatures; `EIGHTH NOTES` for /8 signatures.
+
+**Beat indicator segments.** A row of N segments (one per beat of the signature), each 44dp tall.
+- Beat 1 lit: `signal.mint` fill + 12dp concentric glow behind the segment.
+- Beats 2..N lit: mint at 35% composited over `bg.elev2`.
+- Unlit: `bg.elev1` fill, `line.faint` 1dp border.
+- Beat-1 marker: 4dp mint dot centred inside the unlit beat-1 cell.
+- Colour transition: 80ms `LinearEasing`. **Intentionally overrides reduced-motion** — this is the primary temporal indicator; disabling it would break usability.
+
+- Time signature and subdivision are pill-style 44dp dropdowns, side-by-side at 1fr each, with a `mono.micro` kicker label above each: "SIGNATURE" and "SUBDIVIDE" (verb form).
+- Tap-tempo button: 60dp circle, `bg.elev2`, with `tap` icon plus uppercase "TAP" in `mono.micro`.
+- **Start/Stop: pill button, 60dp tall, flex: 1. Icon + text label (revised Item 18).**
+  - Stopped: ▶ play icon + "Start" text. Mint primary background with the §6.1 24dp glow.
+  - Running: ⏸ pause icon + "Stop" text. `bg.elev3` neutral background, no glow.
 
 ### 8.3 Key Finder
 

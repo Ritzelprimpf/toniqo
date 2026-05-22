@@ -1021,6 +1021,99 @@ is persisted before the screen is typically navigated away from.
 
 ---
 
+## 2026-05-22 — Phase 6.4: Start/Stop button revised to icon + text after mockup review (Item 18)
+
+**Decision.** The Start/Stop pill button shows an icon **and** a text label: ▶ + "Start" when
+stopped, ⏸ + "Stop" when running. The original spec described the button as icon-only.
+
+**Alternatives considered.**
+- *Icon-only (original spec).* Saves horizontal space but reduces scannability at a glance.
+  TalkBack must announce the icon's content description, which is redundant with the text label.
+- *Text-only.* Loses the universal "play/pause" affordance that is immediately recognisable
+  across cultures and age groups.
+
+**Rationale.** The approved mockup review (Item 18) confirmed icon + text as the final design.
+The text label sits to the right of the icon inside the 60dp pill, using `body.strong` style.
+The icon's contentDescription is `null` because the text label serves accessibility.
+
+---
+
+## 2026-05-22 — Phase 6.4: UI structure additions from mockup review (Item 23)
+
+**Decision.** Four UI elements visible in the approved mockups are formalised and documented:
+
+**23a — Page status kicker.** A `mono.micro` kicker line above the H1 title shows
+`METRONOME · RUNNING` (with a leading mint pulsing dot) or `METRONOME · STOPPED` (no dot).
+The pulsing dot uses a ~1 s alpha animation (not gated on reduced-motion — gentle alpha pulse
+is not a vestibular trigger per DESIGN.md §9).
+
+**23b — Beat indicator header.** A `mono.micro` row above the beat segments shows:
+- Left: `BEAT · X / N` (1-indexed current beat, time-signature numerator).
+- Right: `QUARTER NOTES` for /4 signatures, `EIGHTH NOTES` for /8 signatures.
+
+**23c — SUBDIVIDE kicker label.** The kicker above the subdivision dropdown reads "SUBDIVIDE"
+(verb form), not "SUBDIVISION". The dropdown values use noun form ("None", "Eighth notes", etc.).
+
+**23d — Tempo card as a grouped container.** The BPM display, descriptor, slider, and ±1 buttons
+are enclosed in a single visually-bounded container (readout-well style: `bg.inset`, `r.xl`),
+not laid out as loose siblings.
+
+**Rationale.** These structural choices were visible in the approved mockups but not yet
+captured in DESIGN.md §8.2. Formalising them here closes the gap between the spec and the
+approved visual design.
+
+---
+
+## 2026-05-22 — Phase 6.4: Beat indicator 80ms animation overrides reduced-motion intentionally
+
+**Decision.** The beat indicator's 80ms colour-flash animation is always active, even when the
+system's reduced-motion setting is on.
+
+**Rationale.** The beat indicator is the *primary temporal indicator* — without it, the user
+cannot tell which beat the metronome is on. Disabling the flash would break core functionality,
+not just aesthetics. This is the narrowly scoped exception to the reduced-motion rule documented
+in DESIGN.md §8.2.
+
+---
+
+## 2026-05-22 — Phase 6.4: Screen-on lifecycle strictly bound to isPlaying + screen presence
+
+**Decision.** `FLAG_KEEP_SCREEN_ON` is managed via `DisposableEffect(isPlaying)` in the
+`KeepScreenOnWhilePlaying` composable. The `onDispose` block always clears the flag so it is
+removed both on `isPlaying = false` transitions and when the screen leaves the composition.
+
+**Alternatives considered.**
+- *Foreground service with ongoing notification.* Provides background playback but is out of
+  Phase 6.4 scope (Phase6-Metronome-Decisions.md Item 5, deferred). A foreground service would
+  replace this composable in a future phase.
+- *Clear flag only when stopped (not on navigate-away).* The flag would persist if the user
+  navigated away while playing. `DisposableEffect` firing on composition exit is the correct hook.
+
+**Rationale.** The `DisposableEffect` keyed on `isPlaying` re-fires on every state change and
+on composable disposal, covering all lifecycle exit paths cleanly.
+
+---
+
+## 2026-05-22 — Phase 6.4: Glow rendered as layered semi-transparent boxes (hardware-accelerated)
+
+**Decision.** The Start/Stop button 24dp glow and the beat-1 segment 12dp glow are both rendered
+using the concentric-box approach (multiple semi-transparent rounded shapes at increasing radii
+and decreasing alpha). No `BlurMaskFilter` is used for these glows.
+
+**Alternatives considered.**
+- *`BlurMaskFilter` via `drawIntoCanvas`.* Produces a smooth Gaussian blur but requires a
+  software render layer (`Modifier.graphicsLayer { renderEffect = ... }` approach is API 31+
+  and behaves differently from BlurMaskFilter). Hardware-layer compositing limitations make this
+  fragile. The NeedleGauge uses it for the needle glow because the needle is a Canvas draw op;
+  pill/rect shapes can use the box approach instead.
+- *`Modifier.shadow`.* Shadows are always dark; mint glow must be a custom colour.
+
+**Rationale.** The layered-box pattern is already established in the codebase for the nav
+indicator glow (AppNavigationBar.kt). Consistent use of one hardware-accelerated approach across
+all two permitted glows simplifies maintenance.
+
+---
+
 ## (Template for future entries)
 
 ## YYYY-MM-DD — Short title of decision
