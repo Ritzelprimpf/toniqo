@@ -35,5 +35,30 @@ data class MetronomeConfig(
 
         /** Default time-signature denominator (4 — as in 4/4). */
         const val DEFAULT_TIME_SIGNATURE_DENOMINATOR: Int = 4
+
+        /**
+         * The spec-defined defaults: 120 BPM, 4/4, no subdivision.
+         *
+         * Used as the first-launch value and as the fallback whenever a persisted config fails
+         * validation (see `Phase6-Metronome-Decisions.md` Item 17).
+         */
+        val DEFAULT: MetronomeConfig = MetronomeConfig(
+            bpm = DEFAULT_BPM,
+            timeSignatureNumerator = DEFAULT_TIME_SIGNATURE_NUMERATOR,
+            timeSignatureDenominator = DEFAULT_TIME_SIGNATURE_DENOMINATOR,
+            subdivision = Subdivision.NONE,
+        )
+
+        /**
+         * The eight time signatures supported by the metronome, as (numerator, denominator) pairs.
+         *
+         * Persisted configs are validated against this set; any (numerator, denominator) pair not
+         * in this set triggers a full reset to [DEFAULT] (see `Phase6-Metronome-Decisions.md`
+         * Item 17).
+         */
+        val SUPPORTED_SIGNATURES: Set<Pair<Int, Int>> = setOf(
+            2 to 4, 3 to 4, 4 to 4, 5 to 4,
+            6 to 8, 7 to 8, 9 to 8, 12 to 8,
+        )
     }
 }

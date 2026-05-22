@@ -79,6 +79,27 @@
     <string name="metronome_title">Metronome</string>
     <string name="metronome_description">Audible click track at a user-defined tempo and time signature</string>
 
+    <!-- Metronome screen — Phase 6.2 debug harness (TODO 6.4: remove) -->
+    <string name="metronome_debug_play">Play</string>
+    <string name="metronome_debug_stop">Stop</string>
+    <!-- %1$d is the one-based beat number within the current bar, e.g. "Beat: 3" -->
+    <string name="metronome_debug_beat_label">Beat: %1$d</string>
+
+    <!-- Metronome screen — error state -->
+    <string name="metronome_error_audio_unavailable">Audio unavailable. Tap to retry.</string>
+
+    <!-- Metronome screen — Phase 6.3 placeholder (TODO 6.4: replace with real screen strings) -->
+    <!-- %1$d is the tempo in beats per minute, e.g. "120 BPM" -->
+    <string name="metronome_bpm_display">%1$d BPM</string>
+    <!-- %1$d is the numerator, %2$d is the denominator, e.g. "4 / 4" -->
+    <string name="metronome_time_sig_display">%1$d / %2$d</string>
+    <string name="metronome_status_playing">Playing</string>
+    <string name="metronome_status_stopped">Stopped</string>
+    <string name="metronome_play">Play</string>
+    <string name="metronome_stop">Stop</string>
+    <string name="metronome_cd_bpm_decrement">Decrease BPM</string>
+    <string name="metronome_cd_bpm_increment">Increase BPM</string>
+
     <!-- Key Finder module -->
     <string name="keyfinder_title">Key Finder</string>
     <string name="keyfinder_description">Identifies musical keys and modes from a set of input notes</string>

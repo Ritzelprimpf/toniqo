@@ -19,7 +19,7 @@ import kotlin.math.sin
  *
  * No Android runtime is required — this class is fully testable on the JVM.
  */
-internal class ClickSynthesizer {
+internal class ClickSynthesizer @javax.inject.Inject constructor() {
 
     /**
      * Generates a 16-bit PCM buffer for the given [kind].

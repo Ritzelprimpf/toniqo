@@ -6,6 +6,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import de.ritzelprimpf.toniqo.common.permission.AndroidAudioPermissionChecker
 import de.ritzelprimpf.toniqo.common.permission.AudioPermissionChecker
+import de.ritzelprimpf.toniqo.common.util.Clock
+import de.ritzelprimpf.toniqo.common.util.SystemClock
 import javax.inject.Singleton
 
 /**
@@ -21,4 +23,14 @@ abstract class CommonModule {
     abstract fun bindAudioPermissionChecker(
         impl: AndroidAudioPermissionChecker,
     ): AudioPermissionChecker
+
+    /**
+     * Binds [SystemClock] as the singleton implementation of [Clock].
+     *
+     * Injected wherever [System.nanoTime] is needed so that unit tests can substitute a fake clock.
+     * See `Phase6_2-PLAN.md` for the rationale (scheduler and tap-tempo logic both require it).
+     */
+    @Binds
+    @Singleton
+    abstract fun bindClock(impl: SystemClock): Clock
 }

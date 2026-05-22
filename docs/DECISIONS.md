@@ -771,6 +771,256 @@ synthesizer to both reference it without any layering violation.
 
 ---
 
+## 2026-05-22 — Phase 6.2: MetronomePlayer API refactored from imperative to flow-based
+
+**Decision.** The Phase 2 imperative `MetronomePlayer` interface (`start(config)`, `stop()`,
+`updateConfig(config)`, `currentBeat: Flow<Int>`) is **replaced** by a single method:
+`fun run(initialConfig: MetronomeConfig, configFlow: Flow<MetronomeConfig>): Flow<PlayerEvent>`.
+Collecting the returned flow starts playback; cancelling the collector stops it. The ViewModel owns
+the collector's lifetime.
+
+**Alternatives considered.**
+- *Keep the imperative API, wire it to a `callbackFlow` internally.* Would preserve the old
+  interface but require storing mutable audio state as fields on `AudioTrackMetronomePlayer` —
+  making concurrent calls to `start`/`stop` a race condition.
+- *Retain `currentBeat: Flow<Int>` as a separate shared flow.* Requires the player to own a
+  `MutableSharedFlow` and manage its lifecycle separately from the AudioTrack. The events flow
+  unifies the two concerns.
+
+**Rationale.** The flow-based model makes `AudioTrack` resource lifetime unmistakably tied to the
+coroutine scope of the collector — the same pattern used successfully in `MicrophoneAudioSourceImpl`
+(Phase 5.2). `PlayerEvent` (with `Started`, `BeatTick`, `Failed` subtypes) cleanly replaces the
+`currentBeat` flow and adds error signaling with no extra interface surface.
+
+**Consequences.** `PlayerEvent` is placed in `domain/model/` so that `MetronomePlayer` (in
+`domain/repository/`) can return `Flow<PlayerEvent>` without creating a domain → data dependency.
+`StopMetronomeUseCase` becomes a no-op semantic stub; stopping is handled by ViewModel job
+cancellation. `MetronomeStubsTest` (tested the old imperative stubs) is deleted.
+
+---
+
+## 2026-05-22 — Phase 6.2: Clock abstraction for testable timing
+
+**Decision.** A `Clock` interface (`fun nanoTime(): Long`) is placed in `common/util/`. The
+production implementation wraps `System.nanoTime()`. A `FakeClock` in the test source set returns a
+manually controlled value.
+
+**Alternatives considered.**
+- *Call `System.nanoTime()` directly.* Not virtualized by `kotlinx-coroutines-test`; makes timing
+  logic impossible to test without real-time delays.
+- *`kotlinx.coroutines.test.TestCoroutineScheduler`.* Virtualizes `delay()` but not
+  `System.nanoTime()`. Insufficient for the anchor-based scheduler which uses nanosecond wall
+  time, not coroutine time.
+
+**Rationale.** Injecting `Clock` is the minimal change that makes the entire scheduling and tap-tempo
+math testable on the JVM at zero cost (no sleep, no device). The interface is placed in `common/`
+because it is inherently domain-agnostic and may be reused by other timed features.
+
+---
+
+## 2026-05-22 — Phase 6.2: BeatScheduler extracted from AudioTrackMetronomePlayer
+
+**Decision.** The beat-scheduling state machine is extracted into a separate `internal class
+BeatScheduler(clock: Clock, initialConfig: MetronomeConfig)` with no `AudioTrack` dependency. All
+scheduling math and re-anchor logic live there. `AudioTrackMetronomePlayer` holds a `BeatScheduler`
+instance and calls its methods.
+
+**Alternatives considered.**
+- *Keep scheduling logic inline in `AudioTrackMetronomePlayer`.* Correct, but the player requires a
+  real `AudioTrack` and cannot be JVM-unit-tested. The embedded math would have zero test coverage
+  on the JVM.
+
+**Rationale.** Extracting `BeatScheduler` as a pure, injected-clock state machine makes 100% of the
+scheduling logic JVM-testable (`AudioTrackMetronomePlayerTest.kt`). The player becomes a thin shell
+responsible only for audio I/O concerns (AudioTrack, audio focus, buffer writes).
+
+---
+
+## 2026-05-22 — Phase 6.2: Metronome persists to a dedicated DataStore file
+
+**Decision.** `MetronomePreferencesImpl` uses `preferencesDataStore(name = "metronome_preferences")` —
+a file separate from the tuner's `tuner_preferences`.
+
+**Alternatives considered.**
+- *Share the tuner's DataStore.* Rejected — the modules are independent; sharing a file creates an
+  invisible coupling and makes it possible to accidentally corrupt one module's state while writing
+  another's.
+
+**Rationale.** Separate files enforce the module boundary at the persistence level. Future deletion
+of either module leaves no orphaned keys in a shared file. The cost is negligible (one extra file on
+disk).
+
+---
+
+## 2026-05-22 — Phase 6.2: Whole-config replacement strategy for invalid persisted data
+
+**Decision.** When any single field in the persisted `metronome_preferences` DataStore is invalid
+(null, out of range, unrecognized signature, or unrecognized subdivision name), the **entire
+configuration** is replaced with `MetronomeConfig.DEFAULT`. Partial repair is not performed.
+
+**Alternatives considered.**
+- *Field-by-field fallback: repair only the invalid field, keep valid fields.* Rejected — a
+  partially-corrupt config (e.g., invalid BPM with valid signature) may still produce an invalid
+  combination after per-field repair, and the logic to detect it is more complex than a full reset.
+- *Silently ignore the invalid field and keep the previous value.* Rejected — this is silent data
+  corruption and inconsistent state.
+
+**Rationale.** Whole-config replacement on any validation failure is simple, predictable, and safe.
+The user loses no user-facing data they would notice (the next change they make persists correctly).
+`RawMetronomeConfig.requiresRepair()` returns `false` for the all-null case (first launch) so
+unnecessary write-back is suppressed.
+
+---
+
+## 2026-05-22 — Phase 6.2: Tap tempo — rolling 5-tap window, 2-second reset
+
+**Decision.** The tap tempo algorithm (implemented in `TapTempoCalculator`) uses:
+- A rolling window of the most recent **5 tap timestamps** (giving 4 usable intervals).
+- The estimated BPM is the simple mean of those intervals, converted to BPM and rounded to the
+  nearest integer.
+- A gap of **> 2 000 ms** between consecutive taps clears the window and begins a new session.
+- `null` is returned on the first tap of any session (no interval yet).
+- The result is clamped to `[MetronomeConfig.BPM_MIN, MetronomeConfig.BPM_MAX]`.
+
+**Alternatives considered.**
+- *Larger window (8–10 taps).* More accurate for steady tempos but sluggish to respond to deliberate
+  tempo changes. Rejected.
+- *Weighted average (recent taps weighted more heavily).* Marginally better responsiveness at the
+  cost of more complex, harder-to-test math. Rejected for v1.
+
+**Rationale.** The 5-tap window is the industry-standard choice (used by most hardware and software
+metronomes). The 2-second timeout matches the intuitive "I paused — this is a new session" feeling
+without triggering spuriously on brief hesitations.
+
+**Supersession trigger.** If users report the BPM display being slow to respond to deliberate tempo
+changes, reduce the window to 4 taps. If it jumps erratically, consider a weighted average.
+
+---
+
+## 2026-05-22 — Phase 6.2: Metronome audio attributes — USAGE_MEDIA + CONTENT_TYPE_SONIFICATION
+
+**Decision.** `AudioTrackMetronomePlayer` configures its `AudioTrack` with
+`AudioAttributes.USAGE_MEDIA` and `AudioAttributes.CONTENT_TYPE_SONIFICATION`.
+
+**Alternatives considered.**
+- *`USAGE_ALARM`.* Keeps playing over DND and bypasses volume controls in some Android versions.
+  Too aggressive for a practice tool.
+- *`USAGE_ASSISTANCE_SONIFICATION`.* Intended for UI feedback sounds, not music-aligned content.
+- *`USAGE_MUSIC`.* Semantically correct but `CONTENT_TYPE_SONIFICATION` better describes discrete
+  click events vs. a continuous audio stream.
+
+**Rationale.** `USAGE_MEDIA` places the metronome in the media volume channel (the channel users
+expect to control for practice audio), and `CONTENT_TYPE_SONIFICATION` correctly classifies the
+content. The combination is the same as standard metronome apps on Android.
+
+---
+
+## 2026-05-22 — Phase 6.2: Audio focus — AUDIOFOCUS_GAIN, any loss closes the flow
+
+**Decision.** `AudioTrackMetronomePlayer` requests `AudioManager.AUDIOFOCUS_GAIN`. Any focus-loss
+event (transient or permanent, with or without duck permission) closes the `callbackFlow` via a
+`PlayerEvent.Failed(AUDIO_FOCUS_DENIED)` emission followed by channel close. Playback is not
+auto-resumed when focus returns.
+
+**Alternatives considered.**
+- *Pause on transient loss, resume on regain.* Requires storing enough state to resume mid-bar.
+  The "play only while screen is STARTED" lifecycle decision (2026-05-21) means transient losses
+  (phone call, alarm) during active practice are uncommon. Auto-resume adds complexity for a
+  marginal case.
+- *Duck on `AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK`.* Metronome clicks at reduced volume are
+  arguably worse than silence — the user may lose track of tempo. Rejected.
+
+**Rationale.** The simplest, safest contract: if focus is lost for any reason, the metronome stops.
+The user restarts intentionally. Consistent with the lifecycle decision.
+
+---
+
+## 2026-05-22 — Phase 6.3: StopMetronomeUseCase removed — stopping is coroutine cancellation
+
+**Decision.** `StopMetronomeUseCase` is **deleted**. Stopping playback is handled exclusively by
+cancelling the `playerJob` coroutine inside `MetronomeViewModel`. The use case is not replaced.
+
+**Alternatives considered.**
+- *Keep `StopMetronomeUseCase` as a semantic façade that cancels the job via a callback or
+  shared cancellation token.* Adds indirection with no testability benefit: the ViewModel still
+  has to hold the job reference anyway. Any logic worth testing lives in the ViewModel, not the
+  use case.
+- *Give `MetronomePlayer` an explicit `stop()` method.* Contradicts the flow-based API decision
+  from Phase 6.2, where stopping is defined as "cancel the collector."
+
+**Rationale.** In the flow-based model, starting = collecting, stopping = cancelling. There is no
+domain logic in "cancel a coroutine job" that warrants encapsulation in a use case class. Keeping
+the empty stub would violate SRP by manufacturing a responsibility where none exists.
+
+---
+
+## 2026-05-22 — Phase 6.3: MetronomeUiState extended with tempoDescriptor and isInitialLoadComplete
+
+**Decision.** Two fields are added to `MetronomeUiState`:
+- `tempoDescriptor: TempoDescriptor` — derived from `config.bpm` via `tempoDescriptorFor()`;
+  displayed as a human-readable label (ADAGIO / ANDANTE / MODERATO / ALLEGRO / PRESTO).
+- `isInitialLoadComplete: Boolean` — `false` until the first DataStore emission arrives so the
+  screen can suppress content until persisted values are known.
+
+**Alternatives considered.**
+- *Compute `tempoDescriptor` in the Composable from `config.bpm`.* Puts display logic in the UI
+  layer and makes it harder to test without Compose. Keeping it in state means the ViewModel
+  produces a fully ready-to-render snapshot.
+- *Model "loading" as a nullable `config`.* Forces null-checks throughout the UI for a transient
+  state that only matters for the first frame. A Boolean flag is explicit and zero-cost.
+
+**Rationale.** Both additions belong in the state object: `tempoDescriptor` is a derived display
+value (single source of truth in the ViewModel), and `isInitialLoadComplete` is observable screen
+state, not a one-shot event.
+
+---
+
+## 2026-05-22 — Phase 6.3: One-shot errors via SharedFlow<MetronomeEvent>, separate from state
+
+**Decision.** Audio-unavailable errors are emitted through a `MutableSharedFlow<MetronomeEvent>`
+(`replay = 0`, `extraBufferCapacity = 1`) exposed as `events: SharedFlow<MetronomeEvent>`. They
+are **not** embedded in `MetronomeUiState`.
+
+**Alternatives considered.**
+- *`errorMessage: String?` field in `MetronomeUiState`.* Requires explicit "event consumed"
+  acknowledgement so the snackbar does not re-appear on re-composition. Managing that flag is more
+  complex than a dedicated event channel.
+- *`Channel<MetronomeEvent>` exposed directly.* `SharedFlow` is the idiomatic Compose-friendly
+  choice for one-shot events; it integrates cleanly with `LaunchedEffect` and
+  `repeatOnLifecycle(STARTED)` (the pattern established in Phase 5.4 for `TunerViewModel`).
+
+**Rationale.** Mixing ephemeral events into durable state is a known anti-pattern in MVI/MVVM —
+the state machine would need extra logic to distinguish "event pending" from "event consumed."
+A separate `SharedFlow` cleanly models "fire and forget" semantics. `replay = 0` guarantees no
+stale errors are re-delivered after rotation.
+
+---
+
+## 2026-05-22 — Phase 6.3: BPM persistence debounced 200ms; player updated immediately
+
+**Decision.** When the user changes BPM (slider drag, +/− tap, tap tempo):
+1. `configFlow.value` and `_uiState` are updated **immediately** (synchronous, no coroutine).
+2. DataStore persistence (`preferences.setConfig()`) is **debounced 200 ms** via a cancellable
+   `persistJob` in `viewModelScope`.
+
+The named constant is `PERSIST_DEBOUNCE_MS = 200L` in the ViewModel's companion object.
+
+**Alternatives considered.**
+- *Persist on every change.* During a slider drag, a 120-BPM sweep can produce 60+ write calls
+  per second, hammering DataStore unnecessarily and causing noticeable I/O contention.
+- *Persist only on stop or lifecycle exit.* The player and UI are always up-to-date, but if the
+  app is force-killed mid-session, the last BPM is lost. 200 ms ensures any deliberate tap is
+  persisted before the next UI interaction.
+- *Debounce both the player and DataStore.* The player must respond immediately so the audible
+  beat grid snaps to the new tempo without a perceptible lag. Only the storage write is debounced.
+
+**Rationale.** The two-path design gives the user instant audio feedback (critical for tap tempo
+and live adjustments) while protecting DataStore from write storms. 200 ms is long enough to
+coalesce a rapid slider drag into a single write, and short enough that any intentional tap
+is persisted before the screen is typically navigated away from.
+
+---
+
 ## (Template for future entries)
 
 ## YYYY-MM-DD — Short title of decision
