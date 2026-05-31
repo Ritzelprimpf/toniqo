@@ -1351,6 +1351,75 @@ critical for legato playing where the user slides from one note to the next with
 
 ---
 
+## 2026-05-31 — Phase 7.3: Note identity — pitch-class de-dup, first-seen spelling
+
+**Decision.** The Key Finder note list is keyed by **pitch class** (0–11, octave-agnostic). At
+most one chip is displayed per pitch class. The **first-seen `Note`** determines the chip's display
+spelling; subsequent adds of the same pitch class are silent no-ops. The list is maintained as a
+`LinkedHashMap<Int, String>` (pitchClass → displayName) to preserve insertion order.
+
+**Alternatives considered.**
+- *Store full `Note`s (with octave), dedupe in the use case.* Would require the ViewModel to
+  project to pitch classes for every recompute and could result in two chips for e.g. "E2" and
+  "E4" appearing alongside each other — confusing for a chromatic key-finding tool.
+- *Always re-spell using the ScaleSpeller canonical table.* Rejected — the chip's spelling comes
+  from how the user selected the note (picker or mic); overriding it silently would be surprising.
+
+**Rationale.** The matching engine works on pitch classes. Exposing chips by pitch class makes the
+UI consistent with the engine, avoids duplicate chips for the same audible note, and keeps the
+`NoteChip` model simple.
+
+---
+
+## 2026-05-31 — Phase 7.3: Root removal clears root (no auto-reassignment)
+
+**Decision.** When the user removes the note that is currently marked as the root, `rootPitchClass`
+is cleared to `null`. No note is automatically promoted to root.
+
+**Alternatives considered.**
+- *Auto-assign the root to the lowest-pitch-class remaining note.* Implicit state mutation;
+  the user did not request a root change. Would produce a confusing result recompute as a
+  side-effect of a remove action.
+
+**Rationale.** The simplest, most predictable semantic: removing a note removes it and nothing
+else. If the root disappears, the root slot is empty. The user chooses a new root explicitly.
+
+---
+
+## 2026-05-31 — Phase 7.3: Duplicate add is a silent no-op
+
+**Decision.** Adding a note whose pitch class is already in the list — whether from the picker
+or from the mic — is a **silent no-op**: no error, no toast, no state change. The existing chip
+and its spelling are preserved.
+
+**Alternatives considered.**
+- *Show an error or highlight the duplicate chip.* Rejected — the deduplication is intentional
+  product behaviour, not an error condition. The mic path in particular will frequently attempt
+  to re-add a held note; surfacing that as an error would be noisy.
+
+**Rationale.** Idempotent add matches user expectation: "this note is already there" is the right
+outcome with no need for feedback.
+
+---
+
+## 2026-05-31 — Phase 7.3: Note cap — MAX_NOTE_COUNT = 12
+
+**Decision.** The ViewModel enforces a maximum of **12 distinct notes** (pitch classes) in the
+list at any time. This cap is a named constant `MAX_NOTE_COUNT = 12` in `KeyFinderViewModel`.
+
+**Alternatives considered.**
+- *No cap.* Unnecessary — 12 is the chromatic maximum; a 13th distinct pitch class cannot
+  exist. The cap documents and enforces the logical maximum explicitly rather than relying on
+  the implicit dedup-as-cap behaviour.
+- *A smaller cap (e.g. 7 or 8).* Rejected — the matching engine handles up to 12 pitch classes
+  (n > 7 inputs lower stray notes' scores via the `max(7,n)` denominator). Limiting the input
+  would prevent users from exploring chromatic inputs deliberately.
+
+**Rationale.** 12 is the exact chromatic ceiling; naming it as a constant makes the intent
+explicit and prevents a future caller from assuming the list is unbounded.
+
+---
+
 ## (Template for future entries)
 
 ## YYYY-MM-DD — Short title of decision
