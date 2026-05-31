@@ -1,10 +1,10 @@
 package de.ritzelprimpf.toniqo.tuner
 
-import de.ritzelprimpf.toniqo.tuner.data.CaptureEvent
+import de.ritzelprimpf.toniqo.audio.CaptureEvent
 import de.ritzelprimpf.toniqo.tuner.domain.model.TunerMode
 import de.ritzelprimpf.toniqo.tuner.domain.model.TuningStatus
 import de.ritzelprimpf.toniqo.tuner.domain.usecase.DetectTunedStringUseCase
-import de.ritzelprimpf.toniqo.tuner.fakes.FakeMicrophoneAudioSource
+import de.ritzelprimpf.toniqo.tuner.fakes.FakeAudioCaptureSource
 import de.ritzelprimpf.toniqo.tuner.fakes.FakePitchDetector
 import de.ritzelprimpf.toniqo.tuner.fakes.FakeTunerPreferences
 import de.ritzelprimpf.toniqo.tuner.fakes.FakeTunerPresetRepository
@@ -55,7 +55,7 @@ class TunerViewModelTest {
     private fun makeViewModel(
         preferences: FakeTunerPreferences = FakeTunerPreferences(),
         repository: FakeTunerPresetRepository = FakeTunerPresetRepository(),
-        source: FakeMicrophoneAudioSource = FakeMicrophoneAudioSource(emptyList()),
+        source: FakeAudioCaptureSource = FakeAudioCaptureSource(emptyList()),
         detector: FakePitchDetector = FakePitchDetector(emptyList()),
     ): TunerViewModel {
         val useCase = DetectTunedStringUseCase(source, detector)
@@ -185,7 +185,7 @@ class TunerViewModelTest {
 
         // Session 1 (init pipeline): 6 in-tune samples for string 0.
         // Session 2 (after advance): empty — no further detections needed.
-        val source = FakeMicrophoneAudioSource.multiSession(
+        val source = FakeAudioCaptureSource.multiSession(
             listOf(
                 List(6) { samplesEvent() },
                 emptyList(),
@@ -233,7 +233,7 @@ class TunerViewModelTest {
         // Session 1: string 0 (6 in-tune)
         // Session 2: string 1 (6 in-tune)
         // Session 3: empty (chromatic restart, no more detections needed)
-        val source = FakeMicrophoneAudioSource.multiSession(
+        val source = FakeAudioCaptureSource.multiSession(
             listOf(
                 List(6) { samplesEvent() },
                 List(6) { samplesEvent() },
@@ -283,7 +283,7 @@ class TunerViewModelTest {
 
     @Test
     fun `permission denied surfaces in state`() = runTest {
-        val source = FakeMicrophoneAudioSource(listOf(CaptureEvent.PermissionDenied))
+        val source = FakeAudioCaptureSource(listOf(CaptureEvent.PermissionDenied))
         val vm = makeViewModel(source = source)
         advanceUntilIdle()
 
@@ -294,7 +294,7 @@ class TunerViewModelTest {
 
     @Test
     fun `capture failure surfaces in state`() = runTest {
-        val source = FakeMicrophoneAudioSource(listOf(CaptureEvent.Failed("hardware error")))
+        val source = FakeAudioCaptureSource(listOf(CaptureEvent.Failed("hardware error")))
         val vm = makeViewModel(source = source)
         advanceUntilIdle()
 
@@ -340,7 +340,7 @@ class TunerViewModelTest {
         val inTuneHz = preset.notes[0].frequencyHz(440.0)
 
         // Only 1 sample → window size = 1 < 6 → never sustained
-        val source = FakeMicrophoneAudioSource(listOf(samplesEvent()))
+        val source = FakeAudioCaptureSource(listOf(samplesEvent()))
         val detector = FakePitchDetector(listOf(inTuneHz))
         val vm = TunerViewModel(repo, FakeTunerPreferences(), DetectTunedStringUseCase(source, detector))
 
@@ -398,7 +398,7 @@ class TunerViewModelTest {
         val str0Hz = preset.notes[0].frequencyHz(440.0)
         val str1Hz = preset.notes[1].frequencyHz(440.0)
 
-        val source = FakeMicrophoneAudioSource.multiSession(
+        val source = FakeAudioCaptureSource.multiSession(
             listOf(
                 List(6) { samplesEvent() },
                 List(6) { samplesEvent() },
@@ -495,7 +495,7 @@ class TunerViewModelTest {
         val preset = repo.getPresetById("six_string_standard_e")!!
         val str0Hz = preset.notes[0].frequencyHz(440.0)
 
-        val source = FakeMicrophoneAudioSource(List(6) { samplesEvent() })
+        val source = FakeAudioCaptureSource(List(6) { samplesEvent() })
         val detector = FakePitchDetector(List(6) { str0Hz })
 
         val preferences = FakeTunerPreferences(initialAutoAdvance = false)
@@ -564,7 +564,7 @@ class TunerViewModelTest {
         val preset = repo.getPresetById("six_string_standard_e")!!
         val str0Hz = preset.notes[0].frequencyHz(440.0)
 
-        val source = FakeMicrophoneAudioSource.multiSession(
+        val source = FakeAudioCaptureSource.multiSession(
             listOf(
                 List(6) { samplesEvent() }, // session 1: tune string 0
                 emptyList(),                // session 2: after preset change

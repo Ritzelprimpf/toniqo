@@ -1289,6 +1289,68 @@ coexist, with the test as the bridge.
 
 ---
 
+---
+
+## 2026-05-31 — Phase 7.2: Shared `audio/` module created (feature-first deviation)
+
+**Decision.** A new top-level `audio/` package (`de.ritzelprimpf.toniqo.audio`) is created as a
+sibling to `common/` and `ui/`. It contains `AudioCaptureSource` + `AudioRecordCaptureSource`
+(promoted from `tuner/data/MicrophoneAudioSource*`), `CaptureEvent`, `AudioSourceKind`, and
+`PitchDetector` + `YinPitchDetector` + `YinConfig` (promoted from `common/util/`). A new
+`audio/di/AudioModule` provides all Hilt bindings; the bindings previously in `TunerModule` for
+these classes are removed. This is a deliberate deviation from the feature-first layout in
+`CLAUDE.md` §3, which names only `common/` and `ui/` as shared.
+
+**Alternatives considered.**
+- *Keep everything in `tuner/data/` and add forwarding wrappers in `common/`.* Would create a
+  module dependency where `keyfinder/data/` depends on `tuner/data/` — violating the
+  `IMPLEMENTATION_NOTES.md` module isolation rule ("a module must not reference another module's
+  package").
+- *Put the capture source in `common/audio/`.* `common/` is reserved for pure, platform-free
+  music-theory primitives; `AudioRecord` has Android dependencies and must not enter it.
+- *Duplicate the capture source and YIN detector in each feature module.* Violates DRY; any
+  future fix or parameter change would need to be applied in two places.
+
+**Rationale.** Audio capture is a cross-feature Android concern that belongs in a shared but
+platform-honest location. `audio/` is that location: it is shared (Tuner + Key Finder) but
+explicitly Android-dependent, keeping `common/` pure. The deviation from feature-first layout is
+the minimum necessary to satisfy both module isolation and DRY simultaneously.
+
+**Consequences.**
+- `PitchDetector` and `YinPitchDetector` move from `common/util/` to `audio/`. This supersedes
+  the Phase 5.2 decision that placed them in `common/util/`. They are part of the audio pipeline,
+  not pure music theory, so `audio/` is the more coherent home.
+- `TunerModule` loses the `PitchDetector`, `YinConfig`, and `MicrophoneAudioSource` bindings;
+  these live in `AudioModule`.
+- The tuner regression test suite is the acceptance gate for this refactor.
+
+---
+
+## 2026-05-31 — Phase 7.2: Key Finder stable-note detector confirmation and debounce thresholds
+
+**Decision.** `StableNoteDetectorImpl` uses the following rules:
+
+- **Confirmation window:** `CONFIRMATION_BUFFER_COUNT = 2` — the same pitch class must be
+  detected in **2 consecutive buffers** before it is emitted.
+- **Debounce:** once a pitch class is emitted, it is not re-emitted until either (a) a `null`
+  (silence / no clear pitch) frame is received, or (b) a different pitch class is detected.
+
+At the Phase 5.2 locked parameters (44 100 Hz sample rate, 4 096 frames per buffer), one buffer
+takes ≈ 92.9 ms to fill; two buffers ≈ **186 ms**. This is within the target range of 150–250 ms.
+
+**Alternatives considered.**
+- *1 buffer (~93 ms).* Fires too easily on transients; a single chance detection would emit.
+- *3 buffers (~279 ms).* Exceeds the 250 ms upper bound; feels sluggish for fast scalar playing.
+- *Silence-only re-arm (ignoring pitch-class change).* Would require the user to silence between
+  every note, which is impractical for chromatic scales or chord fragments played step by step.
+
+**Rationale.** Two buffers provides transient immunity for sub-93 ms events (e.g. pick noise,
+transients at string attack) while being responsive enough for deliberate quarter-note playing at
+tempos up to ~160 BPM (a quarter note at 160 BPM ≈ 375 ms). The pitch-class-change re-arm is
+critical for legato playing where the user slides from one note to the next without silence.
+
+---
+
 ## (Template for future entries)
 
 ## YYYY-MM-DD — Short title of decision

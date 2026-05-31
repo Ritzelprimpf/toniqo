@@ -1,13 +1,12 @@
-package de.ritzelprimpf.toniqo.tuner.fakes
+package de.ritzelprimpf.toniqo.keyfinder.fakes
 
 import de.ritzelprimpf.toniqo.audio.PitchDetector
 
 /**
- * Test double for [PitchDetector].
+ * Test double for [PitchDetector] used in Key Finder tests.
  *
- * Returns frequencies from a pre-programmed list in order. Once the list is exhausted every
- * subsequent call returns `null`. Supply `null` entries to simulate frames where no pitch
- * was detected.
+ * Returns frequencies from a pre-programmed list in order. Once exhausted every subsequent
+ * call returns `null`. Supply `null` entries explicitly to simulate silence frames.
  */
 class FakePitchDetector(
     private val frequencies: List<Double?>,

@@ -1,9 +1,9 @@
 package de.ritzelprimpf.toniqo.tuner.domain.usecase
 
+import de.ritzelprimpf.toniqo.audio.AudioCaptureSource
+import de.ritzelprimpf.toniqo.audio.CaptureEvent
+import de.ritzelprimpf.toniqo.audio.PitchDetector
 import de.ritzelprimpf.toniqo.common.util.MusicTheory
-import de.ritzelprimpf.toniqo.common.util.PitchDetector
-import de.ritzelprimpf.toniqo.tuner.data.CaptureEvent
-import de.ritzelprimpf.toniqo.tuner.data.MicrophoneAudioSource
 import de.ritzelprimpf.toniqo.tuner.domain.model.TunerInput
 import de.ritzelprimpf.toniqo.tuner.domain.model.TunerMode
 import kotlinx.coroutines.flow.Flow
@@ -14,7 +14,7 @@ import kotlin.math.abs
 /**
  * The heart of the tuner pipeline.
  *
- * Collects raw audio from [MicrophoneAudioSource], runs [PitchDetector] on each buffer,
+ * Collects raw audio from [AudioCaptureSource], runs [PitchDetector] on each buffer,
  * compares the result against the target note, and maintains a **sliding sustained-tone window**
  * to distinguish a genuinely in-tune string from a transient coincidence.
  *
@@ -37,11 +37,11 @@ import kotlin.math.abs
  * invocations. The ViewModel restarts the use case whenever the target changes (new string, new
  * preset, mode switch).
  *
- * @property microphoneAudioSource Emits raw audio buffers (and control events) as a Flow.
+ * @property audioCaptureSource Emits raw audio buffers (and control events) as a Flow.
  * @property pitchDetector Converts a buffer into a fundamental frequency (or `null`).
  */
 class DetectTunedStringUseCase @Inject constructor(
-    private val microphoneAudioSource: MicrophoneAudioSource,
+    private val audioCaptureSource: AudioCaptureSource,
     private val pitchDetector: PitchDetector,
 ) {
 
@@ -59,7 +59,7 @@ class DetectTunedStringUseCase @Inject constructor(
     fun execute(input: TunerInput): Flow<DetectionEvent> {
         val window = ArrayDeque<Boolean>(SUSTAINED_WINDOW_SIZE)
 
-        return microphoneAudioSource.samples()
+        return audioCaptureSource.samples()
             .transform { captureEvent ->
                 when (captureEvent) {
                     is CaptureEvent.PermissionDenied -> {

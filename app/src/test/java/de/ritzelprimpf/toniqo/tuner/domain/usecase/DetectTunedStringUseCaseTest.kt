@@ -3,11 +3,11 @@ package de.ritzelprimpf.toniqo.tuner.domain.usecase
 import de.ritzelprimpf.toniqo.common.model.Note
 import de.ritzelprimpf.toniqo.common.model.NoteName
 import de.ritzelprimpf.toniqo.common.util.MusicTheory
-import de.ritzelprimpf.toniqo.tuner.data.AudioSourceKind
-import de.ritzelprimpf.toniqo.tuner.data.CaptureEvent
+import de.ritzelprimpf.toniqo.audio.AudioSourceKind
+import de.ritzelprimpf.toniqo.audio.CaptureEvent
 import de.ritzelprimpf.toniqo.tuner.domain.model.TunerInput
 import de.ritzelprimpf.toniqo.tuner.domain.model.TunerMode
-import de.ritzelprimpf.toniqo.tuner.fakes.FakeMicrophoneAudioSource
+import de.ritzelprimpf.toniqo.tuner.fakes.FakeAudioCaptureSource
 import de.ritzelprimpf.toniqo.tuner.fakes.FakePitchDetector
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
@@ -56,7 +56,7 @@ class DetectTunedStringUseCaseTest {
 
     @Test
     fun `permission denied propagates and flow completes`() = runTest {
-        val source = FakeMicrophoneAudioSource(listOf(CaptureEvent.PermissionDenied))
+        val source = FakeAudioCaptureSource(listOf(CaptureEvent.PermissionDenied))
         val detector = FakePitchDetector(emptyList())
         val useCase = DetectTunedStringUseCase(source, detector)
 
@@ -70,7 +70,7 @@ class DetectTunedStringUseCaseTest {
 
     @Test
     fun `listening propagates`() = runTest {
-        val source = FakeMicrophoneAudioSource(listOf(listeningEvent()))
+        val source = FakeAudioCaptureSource(listOf(listeningEvent()))
         val detector = FakePitchDetector(emptyList())
         val useCase = DetectTunedStringUseCase(source, detector)
 
@@ -84,7 +84,7 @@ class DetectTunedStringUseCaseTest {
 
     @Test
     fun `capture failure propagates`() = runTest {
-        val source = FakeMicrophoneAudioSource(listOf(CaptureEvent.Failed("boom")))
+        val source = FakeAudioCaptureSource(listOf(CaptureEvent.Failed("boom")))
         val detector = FakePitchDetector(emptyList())
         val useCase = DetectTunedStringUseCase(source, detector)
 
@@ -100,7 +100,7 @@ class DetectTunedStringUseCaseTest {
     @Test
     fun `six in-tolerance detections — sixth is sustained`() = runTest {
         val samples = List(6) { makeSamplesEvent() }
-        val source = FakeMicrophoneAudioSource(samples)
+        val source = FakeAudioCaptureSource(samples)
         val detector = FakePitchDetector(List(6) { inTuneHz })
         val useCase = DetectTunedStringUseCase(source, detector)
 
@@ -124,7 +124,7 @@ class DetectTunedStringUseCaseTest {
             sharpHz,   // glitch — window becomes [T,T,T,T,T,F] = 5/6
             inTuneHz,  // window becomes [T,T,T,T,F,T] = 5/6
         )
-        val source = FakeMicrophoneAudioSource(List(7) { makeSamplesEvent() })
+        val source = FakeAudioCaptureSource(List(7) { makeSamplesEvent() })
         val detector = FakePitchDetector(frequencies)
         val useCase = DetectTunedStringUseCase(source, detector)
 
@@ -151,7 +151,7 @@ class DetectTunedStringUseCaseTest {
             inTuneHz, inTuneHz, inTuneHz, inTuneHz,
             sharpHz, sharpHz,
         )
-        val source = FakeMicrophoneAudioSource(List(6) { makeSamplesEvent() })
+        val source = FakeAudioCaptureSource(List(6) { makeSamplesEvent() })
         val detector = FakePitchDetector(frequencies)
         val useCase = DetectTunedStringUseCase(source, detector)
 
@@ -167,7 +167,7 @@ class DetectTunedStringUseCaseTest {
     @Test
     fun `null detection pushes false into window — no Detection event emitted for null`() = runTest {
         // 5 in-tune, then 1 null: window = [T,T,T,T,T,F] = 5/6 — but no event for the null frame.
-        val source = FakeMicrophoneAudioSource(List(6) { makeSamplesEvent() })
+        val source = FakeAudioCaptureSource(List(6) { makeSamplesEvent() })
         val detector = FakePitchDetector(listOf(inTuneHz, inTuneHz, inTuneHz, inTuneHz, inTuneHz, null))
         val useCase = DetectTunedStringUseCase(source, detector)
 
@@ -188,7 +188,7 @@ class DetectTunedStringUseCaseTest {
             null,
             inTuneHz,
         )
-        val source = FakeMicrophoneAudioSource(List(7) { makeSamplesEvent() })
+        val source = FakeAudioCaptureSource(List(7) { makeSamplesEvent() })
         val detector = FakePitchDetector(frequencies)
         val useCase = DetectTunedStringUseCase(source, detector)
 
@@ -209,7 +209,7 @@ class DetectTunedStringUseCaseTest {
             null, null,
             inTuneHz,
         )
-        val source = FakeMicrophoneAudioSource(List(7) { makeSamplesEvent() })
+        val source = FakeAudioCaptureSource(List(7) { makeSamplesEvent() })
         val detector = FakePitchDetector(frequencies)
         val useCase = DetectTunedStringUseCase(source, detector)
 
@@ -229,7 +229,7 @@ class DetectTunedStringUseCaseTest {
         val g3 = Note(NoteName.G, 3)
         val g3Hz = g3.frequencyHz(refHz)
 
-        val source = FakeMicrophoneAudioSource(listOf(makeSamplesEvent()))
+        val source = FakeAudioCaptureSource(listOf(makeSamplesEvent()))
         val detector = FakePitchDetector(listOf(g3Hz))
         val useCase = DetectTunedStringUseCase(source, detector)
 
@@ -245,7 +245,7 @@ class DetectTunedStringUseCaseTest {
     @Test
     fun `chromatic with frequencyToNote returning null skips emission`() = runTest {
         // 0.5 Hz is outside MusicTheory range → frequencyToNote returns null
-        val source = FakeMicrophoneAudioSource(listOf(makeSamplesEvent()))
+        val source = FakeAudioCaptureSource(listOf(makeSamplesEvent()))
         val detector = FakePitchDetector(listOf(0.5))
         val useCase = DetectTunedStringUseCase(source, detector)
 
@@ -265,7 +265,7 @@ class DetectTunedStringUseCaseTest {
         // 100 cents flat = exactly one semitone below targetNote
         val oneSemiBelowHz = targetHz * Math.pow(2.0, -100.0 / 1200.0)
 
-        val source = FakeMicrophoneAudioSource(listOf(makeSamplesEvent()))
+        val source = FakeAudioCaptureSource(listOf(makeSamplesEvent()))
         val detector = FakePitchDetector(listOf(oneSemiBelowHz))
         val useCase = DetectTunedStringUseCase(source, detector)
 
@@ -283,7 +283,7 @@ class DetectTunedStringUseCaseTest {
         // Playing something sharp of the target — detected note may differ from target.
         val verySharpHz = targetHz * Math.pow(2.0, 200.0 / 1200.0) // 2 semitones sharp
 
-        val source = FakeMicrophoneAudioSource(listOf(makeSamplesEvent()))
+        val source = FakeAudioCaptureSource(listOf(makeSamplesEvent()))
         val detector = FakePitchDetector(listOf(verySharpHz))
         val useCase = DetectTunedStringUseCase(source, detector)
 
