@@ -130,6 +130,38 @@
     <string name="keyfinder_title">Key Finder</string>
     <string name="keyfinder_description">Identifies musical keys and modes from a set of input notes</string>
 
+    <!-- Key Finder — scale type primary labels (%s = conventionally-spelled root, e.g. "A") -->
+    <string name="scale_type_label_major">%s Major</string>
+    <string name="scale_type_label_natural_minor">%s Natural Minor</string>
+    <string name="scale_type_label_dorian">%s Dorian</string>
+    <string name="scale_type_label_phrygian">%s Phrygian</string>
+    <string name="scale_type_label_lydian">%s Lydian</string>
+    <string name="scale_type_label_mixolydian">%s Mixolydian</string>
+    <string name="scale_type_label_locrian">%s Locrian</string>
+    <string name="scale_type_label_harmonic_minor">%s Harmonic Minor</string>
+    <string name="scale_type_label_phrygian_dominant">%s Phrygian Dominant</string>
+    <string name="scale_type_label_locrian_natural6">%s Locrian ♮6</string>
+    <string name="scale_type_label_melodic_minor">%s Melodic Minor</string>
+    <string name="scale_type_label_lydian_dominant">%s Lydian Dominant</string>
+    <string name="scale_type_label_altered">%s Altered</string>
+    <string name="scale_type_label_dorian_flat2">%s Dorian ♭2</string>
+
+    <!-- Key Finder — scale type subtitles (%s = conventionally-spelled root) -->
+    <string name="scale_type_subtitle_ionian">%s Ionian</string>
+    <string name="scale_type_subtitle_aeolian">%s Aeolian</string>
+    <string name="scale_type_subtitle_dorian">%s minor with raised 6</string>
+    <string name="scale_type_subtitle_phrygian">%s minor with lowered 2</string>
+    <string name="scale_type_subtitle_lydian">%s major with raised 4</string>
+    <string name="scale_type_subtitle_mixolydian">%s major with lowered 7</string>
+    <string name="scale_type_subtitle_locrian">%s minor with lowered 2 &amp; 5</string>
+    <string name="scale_type_subtitle_harmonic_minor">%s minor with raised 7</string>
+    <string name="scale_type_subtitle_phrygian_dominant">%s major with lowered 2 &amp; 6</string>
+    <string name="scale_type_subtitle_locrian_natural6">%s Locrian with a natural 6</string>
+    <string name="scale_type_subtitle_melodic_minor">%s minor with raised 6 &amp; 7</string>
+    <string name="scale_type_subtitle_lydian_dominant">%s Lydian with a lowered 7</string>
+    <string name="scale_type_subtitle_altered">%s Super Locrian</string>
+    <string name="scale_type_subtitle_dorian_flat2">%s Dorian with a lowered 2</string>
+
     <!-- Chord Finder module -->
     <string name="chordfinder_title">Chord Finder</string>
     <string name="chordfinder_description">Shows diatonic chords for a selected musical key and mode</string>

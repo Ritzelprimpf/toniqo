@@ -7,20 +7,14 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Stub implementation of [KeyFinderService].
+ * Phase 2 stub implementation of [KeyFinderService], retained for compilation continuity.
  *
- * Will iterate the 84 candidate scales (7 modes × 12 roots) and rank them per the criteria in
- * `APP_SPECIFICATION.md` (Key Finder > Matching Logic). Phase 2 only wires the dependency graph;
- * the matching algorithm itself lands in a later phase.
+ * Phase 7.3 replaces the ViewModel dependency on this service with [MatchScalesUseCase].
+ * Until then [findKeys] throws [NotImplementedError].
  */
 @Singleton
 class KeyFinderServiceImpl @Inject constructor() : KeyFinderService {
 
-    /**
-     * Stub. Returns the ranked match list once the matching algorithm is implemented.
-     *
-     * Throws [NotImplementedError] in Phase 2.
-     */
     override fun findKeys(input: KeyFinderInput): List<KeyFinderResult> =
-        TODO("Not yet implemented")
+        TODO("Not yet implemented — replaced by MatchScalesUseCase in Phase 7.3")
 }

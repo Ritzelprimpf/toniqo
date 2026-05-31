@@ -15,10 +15,9 @@ import org.junit.Test
 
 class KeyFinderStubsTest {
 
-    private val cNote = Note(NoteName.C, octave = 4)
     private val sampleInput = KeyFinderInput(
-        notes = setOf(cNote, Note(NoteName.E, octave = 4)),
-        tonic = cNote,
+        pitchClasses = setOf(0, 4, 7), // C, E, G
+        rootPitchClass = 0,            // C
     )
 
     @Test
@@ -45,15 +44,16 @@ class KeyFinderStubsTest {
     }
 
     @Test
-    fun `KeyFinderInput data class differs when tonic differs`() {
+    fun `KeyFinderInput data class differs when rootPitchClass differs`() {
         val a = sampleInput
-        val b = sampleInput.copy(tonic = null)
+        val b = sampleInput.copy(rootPitchClass = null)
 
         assertNotEquals(a, b)
     }
 
     @Test
     fun `KeyFinderResult data class equality holds for matching fields`() {
+        val cNote = Note(NoteName.C, octave = 4)
         val scale = Scale(root = cNote, mode = Mode.IONIAN)
         val a = KeyFinderResult(
             scale = scale,

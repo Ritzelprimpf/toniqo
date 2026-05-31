@@ -35,7 +35,7 @@ private val Context.metronomeDataStore by preferencesDataStore(name = "metronome
  * This implementation is exercised via the ViewModel integration test in Phase 6.3 and the
  * manual smoke test in Phase 6.2.
  */
-internal class MetronomePreferencesImpl @Inject constructor(
+class MetronomePreferencesImpl @Inject constructor(
     @ApplicationContext private val context: Context,
 ) : MetronomePreferences {
 

@@ -7,7 +7,7 @@ package de.ritzelprimpf.toniqo.metronome.domain.model
  * This keeps the UI emission rate bounded by the time-signature numerator, independent of the
  * active subdivision.
  */
-internal sealed interface PlayerEvent {
+sealed interface PlayerEvent {
 
     /** Emitted exactly once when audio playback successfully begins. */
     data object Started : PlayerEvent
@@ -33,7 +33,7 @@ internal sealed interface PlayerEvent {
 }
 
 /** Reason codes for [PlayerEvent.Failed]. */
-internal enum class PlayerFailureReason {
+enum class PlayerFailureReason {
     /** `AudioTrack` failed to reach the `STATE_INITIALIZED` state during construction. */
     AUDIO_TRACK_INIT_FAILED,
 

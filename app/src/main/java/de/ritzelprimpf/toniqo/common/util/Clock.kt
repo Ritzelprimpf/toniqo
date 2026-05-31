@@ -18,6 +18,6 @@ interface Clock {
 }
 
 /** Production [Clock] backed by [System.nanoTime]. */
-internal class SystemClock @Inject constructor() : Clock {
+class SystemClock @Inject constructor() : Clock {
     override fun nanoTime(): Long = System.nanoTime()
 }

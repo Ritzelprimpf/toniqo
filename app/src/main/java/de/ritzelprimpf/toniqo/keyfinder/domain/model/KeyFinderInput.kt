@@ -1,19 +1,19 @@
 package de.ritzelprimpf.toniqo.keyfinder.domain.model
 
-import de.ritzelprimpf.toniqo.common.model.Note
-
 /**
- * The user-supplied query for the Key Finder: a set of notes plus an optional tonic.
+ * The reduced, pitch-class form of the user's Key Finder query.
  *
- * The notes are unordered (hence `Set`) — only pitch identity matters for matching, not the order
- * in which the user entered them. Enharmonic equivalents are treated as the same pitch class by
- * the matching logic; the original spelling is preserved at the UI level only.
+ * Octave information is discarded; enharmonic equivalents collapse to the same pitch class
+ * (e.g. C# and Db both become pitch class 1). The caller (ViewModel in Phase 7.3) converts
+ * the user's [Note] list into this form before passing it to
+ * [de.ritzelprimpf.toniqo.keyfinder.domain.usecase.MatchScalesUseCase].
  *
- * @property notes The collected notes to match against the 84 candidate diatonic scales.
- * @property tonic The user's chosen tonic, or `null` if no tonic was specified. When non-null,
- *   scales rooted on the tonic rank higher in the result list.
+ * @property pitchClasses Distinct pitch classes contributed by the user's notes, each in 0–11.
+ * @property rootPitchClass The pitch class of the note the user marked as the root, or `null`
+ *   if no root has been chosen. When non-null, scales rooted on this pitch class receive a
+ *   +1 bonus point in the scoring formula.
  */
 data class KeyFinderInput(
-    val notes: Set<Note>,
-    val tonic: Note?,
+    val pitchClasses: Set<Int>,
+    val rootPitchClass: Int?,
 )

@@ -4,23 +4,21 @@ import de.ritzelprimpf.toniqo.keyfinder.domain.model.KeyFinderInput
 import de.ritzelprimpf.toniqo.keyfinder.domain.model.KeyFinderResult
 
 /**
- * Pure-logic service that ranks the 84 candidate diatonic scales against the user's input.
+ * Pure-logic service stub retained for the Phase 2 dependency-graph wiring.
  *
- * Named `Service` (rather than `Repository`) because it performs computation, not persistence —
- * no I/O is involved. The interface lives in the domain layer so the rest of the stack depends
- * on the abstraction; the implementation lives in `data/` to keep the layer split consistent
- * across modules.
+ * Phase 7.3 replaces the ViewModel's dependency on [FindKeysUseCase] / [KeyFinderService] with
+ * [de.ritzelprimpf.toniqo.keyfinder.domain.usecase.MatchScalesUseCase]. Until then this
+ * interface remains as a compile-time placeholder; [findKeys] still throws in the implementation.
+ *
+ * Named `Service` (rather than `Repository`) because it performs computation, not persistence.
  */
 interface KeyFinderService {
 
     /**
-     * Ranks the candidate scales against [input]. Scales with zero matching notes are excluded.
+     * Phase 2 stub. Returns a ranked match list once the matching algorithm is wired in Phase 7.3.
      *
-     * Ranking order: tonic-matching scales first; within each group, scales with higher
-     * [KeyFinderResult.matchScore] rank higher; ties are broken by alphabetical mode name.
-     *
-     * @param input The user's query.
-     * @return The ranked match list — best first.
+     * @param input The user's query (pitch classes + optional root).
+     * @return The ranked match list.
      */
     fun findKeys(input: KeyFinderInput): List<KeyFinderResult>
 }

@@ -9,7 +9,7 @@ import android.media.AudioTrack
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
 import de.ritzelprimpf.toniqo.common.util.Clock
-import de.ritzelprimpf.toniqo.metronome.data.audio.ClickKind
+import de.ritzelprimpf.toniqo.metronome.domain.model.ClickKind
 import de.ritzelprimpf.toniqo.metronome.data.audio.ClickSynthesizer
 import de.ritzelprimpf.toniqo.metronome.data.audio.MetronomeAudioFormat
 import de.ritzelprimpf.toniqo.metronome.domain.model.MetronomeConfig
@@ -54,7 +54,7 @@ import kotlinx.coroutines.launch
  * `USAGE_MEDIA` + `CONTENT_TYPE_SONIFICATION` — correct for non-musical click sounds;
  * respects system media volume. Per `Phase6-Metronome-Decisions.md` Item 12.
  */
-internal class AudioTrackMetronomePlayer @Inject constructor(
+class AudioTrackMetronomePlayer @Inject constructor(
     @ApplicationContext private val context: Context,
     private val clickSynthesizer: ClickSynthesizer,
     private val clock: Clock,

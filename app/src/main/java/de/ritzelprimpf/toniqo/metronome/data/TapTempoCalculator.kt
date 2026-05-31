@@ -23,7 +23,7 @@ import kotlin.math.roundToInt
  *
  * [Clock] is injected so that unit tests can supply deterministic timestamps without sleeping.
  */
-internal class TapTempoCalculator @Inject constructor(
+class TapTempoCalculator @Inject constructor(
     private val clock: Clock,
 ) {
     private val windowMs: ArrayDeque<Long> = ArrayDeque()

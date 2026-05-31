@@ -7,7 +7,7 @@ package de.ritzelprimpf.toniqo.metronome.domain.model
  * Each enum value maps to a string resource (wired in Phase 6.4). The lookup is performed by
  * [tempoDescriptorFor].
  */
-internal enum class TempoDescriptor {
+enum class TempoDescriptor {
     /** Very slow: BPM 1–75. */
     ADAGIO,
 
@@ -40,7 +40,7 @@ private const val TEMPO_BOUNDARY_PRESTO = 168
  * @param bpm Beats per minute. Meaningful range: [1, 300].
  * @return The corresponding [TempoDescriptor].
  */
-internal fun tempoDescriptorFor(bpm: Int): TempoDescriptor = when {
+fun tempoDescriptorFor(bpm: Int): TempoDescriptor = when {
     bpm < TEMPO_BOUNDARY_ANDANTE -> TempoDescriptor.ADAGIO
     bpm < TEMPO_BOUNDARY_MODERATO -> TempoDescriptor.ANDANTE
     bpm < TEMPO_BOUNDARY_ALLEGRO -> TempoDescriptor.MODERATO

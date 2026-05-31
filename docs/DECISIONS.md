@@ -1114,6 +1114,181 @@ all two permitted glows simplifies maintenance.
 
 ---
 
+---
+
+## 2026-05-30 — Phase 7.1: Key Finder match-scoring formula (supersedes APP_SPECIFICATION.md)
+
+**Decision.** The matching engine uses the following formula for every candidate scale `S`
+against input `I`:
+
+```
+n          = |I.pitchClasses|               (distinct input pitch classes)
+covered    = |I.pitchClasses ∩ S.pitchClasses|
+rootBonus  = 1  if (root marked AND S.root == markedRoot)  else 0
+points     = covered + rootBonus
+maxPoints  = max(7, n) + (1 if root marked else 0)
+percent    = round_half_up(points / maxPoints × 100)
+```
+
+Candidates with `covered == 0` are excluded from results. `isFull` = `covered == n`.
+
+**Supersedes.** `APP_SPECIFICATION.md` "Module: Key Finder → Matching Logic", which described
+the score as "percentage of input notes that belong to the mode." That formula did not account
+for stray notes lowering the score, did not define `maxPoints`, and treated the tonic as a
+separate ranking step rather than a point contribution. This entry explicitly supersedes both
+the score definition and the tonic-handling description in the spec.
+
+**Alternatives considered.**
+- *Raw covered / n:* gives 100% for any 3 notes that fit, regardless of scale size. Stray notes
+  don't lower the score. Rejected — produces misleading results when the user adds notes that
+  are outside the scale.
+- *covered / 7 always:* correct denominator for a full 7-note set, but wrong for small inputs
+  (3-note input gives max 43%, making partial results look deceptively poor). The `max(7, n)`
+  floor balances both.
+
+**Rationale.** The `max(7, n)` denominator penalises stray notes (n > 7 inputs lower the score)
+while preserving meaningful percentages for small, well-fitting inputs (n ≤ 7). Folding the root
+into the formula (rather than post-sorting) gives a single comparable number per result and
+allows the root to break ties without a separate ranking pass.
+
+---
+
+## 2026-05-30 — Phase 7.1: Single root note folded into the percentage
+
+**Decision.** The user may mark exactly one note as the root. The root contributes `+1` to
+`points` and `+1` to `maxPoints` when marked, changing the score for scales that match the
+root relative to those that don't. There is no separate post-sort step for root-matching scales.
+
+**Supersedes.** `APP_SPECIFICATION.md` "Module: Key Finder → Output": "If a tonic is provided,
+modes whose root is the tonic are ranked higher (ties broken by match score, then alphabetical
+mode name)." The plan's single-formula approach replaces that two-step process.
+
+**Alternatives considered.**
+- *Post-sort boost:* sort first by score, then promote tonic matches. Produces
+  discontinuities — a 60% tonic match jumping above a 95% non-tonic match feels wrong.
+- *Separate tonic tier:* show tonic results in a distinct section. Adds UI complexity for a
+  single bit of information; the percentage already encodes it.
+
+**Rationale.** The formula gives the root a mathematically consistent weight (1 out of at most
+8 points). A scale that perfectly matches the root note earns the bonus; all other scales are
+naturally ranked below it at the same note content. The tie-breaking emerges from arithmetic,
+not a special rule.
+
+---
+
+## 2026-05-30 — Phase 7.1: Scale inventory — 14 types (supersedes APP_SPECIFICATION.md diatonic-only set)
+
+**Decision.** The Key Finder catalog contains **14 scale types** across three families:
+
+| Family | Types |
+|---|---|
+| Diatonic (7) | Ionian, Dorian, Phrygian, Lydian, Mixolydian, Aeolian, Locrian |
+| Harmonic minor (3) | Harmonic Minor, Phrygian Dominant, Locrian ♮6 |
+| Melodic minor (4) | Melodic Minor, Lydian Dominant, Altered, Dorian ♭2 |
+
+Total catalog: 14 types × 12 roots = **168 candidates**.
+
+**Explicitly excluded:** pentatonic scales, blues scales, the remaining modes of harmonic and
+melodic minor not listed above, double-harmonic / Byzantine parents. Exclusions are recorded to
+prevent accidental re-addition without discussion.
+
+**Supersedes.** `APP_SPECIFICATION.md` "Modes to Support": "Ionian … Locrian. Pentatonic,
+harmonic/melodic minor, and other scale types may be added in a future phase." This entry
+implements the "future phase" expansion and locks the inventory for Phase 7.
+
+**Rationale.** The 7 additional types are the scales guitarists most commonly encounter beyond
+the diatonic modes (harmonic minor for metal/classical, Phrygian Dominant for flamenco/metal,
+Melodic Minor for jazz, Lydian Dominant for jazz fusion, Altered for jazz, Dorian ♭2 as a
+secondary jazz colour). All are 7-note scales, which preserves the uniform `max(7, n)`
+denominator. Pentatonics are excluded because their 5-note structure would require a
+special-cased denominator floor.
+
+---
+
+## 2026-05-30 — Phase 7.1: Ranking rule (supersedes APP_SPECIFICATION.md separate-tonic step)
+
+**Decision.** After scoring, results are ranked by:
+
+1. `percent` descending.
+2. `type.rankOrder` ascending ("common-first" order: Major → Natural Minor → Dorian → Phrygian
+   → Lydian → Mixolydian → Locrian → Harmonic Minor → Phrygian Dominant → Locrian ♮6 →
+   Melodic Minor → Lydian Dominant → Altered → Dorian ♭2).
+3. Root pitch class ascending (C=0, C♯/D♭=1, … B=11).
+
+The top 7 results are returned. Scales with `covered == 0` are excluded before ranking.
+
+**Supersedes.** `APP_SPECIFICATION.md` "Module: Key Finder → Output": "If a tonic is provided,
+modes whose root is the tonic are ranked higher." The tonic's effect is already expressed through
+the percentage (see the root-bonus decision above), so no additional sort pass is needed. The
+"alphabetical mode name" tie-break in the spec is replaced by the common-first ordinal, which
+also imposes a deterministic, musically-meaningful order.
+
+**Alternatives considered.**
+- *Alphabetical tie-break:* deterministic but musically arbitrary (B Locrian before C Major).
+- *Random / stable sort:* non-deterministic; bad for reproducibility and testing.
+
+**Rationale.** Common-first order surfaces the most familiar results at the top of ties, which
+reduces cognitive load for users who see Major before Locrian.
+
+---
+
+## 2026-05-30 — Phase 7.1: Match gate — ≥ 3 distinct pitch classes
+
+**Decision.** `MatchScalesUseCase` returns an empty list when the input has fewer than 3
+distinct pitch classes. With 0–2 notes, too many scales match at high percentages to be
+meaningful; the threshold is an explicitly-tested constant (`MIN_NOTES_TO_MATCH = 3`).
+
+**Rationale.** Three notes is the minimum for a meaningful harmonic context (a triad). With
+fewer, the signal-to-noise ratio is too low. The gate value was established in `Phase7-PLAN.md`
+based on UX reasoning: below 3 notes, the results list would show too many high-percentage
+matches to be actionable.
+
+**Supersession trigger.** If user research shows 2 notes is useful (e.g. for interval
+identification), lower the constant.
+
+---
+
+## 2026-05-30 — Phase 7.1: Conventional enharmonic spelling for Key Finder results
+
+**Decision.** `ScaleSpeller` (a pure `object` in `common/util/`) produces conventionally-spelled
+note names using two rules:
+
+1. **Root spelling:** a fixed canonical table maps each pitch class to its standard root name
+   (`C, D♭, D, E♭, E, F, F♯, G, A♭, A, B♭, B`).
+2. **Degree spelling:** starting from the root's letter, each of the 7 degrees is assigned the
+   next letter cyclically (A–G, wrapping G→A). The accidental is the signed semitone difference
+   between the degree's actual pitch class and the natural pitch class of its assigned letter.
+
+This guarantees exactly one of each letter A–G per scale and correct accidentals for all 168
+candidates, including exotic cases (e.g. G Altered → G A♭ B♭ C♭ D♭ E♭ F).
+
+**Rationale.** The letter-per-degree rule is the standard musicological spelling convention.
+Computing accidentals from the natural pitch classes of the assigned letters is
+algorithm-derivable, testable, and correct across all 14 scale types without special cases or
+lookup tables for individual scales.
+
+---
+
+## 2026-05-30 — Phase 7.1: ScaleType superset added alongside retained Mode enum
+
+**Decision.** `common/model/ScaleType` is added as a new 14-entry enum. The existing
+`common/model/Mode` enum is **retained unchanged**. The seven diatonic `ScaleType` entries
+carry the same `intervalsFromRoot` arrays as the corresponding `Mode` entries; a unit test
+asserts equality so the data has a single conceptual source of truth (maintained by `Mode`,
+verified by the test).
+
+**Rationale.** `Mode` is consumed by the tuner (note display), Chord Finder (diatonic
+harmonization), and existing `Scale` / `MusicTheory` logic. Replacing `Mode` with `ScaleType`
+would require changes across all those consumers for no benefit in Phase 7. Adding `ScaleType`
+as a superset keeps `Mode` stable for its existing callers while giving the Key Finder its
+14-type catalog.
+
+**Consequences.** If a future phase merges the two (e.g. Chord Finder needs harmonic minor
+chords), replace `Mode` with `ScaleType` at that point and delete `Mode`. Until then, both
+coexist, with the test as the bridge.
+
+---
+
 ## (Template for future entries)
 
 ## YYYY-MM-DD — Short title of decision
