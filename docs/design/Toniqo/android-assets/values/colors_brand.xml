@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="brand_chassis">#28302E</color>
+    <color name="brand_fg">#F3F6F5</color>
+    <color name="signal_mint">#9CFF8B</color>
+</resources>

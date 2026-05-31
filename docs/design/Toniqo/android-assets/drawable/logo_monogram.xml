@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Toniqo monogram — dark chassis variant. In-app brand use. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="256dp"
+    android:height="256dp"
+    android:viewportWidth="256"
+    android:viewportHeight="256">
+    <!-- chassis -->
+    <path
+        android:pathData="M56,0 L200,0 A56,56 0 0 1 256,56 L256,200 A56,56 0 0 1 200,256 L56,256 A56,56 0 0 1 0,200 L0,56 A56,56 0 0 1 56,0 Z"
+        android:fillColor="#28302E"/>
+    <!-- left + right brackets -->
+    <path android:pathData="M76,60 L60,60 L60,196 L76,196"
+        android:strokeColor="#F3F6F5" android:strokeWidth="12"
+        android:strokeLineCap="round" android:strokeLineJoin="round"/>
+    <path android:pathData="M180,60 L196,60 L196,196 L180,196"
+        android:strokeColor="#F3F6F5" android:strokeWidth="12"
+        android:strokeLineCap="round" android:strokeLineJoin="round"/>
+    <!-- T crossbar + stem -->
+    <path android:pathData="M96,96 L160,96 M128,96 L128,168"
+        android:strokeColor="#F3F6F5" android:strokeWidth="20"
+        android:strokeLineCap="round" android:strokeLineJoin="round"/>
+    <!-- lock dot -->
+    <path android:pathData="M118,200 a10,10 0 1 0 20,0 a10,10 0 1 0 -20,0 Z"
+        android:fillColor="#9CFF8B"/>
+    <!-- glow ring -->
+    <path android:pathData="M110,200 a18,18 0 1 0 36,0 a18,18 0 1 0 -36,0"
+        android:strokeColor="#9CFF8B" android:strokeWidth="1.5" android:strokeAlpha="0.25"/>
+</vector>

@@ -33,10 +33,10 @@ The app is structured around discrete, independently selectable modules. Only on
 
 | Module | Description | Status |
 |---|---|---|
-| Guitar Tuner | Chromatic / preset-driven tuner using device microphone | Planned (Phase 5) |
-| Metronome | BPM / time-signature metronome with start/stop control | Planned |
-| Key Finder | Identifies musical keys/modes from a set of input notes | Planned |
-| Chord Finder | Lists chords for a selected musical mode | Planned |
+| Guitar Tuner | Chromatic / preset-driven tuner using device microphone | **Done (Phase 5)** |
+| Metronome | BPM / time-signature metronome with start/stop control | **Done (Phase 6)** |
+| Key Finder | Identifies musical keys/modes from a set of input notes | **Done (Phase 7)** |
+| Chord Finder | Lists chords for a selected musical mode | **Next (Phase 8)** |
 
 ## Implementation Phases
 

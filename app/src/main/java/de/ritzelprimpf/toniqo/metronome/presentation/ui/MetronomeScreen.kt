@@ -1,5 +1,6 @@
 package de.ritzelprimpf.toniqo.metronome.presentation.ui
 
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -50,6 +51,7 @@ internal fun MetronomeScreen(
     Scaffold(
         containerColor = Tq.Color.BgBase,
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        contentWindowInsets = WindowInsets(0),
     ) { innerPadding ->
         MetronomeContent(
             state = state,

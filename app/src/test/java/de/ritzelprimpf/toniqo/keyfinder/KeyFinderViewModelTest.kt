@@ -122,10 +122,12 @@ class KeyFinderViewModelTest {
 
     @Test
     fun `duplicate add does not change the display name of the existing chip`() {
-        viewModel.addNoteFromPicker(note(NoteName.CSharp))  // first-seen; sharp name "C#"
+        // Phase 7.4: addNoteFromPicker now uses ScaleSpeller.ROOT_DISPLAY_NAMES[pitchClass]
+        // (canonical spelling), so CSharp (pitch class 1) displays as "D♭" not "C#".
+        viewModel.addNoteFromPicker(note(NoteName.CSharp))  // first-seen; canonical name "D♭"
         viewModel.addNoteFromPicker(note(NoteName.CSharp))  // duplicate; no-op
 
-        assertEquals("C#", viewModel.uiState.value.notes.single().displayName)
+        assertEquals("D♭", viewModel.uiState.value.notes.single().displayName)
     }
 
     // ─── removeNote ───────────────────────────────────────────────────────────

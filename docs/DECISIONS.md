@@ -1420,6 +1420,90 @@ explicit and prevents a future caller from assuming the list is unbounded.
 
 ---
 
+## 2026-05-31 — Phase 7.4: Add-note picker form — compact bottom sheet with 4×3 chromatic grid
+
+**Decision.** The note-add picker is a `ModalBottomSheet` containing a title "ADD NOTE", a subtitle, and a 4×3 grid of all 12 pitch classes using `ScaleSpeller.ROOT_DISPLAY_NAMES` spellings (`C D♭ D E♭ / E F F♯ G / A♭ A B♭ B`). Already-present pitch classes are shown in a disabled visual state. Tapping a cell calls `addNoteFromPicker` and closes the sheet.
+
+**Alternatives considered.**
+- *Inline expandable grid in the note rail.* Clutters the rail for a transient action.
+- *DropdownMenu anchored to the `+` button.* Limited layout control, hard to dismiss elegantly.
+
+**Rationale.** Mirrors the tuner's preset picker pattern (also `ModalBottomSheet`). Keeps the main screen clean and gives the user a focused, discoverable affordance. The canonical spellings match the detail view, so the user sees the same note names everywhere.
+
+---
+
+## 2026-05-31 — Phase 7.4: Mic affordance placement — sub-header row (right of NOTES · n / TONIC · x)
+
+**Decision.** The mic toggle (`mic` / `mic_off` icon, 20dp) is an `IconButton` at the right end of the "NOTES · n / TONIC · x" sub-header row. When `isListening = true`, a `PulsingDot` + "MIC LIVE" label appears in the same row immediately left of the toggle, mirroring the tuner's §8.1 mic-live indicator language.
+
+**Alternatives considered.**
+- *In the screen header row (next to the info button).* Requires extra row or crowd the header with two icons of different semantic weight.
+- *As a dedicated floating pill below the note rail.* Adds layout complexity and breaks the row-based information hierarchy.
+
+**Rationale.** The sub-header row already carries "NOTES · n" context. Placing the mic toggle adjacent to it keeps all note-input affordances in one visual region and keeps the primary title row uncluttered.
+
+---
+
+## 2026-05-31 — Phase 7.4: Mark-root gesture — tap chip body; remove gesture — tap × button
+
+**Decision.**
+- **Tap chip body** → `toggleRoot(pitchClass)`: marks the note as the root, or unmarks it if it already is. The root chip gains the 22% mint-mixed background and "· TONIC" suffix.
+- **Tap × icon** (trailing in the chip) → `removeNote(pitchClass)`.
+
+These two actions are visually separated (body vs trailing button), so they don't collide.
+
+**Alternatives considered.**
+- *Long-press to mark root, tap to remove.* Long-press is undiscoverable; users often don't try it without a visual hint. The × button makes remove obvious.
+- *Tap to cycle role (normal → root → removed).* A three-state cycle on a single tap is surprising; remove should be an explicit action.
+
+**Rationale.** The × pattern is standard for chips in Material Design. Assigning the chip body's tap to toggle-root gives that action a large touch target and keeps it discoverable ("tapping the note changes its role"). No gesture collision is possible since the × and the chip body don't overlap.
+
+---
+
+## 2026-05-31 — Phase 7.4: Detail view form — bottom sheet
+
+**Decision.** Tapping a result row opens a `ModalBottomSheet` showing: the primary label (`H2`), subtitle (`MonoMicro`), percent + badges, a divider, and the 7 conventionally-spelled scale notes with their degree labels. No navigation to Chord Finder (cross-module navigation deferred).
+
+**Alternatives considered.**
+- *Full-screen route.* Adds navigation stack entry and breaks the "glance at the list → inspect one result → return" mental model. The list remains visible behind the sheet.
+
+**Rationale.** The bottom sheet is lighter than a full route and keeps the result-list context visible in the scrim area, making it easy for the user to dismiss and examine the next result.
+
+---
+
+## 2026-05-31 — Phase 7.4: Result row → self-contained detail view, no Chord Finder navigation
+
+**Decision.** Tapping a Key Finder result card opens a self-contained bottom sheet (detail view). The sheet does not contain a "Go to Chord Finder" link or navigation action. Cross-module navigation from Key Finder to Chord Finder is explicitly deferred.
+
+**Rationale.** Chord Finder (Phase 8) is not yet implemented; wiring a nav action to it now would produce dead UI. The detail view's purpose — showing the scale's notes and degrees — is complete without it. The nav link can be added in Phase 8 as part of the Chord Finder implementation.
+
+---
+
+## 2026-05-31 — Phase 7.4: Canonical spelling for all chip display names
+
+**Decision.** Both the picker path (`addNoteFromPicker`) and the mic path (`addNoteByPitchClass`) now use `ScaleSpeller.ROOT_DISPLAY_NAMES[pitchClass]` as the chip display name, replacing the previous `NoteName.sharpName` (ASCII "C#") used in the mic path. This ensures all chips show the same conventional spellings (unicode "D♭", "F♯") regardless of how the note was added.
+
+**Alternatives considered.**
+- *Keep sharpName for mic, ROOT_DISPLAY_NAMES for picker.* Creates an inconsistency: the picker shows "D♭" but the chip then shows "C#" if the same note is added via mic next session. Confusing.
+
+**Rationale.** Consistency matters more than preserving "how the note arrived." The ScaleSpeller canonical table already defines the musically standard spelling for each pitch class; using it everywhere is simpler and more correct.
+
+---
+
+## 2026-05-31 — Phase 7.4 (supersedes mark-root gesture): tap = remove, long-press = tonic
+
+**Decision.** Chips use `combinedClickable`: **tap = remove** the note, **long-press = toggle tonic**. No separate × button. A `mono.micro` hint line "TAP TO REMOVE · HOLD TO SET AS TONIC" is shown in `fg.quaternary` below the rail whenever notes are present but no tonic is marked; it disappears once a root is set.
+
+**Supersedes.** The Phase 7.4 "Mark-root gesture" entry (tap chip body = toggle tonic, × button = remove). User testing found that for short note names ("C", "E") the × button occupied more than half the chip width, causing accidental removes when the user tapped what they thought was the chip label area.
+
+**Alternatives considered.**
+- *Keep × button, make it smaller.* Smaller than 16dp is below any practical tap target; still causes the layout crowding issue on short names.
+- *Keep tap = tonic, add hint only.* The layout problem (× too large) persists regardless of discoverability text.
+
+**Rationale.** Removing the × gives the entire chip to the primary remove gesture (matching Material `InputChip` convention) and eliminates the layout conflict. Long-press for the secondary tonic action is a standard Android pattern. The hint text makes both gestures explicit so neither requires discovery.
+
+---
+
 ## (Template for future entries)
 
 ## YYYY-MM-DD — Short title of decision

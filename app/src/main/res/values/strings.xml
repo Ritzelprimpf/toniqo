@@ -130,6 +130,60 @@
     <string name="keyfinder_title">Key Finder</string>
     <string name="keyfinder_description">Identifies musical keys and modes from a set of input notes</string>
 
+    <!-- Key Finder screen — header (all-caps strings must be uppercase here; Kicker/MonoMicro have no textAllCaps) -->
+    <string name="keyfinder_kicker">KEY FINDER</string>
+    <string name="keyfinder_screen_title">Match notes</string>
+    <string name="keyfinder_cd_info">Key Finder info</string>
+    <!-- %d = number of notes currently in the list -->
+    <string name="keyfinder_notes_count">NOTES · %d</string>
+    <!-- %s = conventionally-spelled root name, e.g. "A" -->
+    <string name="keyfinder_tonic_marker">TONIC · %s</string>
+    <!-- %d = number of matching scales returned by the engine -->
+    <string name="keyfinder_matches_header">%d MATCHES</string>
+    <string name="keyfinder_tonic_preferred">TONIC PREFERRED</string>
+
+    <!-- Key Finder screen — mic toggle -->
+    <string name="keyfinder_cd_mic_off">Enable mic input</string>
+    <string name="keyfinder_cd_mic_on">Disable mic input</string>
+    <string name="keyfinder_mic_live">MIC LIVE</string>
+
+    <!-- Key Finder screen — note chips; %s = note display name, e.g. "D♭" -->
+    <string name="keyfinder_cd_note_chip">%s note; tap to mark as root, tap × to remove</string>
+    <string name="keyfinder_cd_remove_chip">Remove %s</string>
+    <!-- Suffix appended to the root chip's display name (leading space intentional) -->
+    <string name="keyfinder_tonic_suffix"> · TONIC</string>
+
+    <!-- Key Finder screen — add-note button and picker -->
+    <string name="keyfinder_cd_add_note">Add note</string>
+    <string name="keyfinder_picker_title">ADD NOTE</string>
+    <string name="keyfinder_picker_subtitle">Tap a note to add it. Already-present notes are disabled.</string>
+
+    <!-- Key Finder screen — clear-all button (uppercase; MonoMicro style) -->
+    <string name="keyfinder_clear_all">CLEAR</string>
+    <string name="keyfinder_cd_clear_all">Clear all notes</string>
+
+    <!-- Key Finder screen — tonic hint shown below rail when notes exist but none is marked tonic -->
+    <string name="keyfinder_hint_set_tonic">TAP TO REMOVE · HOLD TO SET AS TONIC</string>
+    <!-- Accessibility labels for the long-click tonic action on a chip -->
+    <string name="keyfinder_cd_mark_tonic">Mark as tonic key</string>
+    <string name="keyfinder_cd_unmark_tonic">Unmark as tonic key</string>
+
+    <!-- Key Finder screen — idle / empty state (shown when fewer than 3 notes are entered) -->
+    <string name="keyfinder_idle_prompt">Add at least 3 notes to see matches</string>
+
+    <!-- Key Finder screen — result card badges (uppercase; MonoMicro style) -->
+    <string name="keyfinder_badge_tonic">TONIC</string>
+    <string name="keyfinder_badge_full">FULL</string>
+
+    <!-- Key Finder screen — detail view -->
+    <string name="keyfinder_detail_notes_label">NOTES</string>
+    <string name="keyfinder_detail_cd_close">Close detail view</string>
+
+    <!-- Key Finder screen — mic permission denied card -->
+    <string name="keyfinder_permission_heading">Microphone access needed</string>
+    <string name="keyfinder_permission_body">Toniqo listens for notes you play to add them to the list. We don\'t record or store audio — everything stays on your device.</string>
+    <string name="keyfinder_permission_button">Grant access</string>
+
     <!-- Key Finder — scale type primary labels (%s = conventionally-spelled root, e.g. "A") -->
     <string name="scale_type_label_major">%s Major</string>
     <string name="scale_type_label_natural_minor">%s Natural Minor</string>

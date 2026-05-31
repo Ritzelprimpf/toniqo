@@ -109,7 +109,7 @@ fun TunerScreen(
     var settingsSheetOpen by rememberSaveable { mutableStateOf(false) }
     var modeMenuExpanded by remember { mutableStateOf(false) }
 
-    Column(modifier = modifier.padding(horizontal = Tq.Sp.s4)) {
+    Column(modifier = modifier.padding(horizontal = Tq.Sp.s5).padding(top = Tq.Sp.s5)) {
         ReferencePitchKicker(
             referencePitchHz = uiState.referencePitchHz,
             presetDisplayName = uiState.selectedPreset?.displayName ?: "—",

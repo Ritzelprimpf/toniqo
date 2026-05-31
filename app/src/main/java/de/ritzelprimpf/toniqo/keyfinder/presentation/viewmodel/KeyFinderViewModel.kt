@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import de.ritzelprimpf.toniqo.common.model.Note
-import de.ritzelprimpf.toniqo.common.model.NoteName
+import de.ritzelprimpf.toniqo.common.util.ScaleSpeller
 import de.ritzelprimpf.toniqo.keyfinder.domain.model.KeyFinderInput
 import de.ritzelprimpf.toniqo.keyfinder.domain.repository.NoteDetector
 import de.ritzelprimpf.toniqo.keyfinder.domain.usecase.MatchScalesUseCase
@@ -35,7 +35,7 @@ import javax.inject.Inject
 class KeyFinderViewModel @Inject constructor(
     private val matchScales: MatchScalesUseCase,
     private val noteDetector: NoteDetector,
-) : ViewModel() {
+) : ViewModel(), KeyFinderScreenViewModel {
 
     companion object {
         /**
@@ -61,7 +61,7 @@ class KeyFinderViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(KeyFinderUiState())
 
     /** The screen's current UI state. Collect with `collectAsStateWithLifecycle` in Phase 7.4. */
-    val uiState: StateFlow<KeyFinderUiState> = _uiState.asStateFlow()
+    override val uiState: StateFlow<KeyFinderUiState> = _uiState.asStateFlow()
 
     private var listeningJob: Job? = null
 
@@ -76,10 +76,11 @@ class KeyFinderViewModel @Inject constructor(
      *
      * @param note The note selected in the picker.
      */
-    fun addNoteFromPicker(note: Note) {
+    override fun addNoteFromPicker(note: Note) {
         val pitchClass = note.name.semitonesFromC
         if (noteMap.containsKey(pitchClass) || noteMap.size >= MAX_NOTE_COUNT) return
-        noteMap[pitchClass] = note.name.sharpName
+        // Canonical spelling (D♭ not C#, F♯ not Gb) so picker-added chips match the picker's display.
+        noteMap[pitchClass] = ScaleSpeller.ROOT_DISPLAY_NAMES[pitchClass]
         recompute()
     }
 
@@ -91,7 +92,7 @@ class KeyFinderViewModel @Inject constructor(
      *
      * @param pitchClass Pitch class to remove (0–11).
      */
-    fun removeNote(pitchClass: Int) {
+    override fun removeNote(pitchClass: Int) {
         if (!noteMap.containsKey(pitchClass)) return
         noteMap.remove(pitchClass)
         if (rootPitchClass == pitchClass) rootPitchClass = null
@@ -108,7 +109,7 @@ class KeyFinderViewModel @Inject constructor(
      *
      * @param pitchClass Pitch class to mark/unmark as root (0–11).
      */
-    fun toggleRoot(pitchClass: Int) {
+    override fun toggleRoot(pitchClass: Int) {
         if (!noteMap.containsKey(pitchClass)) return
         rootPitchClass = if (rootPitchClass == pitchClass) null else pitchClass
         recompute()
@@ -117,7 +118,7 @@ class KeyFinderViewModel @Inject constructor(
     /**
      * Clears all notes and the root marker. Results become empty.
      */
-    fun clearAll() {
+    override fun clearAll() {
         noteMap.clear()
         rootPitchClass = null
         recompute()
@@ -130,7 +131,7 @@ class KeyFinderViewModel @Inject constructor(
      * [NoteDetector.detectedNotes] is processed identically to a picker add (de-duped by pitch
      * class, cap-checked). No-op if already listening.
      */
-    fun startListening() {
+    override fun startListening() {
         if (_uiState.value.isListening) return
         _uiState.update { it.copy(isListening = true) }
         listeningJob = viewModelScope.launch {
@@ -147,7 +148,7 @@ class KeyFinderViewModel @Inject constructor(
      * Sets [KeyFinderUiState.isListening] to `false`. Notes already in the list are preserved.
      * Emissions arriving after this call are ignored. No-op if not currently listening.
      */
-    fun stopListening() {
+    override fun stopListening() {
         if (!_uiState.value.isListening) return
         _uiState.update { it.copy(isListening = false) }
         listeningJob?.cancel()
@@ -165,7 +166,8 @@ class KeyFinderViewModel @Inject constructor(
      */
     private fun addNoteByPitchClass(pitchClass: Int) {
         if (noteMap.containsKey(pitchClass) || noteMap.size >= MAX_NOTE_COUNT) return
-        noteMap[pitchClass] = NoteName.entries[pitchClass].sharpName
+        // Canonical spelling (D♭ not C#) so mic-added chips match the picker's display names.
+        noteMap[pitchClass] = ScaleSpeller.ROOT_DISPLAY_NAMES[pitchClass]
         recompute()
     }
 
