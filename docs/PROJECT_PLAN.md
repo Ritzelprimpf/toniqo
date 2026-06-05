@@ -47,7 +47,9 @@ The app is structured around discrete, independently selectable modules. Only on
 | 3 | Design Tokens | Implement the `DESIGN.md` system as Compose code (palette, type, spacing, radii, `ToniqoTheme`) |
 | 4 | Navigation Shell & Placeholders | Bottom nav, module placeholder screens, Info section |
 | 5 | Guitar Tuner | Full implementation of the Guitar Tuner module (sub-phased) |
-| 6+ | Remaining Modules | Order to be confirmed after Phase 5. Likely sequence: Metronome → Chord Finder → Key Finder, because the metronome's audio output stack reuses Phase 5 audio learnings, and Chord Finder is a pure-logic prerequisite for parts of Key Finder. |
+| 6 | Metronome | Full implementation of the Metronome module (sub-phased) |
+| 7 | Key Finder | Full implementation of the Key Finder module (sub-phased) |
+| 8 | Chord Finder | Diatonic chords for any of the 14 scale types, plus tuning-aware guitar voicings (sub-phased 8.1–8.5) |
 
 ## Reading Guide for the Agent
 
