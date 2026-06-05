@@ -13,6 +13,7 @@ You are implementing **Phase 8.2 — Voicing Data, Tuning Model & Loader** of To
 4. `Phase8_2-PLAN.md` and `Phase8_2-REQUIREMENTS.md` — your scope.
 5. `Chord_Finder___C_voicings.png` — the visual target the data must support.
 6. Phase 8.1's output (`ChordQuality`).
+7. Voicing JSON file in app/src/res/chords/
 
 **Hard constraints:** as in 8.1 (Kotlin, SOLID, sealed state, `data class` models, no `!!`/magic numbers, strings in `strings.xml`, KDoc, tests alongside). **Stop and ask** on ambiguity.
 

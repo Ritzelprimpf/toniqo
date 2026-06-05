@@ -1504,6 +1504,120 @@ These two actions are visually separated (body vs trailing button), so they don'
 
 ---
 
+## 2026-06-05 — Phase 8.1: Chord Finder targets 14 ScaleTypes, not 7 diatonic modes (supersedes APP_SPECIFICATION.md)
+
+**Decision.** The Chord Finder module harmonises all 14 `ScaleType`s from the Phase 7 Key Finder catalog — the 7 diatonic modes plus the harmonic-minor family (Harmonic Minor, Phrygian Dominant, Locrian ♮6) and the melodic-minor family (Melodic Minor, Lydian Dominant, Altered, Dorian ♭2). `ChordFinderInput` carries `scaleType: ScaleType` (0–11 root pitch class plus the enum) rather than a `Note` root and a `Mode`.
+
+**Supersedes.** `APP_SPECIFICATION.md` "Module: Chord Finder — Modes supported: the same 7 diatonic modes as Key Finder." That scope was written before the Key Finder was expanded to 14 types in Phase 7.1. This entry explicitly supersedes it for Phase 8 onward.
+
+**Alternatives considered.**
+- *Stay at 7 modes.* Would require the user to switch to a different app for any harmonic/melodic-minor key. Rejected — the 14-type catalog is already implemented in Key Finder and costs nothing extra in the chord engine.
+
+**Rationale.** Since the chord engine derives quality purely from intervals (no major-scale assumption), supporting all 14 types costs exactly zero extra logic. Limiting the UI to 7 types while the domain model already handles 14 would be an artificial constraint.
+
+---
+
+## 2026-06-05 — Phase 8.1: Interval-derived quality; SeventhQuality enum introduced; ChordQuality reduced to 4 triad values
+
+**Decision.** Every chord quality is derived from the actual semitone intervals between stacked scale degrees — no hard-coded major-scale quality pattern. `ChordQuality` is reduced to exactly 4 triad values (`MAJOR`, `MINOR`, `DIMINISHED`, `AUGMENTED`), removing the five seventh-chord variants that were added in Phase 5.1. Seventh-chord types are modelled in a new `chordfinder/domain/model/SeventhQuality` enum with 7 entries: `MAJOR_SEVENTH`, `MINOR_SEVENTH`, `DOMINANT_SEVENTH`, `HALF_DIMINISHED`, `DIMINISHED_SEVENTH`, `MINOR_MAJOR_SEVENTH`, `AUGMENTED_MAJOR_SEVENTH`. `ChordQualityResolver` (a pure `object`) maps `(thirdInterval, fifthInterval)` → `ChordQuality` and `(ChordQuality, seventhInterval)` → `SeventhQuality`, throwing on any out-of-set input.
+
+**Consequence — `MusicTheory.buildSeventhChords()` removed.** With seventh-chord types no longer in `ChordQuality`, `buildSeventhChords()` could not compile. It is removed because it is superseded by `FindChordsUseCase`, which handles all 14 scale types. `MusicTheory.buildTriads()` is retained; it only uses the 4 triad values.
+
+**Alternatives considered.**
+- *Keep `ChordQuality` at 9 values.* Would require a new parallel `SeventhQuality` enum that duplicated 5 of the 9 values. Rejected as duplication.
+- *Put all quality logic in `MusicTheory`.* `MusicTheory` operates on `Mode`-based `Scale` objects; the new engine works on pitch classes + `ScaleType`. Mixing both paradigms in one object violates SRP.
+
+**Rationale.** The chord engine needs only triad qualities as a stepping stone to seventh-quality resolution. Separating the two concepts into `ChordQuality` (triad) and `SeventhQuality` (seventh extension) reflects the two-step derivation process and makes the resolver's contract precise.
+
+---
+
+## 2026-06-05 — Phase 8.1: Guitar voicings added to Chord Finder module (supersedes APP_SPECIFICATION.md); engine follows in Phase 8.2
+
+**Decision.** The Chord Finder module gains a guitar-voicings screen: tapping any chord on the list opens a screen showing playable fretboard diagrams for that chord, respecting the user's current tuning (standard 6-string + uniform-offset transpositions in v1). This supersedes `APP_SPECIFICATION.md` "Module: Chord Finder — Scope: Initial implementation: triads, with the seventh-chord toggle as part of the first release. No voicings." The voicing data model and runtime loader are built in Phase 8.2; this decision is recorded in 8.1 as required by `Phase8-PLAN.md`.
+
+**Supersedes.** `APP_SPECIFICATION.md` "Module: Chord Finder — Scope" (no voicings). Chord Finder v1 ships triad voicings for standard tuning and uniform-offset transpositions.
+
+**Rationale.** Guitar voicings are the natural completion of a chord-finder tool for guitarists. See `Phase8-PLAN.md` "Stage 2 — Voicing Resolution" for the full scope rationale, the CAGED-rejected rationale, and the tier-1/tier-2/tier-3 tuning model.
+
+---
+
+## 2026-06-05 — Phase 8.1: Phase 2 ChordFinderService stub removed; chord logic lives in FindChordsUseCase
+
+**Decision.** The `ChordFinderService` interface, `ChordFinderServiceImpl` stub, and `ChordFinderModule` Hilt binding are deleted. `FindChordsUseCase` is now a self-contained pure class (`@Inject constructor()` with no service dependency) that implements the full chord-engine logic directly — mirroring how `MatchScalesUseCase` owns the Key Finder matching logic with no intermediate service layer. The old service name was "named Service (rather than Repository) because it performs computation, not persistence" — the same reasoning now applies directly to the use case itself.
+
+**Alternatives considered.**
+- *Keep the Service interface, implement it.* Would add an indirection layer with no testability benefit: `FindChordsUseCase` is already the test boundary, and the "service" would be a stateless delegate with identical inputs and outputs. An empty interface and its binding satisfy SRP only if they enable substitution — here they don't.
+
+**Rationale.** Consistent with Key Finder (Phase 7.1 `MatchScalesUseCase`). The use case is the domain entry point; the service layer added in Phase 2 was a placeholder for the eventual implementation, not a long-term design requirement.
+
+---
+
+## 2026-06-05 — Phase 8.2: Data-driven chord-keyed voicings; CAGED runtime engine rejected
+
+**Decision.** Guitar voicings are **data, not runtime-computed** in v1. The library is **keyed by chord identity** (`rootPitchClass + ChordQuality`) — never by key or mode — so each shape is curated once and reused across all modes that contain it. The shipped data asset (`assets/chordfinder/voicings_standard_6.json`) is produced by a throwaway offline Python generator + human curation; the runtime loader is deterministic and entirely guarded by the library validation test.
+
+**Why not CAGED.** An earlier draft used a CAGED shape-transposition engine. CAGED shapes are defined by standard tuning's open-string intervals; the planned FP-3 runtime generator (tuning-adaptive voicings) cannot use them as a foundation. Building CAGED now would be thrown away rather than extended. Data-driven voicings key naturally to chord identity, letting the tier-2 fret-shift transform and the FP-3 generator both populate the same `Voicing` model without a schema change.
+
+**Alternatives considered.**
+- *CAGED runtime engine.* Rejected — dead end for the tuning-adaptive future described in FP-3.
+- *kotlinx.serialization for the parser.* Would be cleaner, but requires an explicit new dependency (`CLAUDE.md` §8). Deferred unless the user approves. Android's built-in `org.json` parses the schema without modification.
+
+**Rationale.** Static data + a tested loader gives the same runtime output as a generator, with the correctness advantage of human review and the performance advantage of no runtime search.
+
+---
+
+## 2026-06-05 — Phase 8.2: JSON parser — `org.json` (no new dependency)
+
+**Decision.** `VoicingJsonParser` uses Android's built-in `org.json.JSONObject` / `JSONArray`. No new library dependency is introduced.
+
+**Alternatives considered.**
+- *kotlinx.serialization.* Cleaner, less boilerplate, but requires a new Gradle dependency and explicit user approval per `CLAUDE.md` §8. Not approved for Phase 8.2.
+
+**Supersession trigger.** If `kotlinx.serialization` is approved for another feature, migrate the parser at that time.
+
+---
+
+## 2026-06-05 — Phase 8.2: Tier-2 uniform-offset transform (preserve sounding pitch, omit open, filter off-neck)
+
+**Decision.** For tier-2 (uniform-offset) tunings: each standard voicing is shifted up by `abs(offset)` frets so it sounds the same pitch on the detuned instrument. Three filter rules apply:
+1. **Open voicings are excluded** — an open string's pitch is fixed by the tuning and cannot be shifted.
+2. **Off-neck voicings are excluded** — any shifted fret > `MAX_FRET` (15) is dropped.
+3. **Preserved fields** — `fingers` and `rootStringIndices` are unchanged; the same grip on the same strings sounds the correct chord.
+
+**Alternatives considered.**
+- *Preserve grip (not sounding pitch) — omit open, keep fret positions.* Would sound a different chord than selected. Rejected as musically incorrect.
+- *Include open voicings, annotate them as standard-only.* Complicates the UI without benefit; the user selected a transposed chord.
+
+**Rationale.** The user chose a chord by name and expects to hear that chord. Shifting to preserve sounding pitch is the only musically meaningful transform for a uniformly-detuned guitar.
+
+---
+
+## 2026-06-05 — Phase 8.2: Neutral position-based voicing labels (diverges from mockup)
+
+**Decision.** Voicings use a **1-based integer index** (`labelKey`) as their label, displayed as a zero-padded number (e.g. `01`, `02`). The mockup's `Open / A-shape / D-shape / E-shape` labels are **not used**.
+
+**Supersedes (partial).** `Chord_Finder___C_voicings.png` shows CAGED shape names. This entry explicitly overrides those names with position-based labels.
+
+**Rationale.** CAGED shape names are meaningful only in standard tuning. Under uniform-offset tier-2 or the future FP-3 generator, the same grip may not correspond to any CAGED shape name. Neutral labels work for all tunings without special-casing.
+
+---
+
+## 2026-06-05 — Phase 8.2: Variable string count baked in from day one
+
+**Decision.** `Voicing.marks` and `Voicing.fingers` are `List<FretMark>` and `List<Int>` of length equal to the tuning's string count. No hardcoded `STRING_COUNT = 6`. The `validated()` factory takes `openNotes: List<Int>` whose size sets the required length. `FretboardDiagram` (Phase 8.5) is specified to render any string count.
+
+**Rationale.** FP-3 adds non-6-string tunings. Baking the variable count in now means FP-3 adds data without a model change. The current v1 JSON ships 6-string data only; the model accepts 7/8.
+
+---
+
+## 2026-06-05 — Phase 8.2: `Voicing.bassDegree` seam for FP-1 (always ROOT in v1)
+
+**Decision.** `Voicing` carries `bassDegree: ChordToneRole` (ROOT / THIRD / FIFTH / OTHER). All v1 curated voicings are root-position so the value is always `ROOT`. The field exists so FP-1 (inversions / slash chords) can populate the same model without a schema change.
+
+**Rationale.** The cost of carrying one extra field is zero. Without it, adding FP-1 would require a model migration.
+
+---
+
 ## (Template for future entries)
 
 ## YYYY-MM-DD — Short title of decision

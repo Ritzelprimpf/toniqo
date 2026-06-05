@@ -124,32 +124,10 @@ object MusicTheory {
         }
     }
 
-    /**
-     * Builds the seven diatonic seventh chords of [scale], one per scale degree.
-     *
-     * Each chord extends the triad with a scale-drawn seventh. Quality is determined by the
-     * four semitone gaps between stacked thirds:
-     * - 4+3+4 → MAJOR_SEVENTH, 3+4+3 → MINOR_SEVENTH, 4+3+3 → DOMINANT_SEVENTH,
-     *   3+3+4 → HALF_DIMINISHED, 3+3+3 → DIMINISHED_SEVENTH.
-     *
-     * For C Ionian this produces `[Cmaj7, Dm7, Em7, Fmaj7, G7, Am7, Bm7♭5]`.
-     *
-     * @param scale The scale to harmonise.
-     * @return 7 [Chord]s in scale-degree order.
-     */
-    fun buildSeventhChords(scale: Scale): List<Chord> {
-        val notes = scale.notes
-        return List(DIATONIC_DEGREE_COUNT) { i ->
-            val gaps = computeGaps(notes, i, toneCount = SEVENTH_CHORD_TONE_COUNT)
-            Chord(root = notes[i], quality = classifySeventhChord(gaps))
-        }
-    }
-
     // ── Private helpers ───────────────────────────────────────────────────────────
 
     private const val DIATONIC_DEGREE_COUNT = 7
     private const val TRIAD_TONE_COUNT = 3
-    private const val SEVENTH_CHORD_TONE_COUNT = 4
 
     /**
      * Returns the absolute semitone position of [note] above C0 (C0 = 0, C#0 = 1, …).
@@ -193,14 +171,5 @@ object MusicTheory {
         gaps[0] == 3 && gaps[1] == 3 -> ChordQuality.DIMINISHED
         gaps[0] == 4 && gaps[1] == 4 -> ChordQuality.AUGMENTED
         else -> error("Unexpected triad interval pattern: ${gaps.toList()}")
-    }
-
-    private fun classifySeventhChord(gaps: IntArray): ChordQuality = when {
-        gaps[0] == 4 && gaps[1] == 3 && gaps[2] == 4 -> ChordQuality.MAJOR_SEVENTH
-        gaps[0] == 3 && gaps[1] == 4 && gaps[2] == 3 -> ChordQuality.MINOR_SEVENTH
-        gaps[0] == 4 && gaps[1] == 3 && gaps[2] == 3 -> ChordQuality.DOMINANT_SEVENTH
-        gaps[0] == 3 && gaps[1] == 3 && gaps[2] == 4 -> ChordQuality.HALF_DIMINISHED
-        gaps[0] == 3 && gaps[1] == 3 && gaps[2] == 3 -> ChordQuality.DIMINISHED_SEVENTH
-        else -> error("Unexpected seventh-chord interval pattern: ${gaps.toList()}")
     }
 }

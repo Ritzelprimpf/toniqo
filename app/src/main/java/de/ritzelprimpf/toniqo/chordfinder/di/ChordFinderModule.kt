@@ -4,24 +4,23 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import de.ritzelprimpf.toniqo.chordfinder.data.ChordFinderServiceImpl
-import de.ritzelprimpf.toniqo.chordfinder.domain.repository.ChordFinderService
+import de.ritzelprimpf.toniqo.chordfinder.data.VoicingRepositoryImpl
+import de.ritzelprimpf.toniqo.chordfinder.domain.repository.VoicingRepository
 import javax.inject.Singleton
 
 /**
  * Hilt bindings for the Chord Finder feature.
  *
- * Binds the domain [ChordFinderService] to its stateless implementation. The use case is a
- * concrete class with `@Inject constructor`, so it needs no explicit binding here.
+ * [VoicingRepositoryImpl] is a singleton so the JSON asset is loaded at most once.
+ * [de.ritzelprimpf.toniqo.chordfinder.domain.usecase.FindChordsUseCase] has an
+ * `@Inject constructor()` and needs no explicit binding.
  */
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class ChordFinderModule {
 
-    /** Binds [ChordFinderServiceImpl] as the singleton implementation of [ChordFinderService]. */
+    /** Binds [VoicingRepositoryImpl] as the singleton implementation of [VoicingRepository]. */
     @Binds
     @Singleton
-    abstract fun bindChordFinderService(
-        impl: ChordFinderServiceImpl,
-    ): ChordFinderService
+    abstract fun bindVoicingRepository(impl: VoicingRepositoryImpl): VoicingRepository
 }

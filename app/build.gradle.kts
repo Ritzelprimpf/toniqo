@@ -39,6 +39,13 @@ android {
     buildFeatures {
         compose = true
     }
+    sourceSets {
+        // Make assets available as classpath resources in JVM unit tests so the
+        // library validation test can load the shipped JSON without a Context.
+        getByName("test") {
+            resources.srcDir("src/main/assets")
+        }
+    }
 }
 
 dependencies {

@@ -220,6 +220,39 @@
     <string name="chordfinder_title">Chord Finder</string>
     <string name="chordfinder_description">Shows diatonic chords for a selected musical key and mode</string>
 
+    <!-- Chord Finder — seventh-chord symbol suffixes (used by SeventhQuality.suffixKey) -->
+    <string name="cf_suffix_maj7">maj7</string>
+    <string name="cf_suffix_m7">m7</string>
+    <string name="cf_suffix_dom7">7</string>
+    <string name="cf_suffix_m7b5">m7♭5</string>
+    <string name="cf_suffix_dim7">dim7</string>
+    <string name="cf_suffix_mmaj7">mMaj7</string>
+    <string name="cf_suffix_maj7s5">maj7♯5</string>
+
+    <!-- Chord Finder — triad quality abbreviations (uppercase; for quality label beneath chord name) -->
+    <string name="cf_quality_maj">MAJ</string>
+    <string name="cf_quality_min">MIN</string>
+    <string name="cf_quality_dim">DIM</string>
+    <string name="cf_quality_aug">AUG</string>
+
+    <!-- Chord Finder — voicing category tags (uppercase; shown on each voicing card) -->
+    <string name="cf_category_open">OPEN</string>
+    <string name="cf_category_barre">BARRE</string>
+    <string name="cf_category_shape">SHAPE</string>
+
+    <!-- Chord Finder — voicings screen labels (uppercase where required) -->
+    <!-- %d = number of voicings, e.g. "3 SHAPES" -->
+    <string name="cf_shapes_count">%d SHAPES</string>
+    <string name="cf_root_legend">ROOT</string>
+    <!-- %s = tuning display name, e.g. "E♭ STD" -->
+    <string name="cf_tuning_indicator">TUNING · %s</string>
+    <!-- "FR x–y" fret range label for a voicing card; %d %d = min and max fret -->
+    <string name="cf_fret_range">FR %d–%d</string>
+    <!-- Single-fret range label when min == max -->
+    <string name="cf_fret_single">FR %d</string>
+    <!-- Tier-3 fallback notice shown when the tuning is unsupported -->
+    <string name="cf_unsupported_tuning_notice">Voicings shown for standard tuning. Non-standard tunings will be supported in a future update.</string>
+
     <!-- Info / More section -->
     <string name="info_title">Info</string>
     <string name="info_item_help">Help</string>
