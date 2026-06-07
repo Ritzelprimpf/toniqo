@@ -62,7 +62,9 @@ fun AppNavHost(
             KeyFinderScreen()
         }
         composable(Routes.CHORD_FINDER) {
-            ChordFinderScreen()
+            ChordFinderScreen(
+                onChordSelected = { _, _ -> }, // nav wired in Phase 8.5
+            )
         }
 
         // Nested info graph — back-stack stays within this graph; bottom bar

@@ -235,6 +235,38 @@
     <string name="cf_quality_dim">DIM</string>
     <string name="cf_quality_aug">AUG</string>
 
+    <!-- Chord Finder — list screen header and controls -->
+    <!-- Kicker: all-caps with middle dot (U+00B7) separator; already uppercase -->
+    <string name="cf_kicker">CHORD FINDER · DIATONIC</string>
+    <string name="cf_cd_info">Chord Finder info</string>
+    <!-- %d = number of diatonic chords shown, e.g. "7 CHORDS" -->
+    <string name="cf_chords_count">%d CHORDS</string>
+    <string name="cf_toggle_triads">TRIADS</string>
+    <string name="cf_toggle_sevenths">7THS</string>
+    <!-- Kicker labels above root/mode dropdowns (uppercase; MonoMicro style) -->
+    <string name="cf_label_root">ROOT</string>
+    <string name="cf_label_mode">MODE</string>
+    <!-- Info dialog -->
+    <string name="cf_info_dialog_title">About Chord Finder</string>
+    <string name="cf_info_dialog_body">Shows the seven diatonic chords for any key and mode. Select a root and mode to see triads or seventh chords. Tap any row to explore voicings on your guitar.</string>
+    <string name="cf_info_dialog_ok">Got it</string>
+
+    <!-- Chord Finder — mode dropdown display labels (root-free; short form for compact dropdown) -->
+    <string name="cf_mode_label_ionian">Major · Ionian</string>
+    <string name="cf_mode_label_aeolian">Minor · Aeolian</string>
+    <string name="cf_mode_label_dorian">Dorian</string>
+    <string name="cf_mode_label_phrygian">Phrygian</string>
+    <string name="cf_mode_label_lydian">Lydian</string>
+    <string name="cf_mode_label_mixolydian">Mixolydian</string>
+    <string name="cf_mode_label_locrian">Locrian</string>
+    <string name="cf_mode_label_harmonic_minor">Harmonic Minor</string>
+    <string name="cf_mode_label_phrygian_dominant">Phrygian Dom.</string>
+    <string name="cf_mode_label_locrian_natural_6">Locrian ♮6</string>
+    <string name="cf_mode_label_melodic_minor">Melodic Minor</string>
+    <string name="cf_mode_label_lydian_dominant">Lydian Dom.</string>
+    <string name="cf_mode_label_altered">Altered</string>
+    <string name="cf_mode_label_dorian_flat_2">Dorian ♭2</string>
+
     <!-- Chord Finder — voicing category tags (uppercase; shown on each voicing card) -->
     <string name="cf_category_open">OPEN</string>
     <string name="cf_category_barre">BARRE</string>

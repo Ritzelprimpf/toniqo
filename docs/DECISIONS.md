@@ -1678,6 +1678,19 @@ These two actions are visually separated (body vs trailing button), so they don'
 
 ---
 
+## 2026-06-07 — Phase 8.4: Info affordance uses an AlertDialog with a brief explainer
+
+**Decision.** The info icon (outlined `Info`) on the Chord Finder list screen opens a Material3 `AlertDialog` with a one-paragraph body explaining the screen's purpose and a "Got it" dismiss button. No bottom sheet or custom dialog is used.
+
+**Alternatives considered.**
+- *Bottom sheet* — heavier, requires `ModalBottomSheetLayout` and scaffold coordination; disproportionate for a one-paragraph blurb.
+- *Tooltip* — not reliably accessible on touch screens; long-press invocation is non-obvious.
+- *No info affordance* — DESIGN.md §8.4 explicitly calls for an info `ⓘ` affordance; omitting it would violate the spec.
+
+**Rationale.** DESIGN.md §14 lists the info-sheet content as an "open question" to resolve. An `AlertDialog` is the lightest well-supported primitive that satisfies the requirement: accessible, dismissible, no extra scaffold plumbing. All strings live in `strings.xml` so the copy can be updated without touching code.
+
+---
+
 ## (Template for future entries)
 
 ## YYYY-MM-DD — Short title of decision

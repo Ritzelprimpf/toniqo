@@ -43,6 +43,8 @@ data class ChordFinderSelection(
     val hasUserSelection: Boolean,
 ) {
     companion object {
+        val DEFAULT_SCALE_TYPE = ScaleType.AEOLIAN
+
         /** A Aeolian, triads, no user selection — the seed fallback. */
         val DEFAULT = ChordFinderSelection(
             rootPitchClass = DEFAULT_ROOT_PITCH_CLASS,
@@ -52,6 +54,5 @@ data class ChordFinderSelection(
         )
 
         const val DEFAULT_ROOT_PITCH_CLASS = 9   // A
-        val DEFAULT_SCALE_TYPE = ScaleType.AEOLIAN
     }
 }
