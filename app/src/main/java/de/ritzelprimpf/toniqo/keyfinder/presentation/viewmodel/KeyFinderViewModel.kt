@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import de.ritzelprimpf.toniqo.common.model.Note
+import de.ritzelprimpf.toniqo.common.state.LatestKeyResultStore
 import de.ritzelprimpf.toniqo.common.util.ScaleSpeller
 import de.ritzelprimpf.toniqo.keyfinder.domain.model.KeyFinderInput
 import de.ritzelprimpf.toniqo.keyfinder.domain.repository.NoteDetector
@@ -35,6 +36,7 @@ import javax.inject.Inject
 class KeyFinderViewModel @Inject constructor(
     private val matchScales: MatchScalesUseCase,
     private val noteDetector: NoteDetector,
+    private val latestKeyResultStore: LatestKeyResultStore,
 ) : ViewModel(), KeyFinderScreenViewModel {
 
     companion object {
@@ -182,6 +184,7 @@ class KeyFinderViewModel @Inject constructor(
         val root = rootPitchClass
         val pitchClasses = noteMap.keys.toSet()
         val results = matchScales(KeyFinderInput(pitchClasses = pitchClasses, rootPitchClass = root))
+        latestKeyResultStore.publish(results.firstOrNull())
         _uiState.update {
             it.copy(
                 notes = noteMap.entries.map { (pc, name) ->

@@ -3,6 +3,7 @@ package de.ritzelprimpf.toniqo.keyfinder
 import de.ritzelprimpf.toniqo.common.model.Note
 import de.ritzelprimpf.toniqo.common.model.NoteName
 import de.ritzelprimpf.toniqo.common.model.ScaleType
+import de.ritzelprimpf.toniqo.common.state.LatestKeyResultStore
 import de.ritzelprimpf.toniqo.keyfinder.domain.usecase.MatchScalesUseCase
 import de.ritzelprimpf.toniqo.keyfinder.fakes.FakeNoteDetector
 import de.ritzelprimpf.toniqo.keyfinder.presentation.viewmodel.KeyFinderViewModel
@@ -36,6 +37,7 @@ class KeyFinderViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val useCase = MatchScalesUseCase()
+    private val latestKeyResultStore = LatestKeyResultStore()
     private lateinit var fakeDetector: FakeNoteDetector
     private lateinit var viewModel: KeyFinderViewModel
 
@@ -43,7 +45,7 @@ class KeyFinderViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         fakeDetector = FakeNoteDetector()
-        viewModel = KeyFinderViewModel(useCase, fakeDetector)
+        viewModel = KeyFinderViewModel(useCase, fakeDetector, latestKeyResultStore)
     }
 
     @After
@@ -427,5 +429,45 @@ class KeyFinderViewModelTest {
 
         // matchCount must equal results.size
         assertEquals(results.size, viewModel.uiState.value.matchCount)
+    }
+
+    // ─── LatestKeyResultStore publish (parity test) ───────────────────────────
+
+    @Test
+    fun `recompute publishes the first result to LatestKeyResultStore`() {
+        // Seeding with 3 notes triggers recompute; the top result should be published.
+        viewModel.addNoteFromPicker(note(NoteName.C))
+        viewModel.addNoteFromPicker(note(NoteName.E))
+        viewModel.addNoteFromPicker(note(NoteName.G))
+
+        val expectedTop = viewModel.uiState.value.results.firstOrNull()
+        assertEquals(expectedTop, latestKeyResultStore.topResult.value)
+    }
+
+    @Test
+    fun `clearing all notes publishes null to LatestKeyResultStore`() {
+        viewModel.addNoteFromPicker(note(NoteName.C))
+        viewModel.addNoteFromPicker(note(NoteName.E))
+        viewModel.addNoteFromPicker(note(NoteName.G))
+
+        viewModel.clearAll()
+
+        assertNull(latestKeyResultStore.topResult.value)
+    }
+
+    @Test
+    fun `store is updated on each recompute without affecting other Key Finder behaviour`() {
+        viewModel.addNoteFromPicker(note(NoteName.A))
+        viewModel.addNoteFromPicker(note(NoteName.C))
+        viewModel.addNoteFromPicker(note(NoteName.E))
+
+        val topAfterThree = latestKeyResultStore.topResult.value
+        assertFalse("Store must hold a match after 3 notes", topAfterThree == null)
+
+        viewModel.addNoteFromPicker(note(NoteName.G))
+
+        val topAfterFour = latestKeyResultStore.topResult.value
+        // Adding a note may change the top result, but the state count is still consistent
+        assertEquals(viewModel.uiState.value.results.firstOrNull(), topAfterFour)
     }
 }

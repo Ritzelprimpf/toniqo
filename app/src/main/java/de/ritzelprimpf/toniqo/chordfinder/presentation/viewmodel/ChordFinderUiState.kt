@@ -1,24 +1,32 @@
 package de.ritzelprimpf.toniqo.chordfinder.presentation.viewmodel
 
-import de.ritzelprimpf.toniqo.chordfinder.domain.model.ChordFinderResult
-import de.ritzelprimpf.toniqo.common.model.Mode
-import de.ritzelprimpf.toniqo.common.model.Note
+import de.ritzelprimpf.toniqo.chordfinder.domain.model.DegreeChord
+import de.ritzelprimpf.toniqo.chordfinder.domain.repository.ChordFinderSelection
+import de.ritzelprimpf.toniqo.common.model.ScaleType
 
 /**
- * Immutable snapshot of everything the Chord Finder screen needs to render.
+ * Immutable snapshot of everything the Chord Finder list screen needs to render.
  *
- * Defaults represent the screen's empty state: no root or mode selected, seventh toggle off, no
- * result computed.
- *
- * @property selectedRoot The chosen root note, or `null` if none has been selected yet.
- * @property selectedMode The chosen mode, or `null` if none has been selected yet.
- * @property includeSeventhChords State of the seventh-chord toggle. Defaults to `false`.
- * @property result The most recently computed chord list, or `null` if no query has been issued
- *   yet.
+ * @property rootPitchClass Currently selected root pitch class (0 = C … 11 = B).
+ * @property scaleType Currently selected scale type.
+ * @property includeSeventhChords State of the TRIADS / 7THS toggle.
+ * @property spelledRoot Conventionally-spelled root name (e.g. `"A"`, `"D♭"`) via
+ *   [de.ritzelprimpf.toniqo.common.util.ScaleSpeller]. Combined with the string resource
+ *   for [scaleType.primaryLabelKey] to produce the screen title.
+ * @property chords Ordered list of 7 diatonic chords (I … VII) for the current selection.
+ *   Empty before the initial DataStore load completes.
+ * @property isInitialLoadComplete `false` until the first DataStore emission arrives;
+ *   the screen suppresses content until this is `true`.
  */
 data class ChordFinderUiState(
-    val selectedRoot: Note? = null,
-    val selectedMode: Mode? = null,
+    val rootPitchClass: Int = ChordFinderSelection.DEFAULT_ROOT_PITCH_CLASS,
+    val scaleType: ScaleType = ChordFinderSelection.DEFAULT_SCALE_TYPE,
     val includeSeventhChords: Boolean = false,
-    val result: ChordFinderResult? = null,
-)
+    val spelledRoot: String = DEFAULT_SPELLED_ROOT,
+    val chords: List<DegreeChord> = emptyList(),
+    val isInitialLoadComplete: Boolean = false,
+) {
+    companion object {
+        private const val DEFAULT_SPELLED_ROOT = "A"
+    }
+}

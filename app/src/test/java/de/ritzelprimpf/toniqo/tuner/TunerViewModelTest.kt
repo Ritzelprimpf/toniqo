@@ -10,6 +10,7 @@ import de.ritzelprimpf.toniqo.tuner.fakes.FakeTunerPreferences
 import de.ritzelprimpf.toniqo.tuner.fakes.FakeTunerPresetRepository
 import de.ritzelprimpf.toniqo.tuner.presentation.viewmodel.TunerEvent
 import de.ritzelprimpf.toniqo.tuner.presentation.viewmodel.TunerViewModel
+import de.ritzelprimpf.toniqo.common.state.SelectedTuningStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.toList
@@ -59,7 +60,7 @@ class TunerViewModelTest {
         detector: FakePitchDetector = FakePitchDetector(emptyList()),
     ): TunerViewModel {
         val useCase = DetectTunedStringUseCase(source, detector)
-        return TunerViewModel(repository, preferences, useCase)
+        return TunerViewModel(repository, preferences, useCase, SelectedTuningStore())
     }
 
     // ── Preset loading ────────────────────────────────────────────────────────────

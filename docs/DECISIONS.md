@@ -1618,6 +1618,66 @@ These two actions are visually separated (body vs trailing button), so they don'
 
 ---
 
+## 2026-06-07 — Phase 8.3: Two app-scoped in-memory stores for cross-module state
+
+**Decision.** `LatestKeyResultStore` and `SelectedTuningStore` are `@Singleton` classes with `@Inject constructor()`, backed by `MutableStateFlow`. They are not injected via `AppModule` or `ChordFinderModule`; Hilt auto-provides any `@Singleton` with an `@Inject constructor`. Writers call `publish(…)` directly; readers hold the `StateFlow` reference.
+
+**Alternatives considered.** A shared `AppStateHolder` data class containing both states; a `@Singleton` application-scope `ViewModel`; a reactive event bus.
+
+**Rationale.** One class per concern satisfies SRP and ISP. `StateFlow` with `.value` for synchronous one-shot reads (seed algorithm) or `.collect` for reactive consumers (voicings re-lookup) covers both access patterns. No shared mediator is needed.
+
+**Supersession trigger.** If more than ~5 cross-module stores accumulate, consolidating into a typed application state container may reduce boilerplate.
+
+---
+
+## 2026-06-07 — Phase 8.3: SelectedTuningStore carries TuningWithLabel (tuning + display name)
+
+**Decision.** `SelectedTuningStore.publish(tuning, label)` and `selection: StateFlow<TuningWithLabel>` carry both the `GuitarTuning` and the human-readable `displayName` from `TunerPreset`. The `TunerViewModel` passes `preset.displayName` at each publish site.
+
+**Alternatives considered.** Store only `GuitarTuning` and derive the label in `ChordVoicingsViewModel` (e.g. from the tuning id). Store separately in a second store.
+
+**Rationale.** The tuning label is a UI concern derivable only from the `TunerPreset` at the write site. Re-deriving it from `GuitarTuning.id` in the ViewModel would couple the Chord Finder to tuner ID naming conventions. Carrying it once at publish is simpler and more correct. A second store for the label alone would create unnecessary coupling.
+
+---
+
+## 2026-06-07 — Phase 8.3: Seed algorithm reads LatestKeyResultStore.topResult.value once at init
+
+**Decision.** `ChordFinderViewModel.init` reads `latestKeyResultStore.topResult.value` synchronously (a single `.value` snapshot), not via `collect`. Once the seed decision is made, later Key Finder recomputes never override a seeded or user-owned selection.
+
+**Alternatives considered.** Collecting from `topResult` reactively so the Chord Finder always tracks the latest Key Finder result.
+
+**Rationale.** The product spec is "seed-once, then user-owned". A reactive subscription would violate this by silently changing the user's current view when they are in a different tab. The synchronous read guarantees the seed happens exactly once.
+
+---
+
+## 2026-06-07 — Phase 8.3: ChordFinderUiState uses spelledRoot + scaleType instead of a title String
+
+**Decision.** `ChordFinderUiState` exposes `spelledRoot: String` (from `ScaleSpeller.rootName()`) and `scaleType: ScaleType` rather than a pre-formatted `title: String`. The composable combines them using `stringResource(scaleType.primaryLabelKey, spelledRoot)`.
+
+**Alternatives considered.** A pre-formatted `title: String` computed in the ViewModel; injecting an Android `Context` into the ViewModel.
+
+**Rationale.** `ScaleType.primaryLabelKey` is a string-resource key (e.g. `"scale_type_label_natural_minor"`). Resolving it in the ViewModel requires a Context dependency, which violates the domain's zero-Android-dependency rule. Delegating string resource formatting to the composable is the standard Compose pattern.
+
+---
+
+## 2026-06-07 — Phase 8.3: ChordVoicingsViewModel is not @HiltViewModel in Phase 8.3
+
+**Decision.** `ChordVoicingsViewModel` extends `ViewModel()` with explicit constructor parameters (`ChordKey`, `chordName`, `noteNames`, `VoicingRepository`, `SelectedTuningStore`) but carries no `@HiltViewModel` or `@Inject` annotation. Phase 8.5 will convert it to `@HiltViewModel` + `SavedStateHandle` for navigation-arg extraction.
+
+**Rationale.** Phase 8.3 has no UI or navigation routes. Adding `@HiltViewModel` now would require `SavedStateHandle` wiring that has no callsite until 8.5. The plain constructor form is unit-testable without Hilt and is a trivial upgrade in Phase 8.5.
+
+---
+
+## 2026-06-07 — Phase 8.3: Unsupported tier falls back to a second Standard lookup
+
+**Decision.** When `VoicingRepository.lookup(chord, tuning)` returns `VoicingLookupResult.Unsupported`, `ChordVoicingsViewModel` performs a second lookup against `GuitarTuning.STANDARD_6` and surfaces those voicings with `tier = UNSUPPORTED`. The UI (Phase 8.5) renders them with a "shown for standard tuning" indicator.
+
+**Alternatives considered.** Expose an empty voicings list for unsupported tunings; combine the fallback lookup inside the repository.
+
+**Rationale.** An empty diagram screen is a worse UX than diagrams with a disclaimer, especially for users with drop tunings who can manually compensate. Keeping the fallback in the ViewModel (not the repository) preserves SRP — the repository reports what it knows; the ViewModel decides the fallback policy.
+
+---
+
 ## (Template for future entries)
 
 ## YYYY-MM-DD — Short title of decision

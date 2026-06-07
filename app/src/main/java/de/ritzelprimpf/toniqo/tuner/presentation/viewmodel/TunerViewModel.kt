@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import de.ritzelprimpf.toniqo.common.model.Note
+import de.ritzelprimpf.toniqo.common.state.SelectedTuningStore
 import de.ritzelprimpf.toniqo.tuner.data.TunerPreferences
+import de.ritzelprimpf.toniqo.tuner.data.TuningPresetMapper
 import de.ritzelprimpf.toniqo.tuner.domain.model.TunerInput
 import de.ritzelprimpf.toniqo.tuner.domain.model.TunerMode
 import de.ritzelprimpf.toniqo.tuner.domain.model.TunerPreset
@@ -60,6 +62,7 @@ class TunerViewModel @Inject constructor(
     private val presetRepository: TunerPresetRepository,
     private val preferences: TunerPreferences,
     private val detectTunedStringUseCase: DetectTunedStringUseCase,
+    private val selectedTuningStore: SelectedTuningStore,
 ) : ViewModel(), TunerScreenViewModel {
 
     // ── Internal mutable state ────────────────────────────────────────────────────
@@ -132,6 +135,7 @@ class TunerViewModel @Inject constructor(
 
             if (resolved != null) {
                 tunerInput.value = buildInput(TunerMode.PRESET, resolved.notes[0], refHz)
+                selectedTuningStore.publish(TuningPresetMapper.map(resolved), resolved.displayName)
             }
         }
 
@@ -183,6 +187,7 @@ class TunerViewModel @Inject constructor(
                 )
             }
             tunerInput.value = buildInput(TunerMode.PRESET, targetNote, refHz)
+            selectedTuningStore.publish(TuningPresetMapper.map(preset), preset.displayName)
             viewModelScope.launch { preferences.setLastUsedPresetId(presetId) }
         }
     }
