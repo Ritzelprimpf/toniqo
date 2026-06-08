@@ -1691,6 +1691,50 @@ These two actions are visually separated (body vs trailing button), so they don'
 
 ---
 
+## 2026-06-08 — Phase 8.5: ChordVoicingsViewModel converted to @HiltViewModel + SavedStateHandle
+
+**Decision.** `ChordVoicingsViewModel` is now `@HiltViewModel @Inject constructor(savedStateHandle, voicingRepository, selectedTuningStore)`. Navigation arguments `rootPc` (Int), `quality` (String, ChordQuality enum name), and `chordName` (String, URL-encoded) are extracted from `SavedStateHandle`. Note names are derived internally from `ChordKey` using `ChordQuality.intervalsFromRoot` and a chromatic name array — they are no longer passed as a navigation argument.
+
+**Alternatives considered.**
+- *Keep plain constructor + factory ViewModel* — requires a `ViewModelProvider.Factory` and coupling in the navigation composable.
+- *Pass note names as a nav arg* — requires URL-encoding a comma-separated list; fragile and unnecessary since the information is fully derivable from `ChordKey`.
+
+**Rationale.** `SavedStateHandle` is the idiomatic pattern for extracting nav args in Hilt ViewModels. Deriving note names in the ViewModel keeps navigation args minimal and avoids double-encoding risks. This supersedes the Phase 8.3 decision not to use `@HiltViewModel`.
+
+---
+
+## 2026-06-08 — Phase 8.5: FretboardRenderModel is a presentation-layer type in chordfinder/presentation/ui
+
+**Decision.** `FretboardRenderModel` and its `Voicing.toRenderModel()` extension live in `chordfinder/presentation/ui/`. `FretboardDiagram` lives in `ui/components/` and imports the model from the feature package. No shared `ui/model/` package is introduced.
+
+**Alternatives considered.**
+- *Move the model to `ui/components/`* — would make it a shared UI type detached from its only consumer. The mapper extension would also move there, fragmenting chordfinder presentation logic.
+- *Create a new shared `ui/model/` package* — premature; no other feature currently needs a `FretboardRenderModel`.
+
+**Rationale.** `FretboardRenderModel` is chordfinder-specific. In a single-module app, placing it with its consumer (chordfinder) is simpler than inventing a shared layer. If a second feature ever needs fretboard rendering, the model can be promoted at that point.
+
+---
+
+## 2026-06-08 — Phase 8.5: CAGED shape names omitted from voicings screen
+
+**Decision.** Voicing cards show fret-range labels (e.g. "FR 3–7"), technique badges (OPEN / BARRE / SHAPE), and fretboard diagrams. CAGED shape names (E-shape, A-shape, etc.) are never shown.
+
+**Alternatives considered.** Showing CAGED names as subtitles or tooltips on each card; toggling them on/off.
+
+**Rationale.** CAGED is a teaching framework, not a universal standard. Many guitarists do not learn via CAGED; displaying those names would confuse as many users as it would help. The fret-range label and technique badge carry all the information a guitarist needs to locate and play the chord. CAGED support can be added as a user preference in a future release.
+
+---
+
+## 2026-06-08 — Phase 8.5: Tier-3 unsupported tuning notice rendered as an inline card above the grid
+
+**Decision.** When `tier == UNSUPPORTED`, a quiet one-line notice box (BgElev1 background, Caption text, Radius.Md) appears in the header section above the voicing grid. It uses the existing `cf_unsupported_tuning_notice` string. No modal, no snackbar, no empty state.
+
+**Alternatives considered.** Snackbar (dismissed too quickly; user may miss it); modal dialog (too disruptive for a non-blocking notice); empty state with illustration (misleading — voicings are shown).
+
+**Rationale.** An inline notice is persistent (stays visible while the user scrolls), non-blocking (doesn't require dismissal), and contextual (right above the diagrams it qualifies). Consistent with the app's flat, text-driven visual language.
+
+---
+
 ## (Template for future entries)
 
 ## YYYY-MM-DD — Short title of decision

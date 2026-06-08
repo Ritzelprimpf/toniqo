@@ -4,10 +4,13 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
+import androidx.navigation.navArgument
 import de.ritzelprimpf.toniqo.chordfinder.presentation.ui.ChordFinderScreen
+import de.ritzelprimpf.toniqo.chordfinder.presentation.ui.ChordVoicingsScreen
 import de.ritzelprimpf.toniqo.keyfinder.presentation.ui.KeyFinderScreen
 import de.ritzelprimpf.toniqo.metronome.presentation.ui.MetronomeScreen
 import de.ritzelprimpf.toniqo.tuner.presentation.ui.TunerScreen
@@ -23,10 +26,11 @@ import de.ritzelprimpf.toniqo.ui.info.RateAndShareScreen
  * Navigation structure:
  * ```
  * AppNavHost
- * ├── tuner_route        → TunerScreen
- * ├── metronome_route    → MetronomeScreen    (placeholder)
- * ├── keyfinder_route    → KeyFinderScreen    (placeholder)
- * ├── chordfinder_route  → ChordFinderScreen  (placeholder)
+ * ├── tuner_route                → TunerScreen
+ * ├── metronome_route            → MetronomeScreen
+ * ├── keyfinder_route            → KeyFinderScreen
+ * ├── chordfinder_route          → ChordFinderScreen
+ * ├── chordfinder/voicings/…     → ChordVoicingsScreen
  * └── info (nested graph)
  *     ├── info_home_route → InfoHomeScreen
  *     ├── help_route      → HelpScreen
@@ -37,6 +41,8 @@ import de.ritzelprimpf.toniqo.ui.info.RateAndShareScreen
  *
  * The bottom bar remains visible during Info sub-screen navigation because the
  * nested graph lives inside the Scaffold's content slot (not overlaid on top).
+ * The Chord Voicings screen is also inside the content slot, so the bottom bar
+ * remains visible there as well.
  *
  * @param navController Hoisted nav controller from [MainScreen].
  * @param snackbarHostState Shared snackbar state from the outer Scaffold.
@@ -63,7 +69,27 @@ fun AppNavHost(
         }
         composable(Routes.CHORD_FINDER) {
             ChordFinderScreen(
-                onChordSelected = { _, _ -> }, // nav wired in Phase 8.5
+                onChordSelected = { chordKey, chordName ->
+                    navController.navigate(
+                        Routes.chordVoicingsRoute(
+                            rootPc    = chordKey.rootPitchClass,
+                            quality   = chordKey.quality.name,
+                            chordName = chordName,
+                        ),
+                    )
+                },
+            )
+        }
+        composable(
+            route     = Routes.CHORD_VOICINGS,
+            arguments = listOf(
+                navArgument(Routes.ARG_ROOT_PC)    { type = NavType.IntType },
+                navArgument(Routes.ARG_QUALITY)    { type = NavType.StringType },
+                navArgument(Routes.ARG_CHORD_NAME) { type = NavType.StringType },
+            ),
+        ) {
+            ChordVoicingsScreen(
+                onBack = { navController.popBackStack() },
             )
         }
 

@@ -262,6 +262,53 @@ The shipped design is `icon-label`. Earlier exploration sketches (icon-only, seg
 ### 6.8 Toggles and segmented controls
 - Pill track padding 3dp. Active segment: radius 999, BG `bg.elev3`, FG `fg.primary`, border `line` 1dp. Inactive FG `fg.tertiary`.
 
+### 6.9 Fretboard Diagram
+
+Stateless `Canvas` composable. Accepts a `FretboardRenderModel`; never a raw domain `Voicing`.
+
+#### Anatomy
+
+```
+[ pos-label area  ][ side-pad ][ --- string 0 --- ... --- string N-1 --- ][ side-pad ]
+                              ^                                           ^
+                           gridLeft                                    gridRight
+```
+
+- **Marker area** (top band, above fret row 1): 20dp height; ○ / × symbols drawn here.
+- **Fret grid**: `fretWindow × fretSpacing` (5 rows × 26dp = 130dp).
+- **Position-label area**: 20dp wide strip left of the grid; holds `"Xfr"` text (MonoMicro 9sp, `fg.tertiary`) when the voicing is not at the nut. Empty when nut is shown.
+- **Side padding**: 10dp on each side of the grid (inside the total width).
+- **String spacing**: 18dp between adjacent strings.
+
+#### Total dimensions
+
+| String count | Width  | Height  |
+|--------------|--------|---------|
+| 6            | 130 dp | 150 dp  |
+| 7            | 148 dp | 150 dp  |
+| 8            | 166 dp | 150 dp  |
+
+Width formula: `posLabelWidth(20) + sidePad(10) + (stringCount−1)×stringSpacing(18) + sidePad(10)`
+
+#### Visual layers (bottom → top)
+
+1. **String lines** — `line` colour, 1dp stroke, full height.
+2. **Fret lines** — `line` colour, 1dp stroke, full width. Row 0 is the nut (4dp, `fg.secondary`, round caps) when `showNut=true`; otherwise a regular 1dp line.
+3. **Position label** — MonoMicro 9sp `fg.tertiary`, centred in the pos-label area at row 1 centre-height. Omitted when `showNut=true`.
+4. **Barre** — Rounded rect (`r.pill` corner radius), `bg.elev3` fill, spanning `fromString`..`toString` at the barre fret's centre height. Drawn before dots so dots appear on top.
+5. **Finger dots** — Filled circles, radius 9dp.
+   - Root strings: fill `signal.mint`.
+   - Other strings: fill `bg.elev3`.
+6. **Finger numerals** — MonoMicro 9sp inside each dot; `bg.base` text on mint, `fg.primary` text on neutral. Omitted when `finger == null`.
+7. **Open (○) markers** — Circle outline, radius 7dp, 1.5dp stroke, `fg.secondary`, drawn in the marker area.
+8. **Muted (×) markers** — Two crossing lines, ±65% of marker radius, 1.5dp stroke, `fg.secondary`, `StrokeCap.Round`, drawn in the marker area.
+
+#### Notes
+
+- CAGED shape names **must not appear** anywhere on the voicings screen or in diagram labels. This is a hard product decision (Phase 8.5).
+- The component is entirely stateless and carries no animation. Tapping a diagram card navigates to an audio-playback future feature (FP-4); do not add tap handling now.
+- For Compose previews and tests, construct `Voicing` directly via its data-class constructor (bypassing `Voicing.validated`) to avoid chord-validation setup.
+
 ---
 
 ## 7. Iconography

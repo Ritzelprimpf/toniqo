@@ -1,5 +1,6 @@
 package de.ritzelprimpf.toniqo.chordfinder
 
+import androidx.lifecycle.MutableSavedStateHandle
 import de.ritzelprimpf.toniqo.chordfinder.domain.model.ChordKey
 import de.ritzelprimpf.toniqo.chordfinder.domain.repository.VoicingLookupResult
 import de.ritzelprimpf.toniqo.chordfinder.fakes.FakeVoicingRepository
@@ -11,6 +12,7 @@ import de.ritzelprimpf.toniqo.common.model.GuitarTuning
 import de.ritzelprimpf.toniqo.common.model.Note
 import de.ritzelprimpf.toniqo.common.model.NoteName
 import de.ritzelprimpf.toniqo.common.state.SelectedTuningStore
+import de.ritzelprimpf.toniqo.ui.navigation.Routes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -34,9 +36,8 @@ class ChordVoicingsViewModelTest {
     @Before fun setUp() { Dispatchers.setMain(testDispatcher) }
     @After  fun tearDown() { Dispatchers.resetMain() }
 
-    private val amKey = ChordKey(rootPitchClass = 9, quality = ChordQuality.MINOR)
-    private val amNoteNames = listOf("A", "C", "E")
-    private val amName = "Am"
+    private val amKey    = ChordKey(rootPitchClass = 9, quality = ChordQuality.MINOR)
+    private val amName   = "Am"
 
     // E♭ standard: each string one semitone below STANDARD_6
     private val ebStandard = GuitarTuning(
@@ -55,7 +56,7 @@ class ChordVoicingsViewModelTest {
     private val dropD = GuitarTuning(
         id = "drop_d",
         openNotes = listOf(
-            Note(NoteName.D, 2),   // tuned down 2 semitones
+            Note(NoteName.D, 2),
             Note(NoteName.A, 2),
             Note(NoteName.D, 3),
             Note(NoteName.G, 3),
@@ -65,9 +66,21 @@ class ChordVoicingsViewModelTest {
     )
 
     private fun makeViewModel(
+        key: ChordKey = amKey,
+        chordName: String = amName,
         repo: FakeVoicingRepository = FakeVoicingRepository(),
         store: SelectedTuningStore = SelectedTuningStore(),
-    ) = ChordVoicingsViewModel(amKey, amName, amNoteNames, repo, store)
+    ) = ChordVoicingsViewModel(
+        savedStateHandle = MutableSavedStateHandle(
+            mapOf(
+                Routes.ARG_ROOT_PC    to key.rootPitchClass,
+                Routes.ARG_QUALITY    to key.quality.name,
+                Routes.ARG_CHORD_NAME to chordName,
+            ),
+        ),
+        voicingRepository   = repo,
+        selectedTuningStore = store,
+    )
 
     // ── Standard tier ─────────────────────────────────────────────────────────────
 
@@ -140,28 +153,26 @@ class ChordVoicingsViewModelTest {
         assertFalse(state.isLoading)
     }
 
-    // ── Note names and root highlighting ─────────────────────────────────────────
+    // ── Note names (now internally derived from ChordKey) ────────────────────────
 
     @Test
-    fun `rootNoteName is the first entry of chordNoteNames`() = runTest {
-        val vm = makeViewModel()
-        // Initial state is set synchronously from constructor
+    fun `rootNoteName is the first note derived from rootPitchClass and quality`() = runTest {
+        val vm = makeViewModel() // amKey = rootPc 9 = "A"
         assertEquals("A", vm.uiState.value.rootNoteName)
     }
 
     @Test
-    fun `noteNames contain all chord tones from the provided list`() = runTest {
+    fun `noteNames are derived from rootPitchClass and quality intervals`() = runTest {
         val vm = makeViewModel()
         advanceUntilIdle()
-
-        assertEquals(amNoteNames, vm.uiState.value.noteNames)
+        // Am = rootPc 9, MINOR intervals [0,3,7] → A, C, E
+        assertEquals(listOf("A", "C", "E"), vm.uiState.value.noteNames)
     }
 
     @Test
-    fun `chordName is preserved from constructor arg`() = runTest {
+    fun `chordName is preserved from nav arg`() = runTest {
         val vm = makeViewModel()
         advanceUntilIdle()
-
         assertEquals(amName, vm.uiState.value.chordName)
     }
 

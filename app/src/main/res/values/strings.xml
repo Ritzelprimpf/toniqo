@@ -273,6 +273,12 @@
     <string name="cf_category_shape">SHAPE</string>
 
     <!-- Chord Finder — voicings screen labels (uppercase where required) -->
+    <!-- Kicker for the voicings detail screen; %s = chord name (uppercased by composable) -->
+    <string name="cf_voicings_kicker">VOICINGS · %s</string>
+    <!-- Content description for the back arrow on the voicings screen -->
+    <string name="cf_cd_back">Back</string>
+    <!-- Offset notice shown on UNIFORM_OFFSET tier; %s = e.g. "+1 st" or "-2 st" -->
+    <string name="cf_offset_note">Diagrams shifted %s to match your tuning.</string>
     <!-- %d = number of voicings, e.g. "3 SHAPES" -->
     <string name="cf_shapes_count">%d SHAPES</string>
     <string name="cf_root_legend">ROOT</string>
