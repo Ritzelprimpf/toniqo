@@ -1,6 +1,5 @@
 package de.ritzelprimpf.toniqo.ui.navigation
 
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -17,8 +16,6 @@ import de.ritzelprimpf.toniqo.tuner.presentation.ui.TunerScreen
 import de.ritzelprimpf.toniqo.ui.info.HelpScreen
 import de.ritzelprimpf.toniqo.ui.info.InfoHomeScreen
 import de.ritzelprimpf.toniqo.ui.info.LicensesScreen
-import de.ritzelprimpf.toniqo.ui.info.PrivacyPolicyScreen
-import de.ritzelprimpf.toniqo.ui.info.RateAndShareScreen
 
 /**
  * Top-level nav host wiring all five module destinations and the nested Info graph.
@@ -34,9 +31,7 @@ import de.ritzelprimpf.toniqo.ui.info.RateAndShareScreen
  * └── info (nested graph)
  *     ├── info_home_route → InfoHomeScreen
  *     ├── help_route      → HelpScreen
- *     ├── privacy_route   → PrivacyPolicyScreen
- *     ├── licenses_route  → LicensesScreen
- *     └── rate_share_route→ RateAndShareScreen
+ *     └── licenses_route  → LicensesScreen
  * ```
  *
  * The bottom bar remains visible during Info sub-screen navigation because the
@@ -45,12 +40,10 @@ import de.ritzelprimpf.toniqo.ui.info.RateAndShareScreen
  * remains visible there as well.
  *
  * @param navController Hoisted nav controller from [MainScreen].
- * @param snackbarHostState Shared snackbar state from the outer Scaffold.
  */
 @Composable
 fun AppNavHost(
     navController: NavHostController,
-    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
     NavHost(
@@ -110,19 +103,8 @@ fun AppNavHost(
                     onBack = { navController.popBackStack() },
                 )
             }
-            composable(Routes.PRIVACY) {
-                PrivacyPolicyScreen(
-                    onBack = { navController.popBackStack() },
-                )
-            }
             composable(Routes.LICENSES) {
                 LicensesScreen(
-                    onBack = { navController.popBackStack() },
-                )
-            }
-            composable(Routes.RATE_AND_SHARE) {
-                RateAndShareScreen(
-                    snackbarHostState = snackbarHostState,
                     onBack = { navController.popBackStack() },
                 )
             }

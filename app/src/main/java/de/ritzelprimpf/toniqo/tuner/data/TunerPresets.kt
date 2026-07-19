@@ -26,6 +26,7 @@ internal object TunerPresets {
         preset("six_string_standard_eb", "Eb Standard (Half Step Down)",      6, STANDARD, "Eb2 Ab2 Db3 Gb3 Bb3 Eb4"),
         preset("six_string_standard_d",  "D Standard (Whole Step Down)",      6, STANDARD, "D2 G2 C3 F3 A3 D4"),
         preset("six_string_standard_cs", "C# Standard",                       6, STANDARD, "C#2 F#2 B2 E3 G#3 C#4"),
+        preset("six_string_standard_c",  "C Standard",                        6, STANDARD, "C2 F2 A#2 D#3 G3 C4"),
 
         // ── 6-string Open ────────────────────────────────────────────────────────
         preset("six_string_open_d",      "Open D",                            6, OPEN,     "D2 A2 D3 F#3 A3 D4"),

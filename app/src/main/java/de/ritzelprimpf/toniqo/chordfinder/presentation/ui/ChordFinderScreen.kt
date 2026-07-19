@@ -25,7 +25,6 @@ import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenu
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
@@ -129,6 +128,7 @@ fun ChordFinderScreen(
  * Accepts the full UI state and lambdas for every user intent so it is Hilt-free and
  * directly testable with Compose UI tests.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ChordFinderContent(
     state: ChordFinderUiState,
@@ -154,7 +154,9 @@ internal fun ChordFinderContent(
             .fillMaxSize()
             .background(Tq.Color.BgBase),
         contentPadding = PaddingValues(
-            horizontal = Tq.Sp.s5,
+            start = Tq.Sp.s5,
+            top = Tq.Sp.s0,
+            end = Tq.Sp.s5,
             bottom = Tq.Sp.s12,
         ),
     ) {

@@ -62,6 +62,16 @@ class TunerPresetsTest {
     }
 
     @Test
+    fun `C Standard 6-string is in the catalog`() {
+        val preset = TunerPresets.all.first { it.id == "six_string_standard_c" }
+        assertEquals("C Standard", preset.displayName)
+        assertEquals(6, preset.stringCount)
+        assertEquals(TunerCategory.STANDARD, preset.category)
+        // Lowest string should be C2, 4 half steps below E Standard's low E2.
+        assertEquals("C2", preset.notes.first().displayName())
+    }
+
+    @Test
     fun `Drop C 8-string preset is present and parses correctly`() {
         val preset = TunerPresets.all.first { it.id == "eight_string_drop_c" }
         assertEquals(8, preset.notes.size)

@@ -293,35 +293,23 @@
 
     <!-- Info / More section -->
     <string name="info_title">Info</string>
+    <string name="info_cd_back">Back</string>
     <string name="info_item_help">Help</string>
-    <string name="info_item_privacy">Privacy Policy</string>
     <string name="info_item_licenses">Open Source Licenses</string>
-    <string name="info_item_rate">Rate the App</string>
-    <string name="info_item_share">Share the App</string>
+    <string name="info_item_feedback">Feedback</string>
+    <string name="info_item_support">Support the Project</string>
 
     <!-- Help screen -->
     <string name="help_title">Help</string>
     <string name="help_section_tuner">Guitar Tuner</string>
-    <string name="help_placeholder_tuner">Help for the Guitar Tuner will be added here.</string>
+    <string name="help_placeholder_tuner">Play a string and the needle shows how far off it is — tilted left means flat, right means sharp, centered and lit up means in tune. Pick a tuning from the preset picker (6, 7, or 8 string, standard, dropped, or open) and the tuner steps through your strings from lowest to highest automatically. Tap any string pill to jump to it directly. Once every string is in tune, the tuner switches to chromatic mode so you can fine-tune any string in any order. Needs microphone access to listen to your guitar.</string>
     <string name="help_section_metronome">Metronome</string>
-    <string name="help_placeholder_metronome">Help for the Metronome will be added here.</string>
+    <string name="help_placeholder_metronome">Set a tempo from 1 to 300 BPM by typing a number, dragging the slider, or using the +/- buttons — or tap the tempo button a few times in rhythm and let the app work out your BPM. Choose a time signature and an optional subdivision to add quieter clicks between the main beats. The first beat of every bar is accented so you always know where the downbeat is, and the beat tiles light up in time. Start and stop anytime; your settings are remembered for next time.</string>
     <string name="help_section_keyfinder">Key Finder</string>
-    <string name="help_placeholder_keyfinder">Help for the Key Finder will be added here.</string>
+    <string name="help_placeholder_keyfinder">Add the notes you are playing or hearing — from a riff, a chord, or a whole progression — and Key Finder ranks the scales and modes that fit best. If you know the tonic, the note that feels like home, mark it and matches built on that root are ranked first. Full matches, where every note fits, are flagged so the best candidates stand out.</string>
     <string name="help_section_chordfinder">Chord Finder</string>
-    <string name="help_placeholder_chordfinder">Help for the Chord Finder will be added here.</string>
-
-    <!-- Privacy Policy screen -->
-    <string name="privacy_title">Privacy Policy</string>
-    <string name="privacy_placeholder">Privacy policy content will be added here.</string>
+    <string name="help_placeholder_chordfinder">Pick a root note and a mode, and Chord Finder lays out the seven chords that naturally belong to that key, in order from I to vii°. Switch on the seventh-chord toggle to see richer voicings like Cmaj7 or G7 instead of plain triads. Tap any chord to see fingerings on a fretboard diagram.</string>
 
     <!-- Licenses screen -->
     <string name="licenses_title">Open Source Licenses</string>
-    <string name="licenses_placeholder">Open source license attributions will be listed here.</string>
-
-    <!-- Rate &amp; Share screen -->
-    <string name="rate_share_title">Rate &amp; Share</string>
-    <string name="rate_app_label">Rate the App</string>
-    <string name="share_app_label">Share the App</string>
-    <string name="snackbar_rate">Will open Google Play</string>
-    <string name="snackbar_share">Will open share sheet</string>
 </resources>

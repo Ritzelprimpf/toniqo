@@ -1735,6 +1735,22 @@ These two actions are visually separated (body vs trailing button), so they don'
 
 ---
 
+## 2026-07-19 — Info/More menu scope reduced to Help, Licenses, Feedback, Support the Project
+
+**Decision.** For the initial release, the Info/More menu contains four items: Help, Open Source Licenses, Feedback, and "Support the Project". Feedback and Support the Project are both external links (GitHub Issues and GitHub Sponsors respectively) opened via `Intent.ACTION_VIEW` directly, with no dedicated in-app screen. The Privacy Policy and Rate & Share screens, routes, and strings are deleted from the codebase rather than hidden.
+
+**Alternatives considered.**
+- *Keep Privacy Policy/Rate & Share code but hide from menu.* Rejected by explicit user choice — avoids unused code sitting around per CLAUDE.md §10; can be re-added when actually needed (e.g. ahead of a Play Store submission, which likely requires a Privacy Policy).
+- *Give "Support the Project" its own screen.* Rejected — an external link needs no intermediate screen, and skips re-introducing the "no back button" problem being fixed elsewhere in this same session.
+
+**Rationale.** The user wants a minimal, non-pushy way for people to say thanks (GitHub Sponsors) without the tone of "give me money," and doesn't want unfinished/unneeded menu items shipped. "Support the Project" was chosen as the label over "Say Thanks" or "GitHub Sponsors" (user's pick from options).
+
+**Known gap.** `GITHUB_SPONSORS_URL` in `InfoHomeScreen.kt` is a placeholder (`https://github.com/sponsors/REPLACE_ME`) — must be replaced with the real URL before shipping. `GITHUB_ISSUES_URL` is already set to the real repo (`https://github.com/Ritzelprimpf/toniqo/issues`).
+
+**Supersession trigger.** Play Store submission will likely require a Privacy Policy again — re-add that screen at that point rather than un-deleting old code verbatim, since requirements may have changed.
+
+---
+
 ## (Template for future entries)
 
 ## YYYY-MM-DD — Short title of decision

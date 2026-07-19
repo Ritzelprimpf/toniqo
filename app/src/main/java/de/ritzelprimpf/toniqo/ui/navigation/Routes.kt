@@ -32,7 +32,5 @@ object Routes {
     const val INFO_GRAPH    = "info"
     const val INFO_HOME     = "info_home"
     const val HELP          = "help"
-    const val PRIVACY       = "privacy"
     const val LICENSES      = "licenses"
-    const val RATE_AND_SHARE = "rate_share"
 }

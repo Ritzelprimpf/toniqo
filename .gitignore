@@ -1,5 +1,6 @@
 *.iml
 .gradle
+.kotlin
 /local.properties
 /.idea/caches
 /.idea/libraries
@@ -8,8 +9,19 @@
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
 .DS_Store
+Thumbs.db
 /build
 /captures
 .externalNativeBuild
 .cxx
-local.properties
+
+# Signing credentials — none in use yet, ignored defensively in case a
+# release keystore is added later.
+*.jks
+*.keystore
+key.properties
+keystore.properties
+
+# Claude Code local session data (settings, machine paths, working memory) —
+# not meant for publishing.
+.claude/

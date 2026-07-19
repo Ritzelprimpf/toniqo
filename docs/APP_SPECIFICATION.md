@@ -12,11 +12,12 @@ Reference this document when implementing any module to understand expected beha
 
 - The app always has exactly one module active at a time.
 - Module switching is available from a persistent navigation element. The specific mechanism (bottom navigation bar vs. drawer) is decided in Phase 3 and recorded in `DECISIONS.md`.
-- An **Info / About section** is accessible from the navigation. It contains:
-  - App version info
+- An **Info / About section** is accessible from the navigation. Initial scope (see `DECISIONS.md`, 2026-07-19) contains:
   - Help articles (per module)
-  - Legal documents (privacy policy, licenses)
-  - Links to rate the app and share the app
+  - Open Source Licenses
+  - Feedback (GitHub Issues link)
+  - Support the Project (GitHub Sponsors link)
+  - Privacy Policy and Rate/Share the App are deferred — not in the initial menu.
 
 ---
 
@@ -37,6 +38,7 @@ The tuner ships with the following presets, organized by string count and catego
 - Eb Standard (Half Step Down): Eb2, Ab2, Db3, Gb3, Bb3, Eb4
 - D Standard (Whole Step Down): D2, G2, C3, F3, A3, D4
 - C# Standard: C#2, F#2, B2, E3, G#3, C#4
+- C Standard: C2, F2, A#2, D#3, G3, C4
 
 **Open**
 - Open D: D2, A2, D3, F#3, A3, D4
@@ -319,9 +321,15 @@ Given a musical mode (key), shows all diatonic chords that naturally belong to i
 
 ## Info / About Section
 
-- **App version** (pulled from build config)
+Initial scope (see `DECISIONS.md`, 2026-07-19):
+
 - **Help** — per-module help text explaining how to use each tool
-- **Privacy Policy** — static text or webview link
 - **Open Source Licenses** — third-party library attribution
+- **Feedback** — opens the GitHub Issues page (`https://github.com/Ritzelprimpf/toniqo/issues`) in an external browser
+- **Support the Project** — opens the GitHub Sponsors page in an external browser
+
+Deferred, not currently in the menu:
+
+- **Privacy Policy** — static text or webview link
 - **Rate the App** — links to Google Play listing
 - **Share the App** — Android share intent

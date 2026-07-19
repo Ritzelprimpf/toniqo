@@ -10,6 +10,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -38,7 +42,15 @@ fun HelpScreen(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = Tq.Sp.s5),
     ) {
-        Spacer(modifier = Modifier.height(Tq.Sp.s5))
+        Spacer(modifier = Modifier.height(Tq.Sp.s2))
+
+        IconButton(onClick = onBack) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                contentDescription = stringResource(R.string.info_cd_back),
+                tint = Tq.Color.FgSecondary,
+            )
+        }
 
         Text(
             text = stringResource(R.string.help_title),

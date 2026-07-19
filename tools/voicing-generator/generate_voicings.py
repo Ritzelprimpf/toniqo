@@ -11,6 +11,10 @@ Relationship to FP-3 (runtime tuning-adaptive generator):
     - candidate_frets_for_string()   — tuning-agnostic note search per string
     - the cartesian-product enumeration in generate_voicings()
     - the invariant filter (passes_filters + self_check_voicing)
+    - canonicalize_voicing()         — collapses free-string open/mute noise;
+                                       tuning-agnostic, keep as-is
+    - is_dominated() / prune_dominated() — drops strict-subset voicings;
+                                       tuning-agnostic, keep as-is
   The parts that are THROWAWAY (replaced by a smarter runtime engine):
     - the offline CLI wrapper (main / argparse)
     - assign_fingers_and_barre()     — rough heuristic; FP-3 needs a proper
@@ -21,11 +25,25 @@ Relationship to FP-3 (runtime tuning-adaptive generator):
 # How to curate:
 #
 # 1. Run the script (see README.md) to produce voicings_standard_6.json.
+#    The generator already removes two kinds of automatic clutter before
+#    you see the file:
+#      - canonicalize_voicing(): if a string can validly ring open, it does
+#        — so you will never see x32010 next to x32013 / x3201x / x32x13 as
+#        separate entries; they collapse to the one fullest voicing.
+#      - prune_dominated(): a voicing that is identical to another except it
+#        mutes one or more strings the other sounds is dropped in favour of
+#        the fuller one.
+#    What's left after that is genuinely different fingerings — e.g. the
+#    same chord fretted starting from a different string (a D-string vs a
+#    B-string alternate) or a different neck position — which is exactly
+#    the kind of choice curation is for.
 # 2. Open the file; remove any voicing that is awkward or unplayable:
 #      - Shapes that require more than 4 distinct finger positions (including barre)
 #      - Finger collisions (two fingers at the same fret on adjacent strings
 #        that can't both be pressed cleanly)
-#      - Duplicate grips that are enharmonically the same as another entry
+#      - Alternate fingerings you find musically redundant even though they
+#        are not structurally dominated (e.g. two similarly-awkward mid-neck
+#        options at the same position — keep whichever plays better)
 #      - Inversions accidentally included (inspect: does the lowest X show
 #        the right root?)
 #      - Any shape you personally find unlikely in a real arrangement
@@ -243,6 +261,82 @@ def self_check_voicing(
     return (open_pcs[sounded[0]] + frets[sounded[0]]) % 12 == root_pc
 
 
+
+def canonicalize_voicing(
+    combo: tuple,
+    open_pcs: list,
+    chord_pcs: set,
+    root_pc: int,
+    min_sounded: int,
+    max_span: int,
+    allow_interior_mutes: bool,
+) -> tuple:
+    """
+    Collapses combinatorial near-duplicates that differ only in whether an
+    optional string rings open (e.g. x32010 / x32013 / x3201x are all the
+    same grip; only the free top string differs).
+
+    For every string not already open, try setting it to open (fret 0) --
+    but only when its open note is a chord tone AND the resulting voicing
+    still passes every invariant (passes_filters is the sole validity
+    oracle, reused unchanged). This is a ONE-WAY simplification: a string
+    is upgraded toward "open" when it's free to be; it is never muted or
+    downgraded here. That direction matters -- muting an already-sounding
+    string can silently strip a full, idiomatic voicing (classic open C,
+    x32010) down to a sparser one, which is not the canonical form we want.
+    Sparser derivatives that are still redundant are instead removed later,
+    explicitly, by prune_dominated().
+    """
+    combo = list(combo)
+    for i, value in enumerate(combo):
+        if value == 0:
+            continue  # already open, nothing to upgrade
+        if (open_pcs[i] % 12) not in chord_pcs:
+            continue  # open note isn't a chord tone on this string
+        trial = combo.copy()
+        trial[i] = 0
+        if passes_filters(
+            tuple(trial), open_pcs, chord_pcs, root_pc,
+            min_sounded, max_span, allow_interior_mutes,
+        ):
+            combo[i] = 0
+    return tuple(combo)
+
+
+def is_dominated(candidate: "VoicingCandidate", other: "VoicingCandidate") -> bool:
+    """
+    True if `candidate` is a strict, redundant subset of `other`: every
+    string `candidate` sounds, `other` sounds at the identical fret, and
+    `other` additionally sounds at least one string `candidate` mutes.
+
+    A dominated voicing is literally the same grip with one or more strings
+    deliberately left silent -- it adds no new shape, only a thinner strum
+    of a shape already present -- so it is dropped in favour of the fuller
+    voicing.
+    """
+    extra_sounding = False
+    for c_fret, o_fret in zip(candidate.frets, other.frets):
+        if c_fret == "x":
+            if o_fret != "x":
+                extra_sounding = True
+            continue
+        if c_fret != o_fret:
+            return False
+    return extra_sounding
+
+
+def prune_dominated(candidates: list) -> list:
+    """
+    Removes any voicing that is a strict subset of another voicing in the
+    same list (see is_dominated). O(n^2) over an already-deduplicated,
+    typically small per-chord candidate list -- cheap in practice.
+    """
+    return [
+        c for c in candidates
+        if not any(is_dominated(c, other) for other in candidates if other is not c)
+    ]
+
+
 # ---------------------------------------------------------------------------
 # Finger / barre assignment (heuristic — intentionally imperfect)
 # ---------------------------------------------------------------------------
@@ -390,16 +484,24 @@ def generate_voicings(
             min_sounded, max_span, allow_interior_mutes,
         ):
             continue
-        if combo in seen:
-            continue
-        seen.add(combo)
 
-        # Self-check — should never trigger if passes_filters is correct
-        if not self_check_voicing(combo, open_pcs, chord_pcs, root_pc):
+        # Collapse combinatorial near-duplicates before dedup: several raw
+        # combos differing only in an optional string's open/mute/alt-fret
+        # choice canonicalize to the same tuple.
+        canonical = canonicalize_voicing(
+            combo, open_pcs, chord_pcs, root_pc,
+            min_sounded, max_span, allow_interior_mutes,
+        )
+        if canonical in seen:
+            continue
+        seen.add(canonical)
+
+        # Self-check — should never trigger if passes_filters/canonicalize are correct
+        if not self_check_voicing(canonical, open_pcs, chord_pcs, root_pc):
             skipped += 1
             continue
 
-        fingers_list, barre = assign_fingers_and_barre(combo)
+        fingers_list, barre = assign_fingers_and_barre(canonical)
 
         # Drop voicings that require more than MAX_FINGERS (mechanically unplayable).
         # max(fingers_list) is the highest finger number assigned; > MAX_FINGERS means
@@ -407,17 +509,20 @@ def generate_voicings(
         if max(fingers_list) > MAX_FINGERS:
             continue
 
-        fretted_values = [f for f in combo if f != "x" and f > 0]
+        fretted_values = [f for f in canonical if f != "x" and f > 0]
         base_fret = min(fretted_values) if fretted_values else 0
 
         raw.append(VoicingCandidate(
-            frets=combo,
+            frets=canonical,
             fingers=tuple(fingers_list),
             barre=barre,
             base_fret=base_fret,
         ))
 
     raw.sort(key=_voicing_sort_key)
+    # Cross-voicing pass: drop any voicing that is a strict, muted-down
+    # subset of a fuller voicing already present (see prune_dominated).
+    raw = prune_dominated(raw)
     selected = select_voicings(raw, max_per_chord, SPREAD_MIN_SPACING)
     return selected, skipped
 

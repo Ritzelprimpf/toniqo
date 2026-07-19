@@ -10,6 +10,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -79,8 +80,8 @@ fun FretboardDiagram(
     val fingerStyle   = Tq.Type.MonoMicro
 
     val totalWidth: Dp  = POS_LABEL_WIDTH + SIDE_PADDING +
-            (model.stringCount - 1) * STRING_SPACING + SIDE_PADDING
-    val totalHeight: Dp = MARKER_AREA_HEIGHT + model.fretWindow * FRET_SPACING
+            STRING_SPACING * (model.stringCount - 1) + SIDE_PADDING
+    val totalHeight: Dp = MARKER_AREA_HEIGHT + FRET_SPACING * model.fretWindow
 
     Canvas(modifier = modifier.size(width = totalWidth, height = totalHeight)) {
         val stringSpacing   = STRING_SPACING.toPx()

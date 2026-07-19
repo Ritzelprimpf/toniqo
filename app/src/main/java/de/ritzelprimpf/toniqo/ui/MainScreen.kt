@@ -66,7 +66,6 @@ fun MainScreen() {
     ) { innerPadding ->
         AppNavHost(
             navController = navController,
-            snackbarHostState = snackbarHostState,
             modifier = Modifier.padding(innerPadding),
         )
     }

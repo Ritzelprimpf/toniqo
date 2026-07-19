@@ -1,5 +1,7 @@
 package de.ritzelprimpf.toniqo.ui.info
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,17 +17,17 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.Feedback
 import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Policy
-import androidx.compose.material.icons.outlined.Share
-import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material.icons.outlined.VolunteerActivism
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import de.ritzelprimpf.toniqo.R
@@ -33,6 +35,16 @@ import de.ritzelprimpf.toniqo.ui.components.ToniqoCard
 import de.ritzelprimpf.toniqo.ui.navigation.Routes
 import de.ritzelprimpf.toniqo.ui.theme.Tq
 import de.ritzelprimpf.toniqo.ui.theme.ToniqoTheme
+
+/**
+ * GitHub Sponsors page opened by the "Support the Project" row.
+ *
+ * TODO: Replace with the real GitHub Sponsors URL before shipping.
+ */
+private const val GITHUB_SPONSORS_URL = "https://github.com/sponsors/REPLACE_ME"
+
+/** GitHub Issues page opened by the "Feedback" row. */
+private const val GITHUB_ISSUES_URL = "https://github.com/Ritzelprimpf/toniqo/issues"
 
 /**
  * Info section home screen.
@@ -49,6 +61,8 @@ fun InfoHomeScreen(
     onNavigate: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -78,27 +92,25 @@ fun InfoHomeScreen(
                 )
                 InfoNavRow(
                     // TODO: Replace with custom `info` icon from DESIGN.md §7
-                    icon = Icons.Outlined.Policy,
-                    label = stringResource(R.string.info_item_privacy),
-                    onClick = { onNavigate(Routes.PRIVACY) },
-                )
-                InfoNavRow(
-                    // TODO: Replace with custom `info` icon from DESIGN.md §7
                     icon = Icons.Outlined.Info,
                     label = stringResource(R.string.info_item_licenses),
                     onClick = { onNavigate(Routes.LICENSES) },
                 )
                 InfoNavRow(
                     // TODO: Replace with custom `info` icon from DESIGN.md §7
-                    icon = Icons.Outlined.Star,
-                    label = stringResource(R.string.info_item_rate),
-                    onClick = { onNavigate(Routes.RATE_AND_SHARE) },
+                    icon = Icons.Outlined.Feedback,
+                    label = stringResource(R.string.info_item_feedback),
+                    onClick = {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(GITHUB_ISSUES_URL)))
+                    },
                 )
                 InfoNavRow(
                     // TODO: Replace with custom `info` icon from DESIGN.md §7
-                    icon = Icons.Outlined.Share,
-                    label = stringResource(R.string.info_item_share),
-                    onClick = { onNavigate(Routes.RATE_AND_SHARE) },
+                    icon = Icons.Outlined.VolunteerActivism,
+                    label = stringResource(R.string.info_item_support),
+                    onClick = {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(GITHUB_SPONSORS_URL)))
+                    },
                     isLast = true,
                 )
             }
