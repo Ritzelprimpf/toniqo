@@ -11,6 +11,15 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 fun HapticFeedback.tunedStringHaptic() = performHapticFeedback(HapticFeedbackType.LongPress)
 
 /**
+ * Tactile pulse fired when auto-advance switches the target to the next string.
+ *
+ * Deliberately a lighter, distinct pattern from [tunedStringHaptic] — that pulse means "this
+ * string is in tune," this one means "we moved on." Using the same feel for both would make the
+ * advance itself unnoticeable, which is the exact gap this event exists to fix.
+ */
+fun HapticFeedback.stringAdvancedHaptic() = performHapticFeedback(HapticFeedbackType.TextHandleMove)
+
+/**
  * Tactile pulse fired when all strings are in tune. Same weight as [tunedStringHaptic] in v1;
  * a distinct heavier pattern can be substituted here without touching call sites.
  */

@@ -46,12 +46,14 @@ import de.ritzelprimpf.toniqo.tuner.presentation.ui.components.TunerSettingsShee
 import de.ritzelprimpf.toniqo.tuner.presentation.util.allTunedHaptic
 import de.ritzelprimpf.toniqo.tuner.presentation.util.findActivity
 import de.ritzelprimpf.toniqo.tuner.presentation.util.handleGrantAccess
+import de.ritzelprimpf.toniqo.tuner.presentation.util.stringAdvancedHaptic
 import de.ritzelprimpf.toniqo.tuner.presentation.util.tunedStringHaptic
 import de.ritzelprimpf.toniqo.tuner.presentation.viewmodel.TunerEvent
 import de.ritzelprimpf.toniqo.tuner.presentation.viewmodel.TunerScreenViewModel
 import de.ritzelprimpf.toniqo.tuner.presentation.viewmodel.TunerViewModel
 import de.ritzelprimpf.toniqo.ui.components.ToniqoCard
 import de.ritzelprimpf.toniqo.ui.theme.Tq
+import kotlinx.coroutines.delay
 
 /**
  * Full Guitar Tuner screen — wires the audio pipeline (Phases 5.1–5.3) into UI.
@@ -80,6 +82,11 @@ fun TunerScreen(
         onResult = { viewModel.onPermissionRequested() },
     )
 
+    // Short mint ring flash on the readout well, driven by TunerEvent.StringAdvanced below —
+    // reuses SuccessRing's existing fade animation with a much shorter hold than the
+    // ALL_STRINGS_TUNED celebration, since this just needs to catch the eye, not celebrate.
+    var advanceFlashVisible by remember { mutableStateOf(false) }
+
     // Keys ensure the effect re-launches only on actual identity changes.
     // repeatOnLifecycle(STARTED) pauses collection while backgrounded and resumes on foreground
     // without re-running the outer LaunchedEffect, preventing duplicate haptics on rotation.
@@ -88,6 +95,12 @@ fun TunerScreen(
             viewModel.events.collect { event ->
                 when (event) {
                     is TunerEvent.StringTuned -> haptic.tunedStringHaptic()
+                    is TunerEvent.StringAdvanced -> {
+                        haptic.stringAdvancedHaptic()
+                        advanceFlashVisible = true
+                        delay(ADVANCE_FLASH_HOLD_MS)
+                        advanceFlashVisible = false
+                    }
                     TunerEvent.AllStringsTuned -> haptic.allTunedHaptic()
                     TunerEvent.EnteredChromaticMode -> Unit
                 }
@@ -165,7 +178,7 @@ fun TunerScreen(
                     )
                 }
                 SuccessRing(
-                    visible = uiState.status == TuningStatus.ALL_STRINGS_TUNED,
+                    visible = uiState.status == TuningStatus.ALL_STRINGS_TUNED || advanceFlashVisible,
                     modifier = Modifier.matchParentSize(),
                 )
             }
@@ -214,3 +227,10 @@ private fun CaptureFailedCard() {
         )
     }
 }
+
+/**
+ * How long the [SuccessRing] stays visible for a [TunerEvent.StringAdvanced] flash, before
+ * SuccessRing's own 320ms fade-out begins. Short on purpose — this is a "notice me" flash, not
+ * the ALL_STRINGS_TUNED celebration (which holds for 1200ms; see TunerViewModel).
+ */
+private const val ADVANCE_FLASH_HOLD_MS = 350L

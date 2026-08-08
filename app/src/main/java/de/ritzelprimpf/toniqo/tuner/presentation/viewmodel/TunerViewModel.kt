@@ -447,6 +447,7 @@ class TunerViewModel @Inject constructor(
                     )
                 }
                 tunerInput.value = buildInput(TunerMode.PRESET, nextNote, refHz)
+                emitEvent(TunerEvent.StringAdvanced(nextIndex))
             }
             // When auto-advance is disabled, the hold fires but does not increment currentStringIndex.
         }

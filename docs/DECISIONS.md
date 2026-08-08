@@ -1751,6 +1751,24 @@ These two actions are visually separated (body vs trailing button), so they don'
 
 ---
 
+## 2026-08-08 — Tuner auto-advance gets its own haptic, ring flash, and pill-highlight transition
+
+**Decision.** Auto-advance (moving the tuner's target to the next string, 200ms after the previous string is confirmed in tune) now has its own dedicated cue, separate from the "string tuned" cue that already existed:
+- A new `TunerEvent.StringAdvanced(stringIndex)`, emitted at the exact moment `currentStringIndex` increments in `TunerViewModel.onStringSustainedInTune()`.
+- A distinct haptic (`HapticFeedbackType.TextHandleMove` via `stringAdvancedHaptic()`), deliberately different from `tunedStringHaptic()`'s `LongPress`.
+- A short mint `SuccessRing` flash around the readout well — the same component/colour already used for the ALL_STRINGS_TUNED celebration, reused here with a much shorter 250ms hold (`ADVANCE_FLASH_HOLD_MS` in `TunerScreen.kt`) instead of the celebration's 1200ms, before SuccessRing's existing 320ms fade-out.
+- `StringPill`'s active border/halo also cross-fades (320ms, `LinearOutSlowInEasing`, matching `SuccessRing`'s fade timing; instant under reduced motion) instead of snapping instantly between pills.
+
+**Alternatives considered.**
+- *Haptic + pill cross-fade only, no ring flash.* Shipped first; user feedback was "too subtle" — the pill highlight alone didn't draw the eye enough. Superseded by adding the ring flash.
+- *Build a brand-new visual element for the flash.* Rejected — reusing `SuccessRing` as-is (just with a shorter externally-driven hold, which its own doc comment already anticipated: "The 1200ms hold is driven externally") avoids introducing a second glow/ring pattern into the design language.
+
+**Rationale.** User-reported bug: with auto-advance on, the user didn't notice when the tuner moved to the next string. Root cause: the only existing feedback (haptic pulse + check-mark) fires at the "string is in tune" moment; the actual advance 200ms later — where the readout well silently re-targets — had zero signal. The haptic + pill cross-fade alone wasn't noticeable enough per direct user feedback, so a short flash of the existing mint success-ring was added on top — same colour/component as the established "success" language, just briefer, keeping it consistent with DESIGN.md §9's "tools, not toys" principle (no new celebratory pattern, just a shorter use of an existing one).
+
+**Known gap.** The last-string case (auto-advance transitioning into `ALL_STRINGS_TUNED`) intentionally does *not* emit `StringAdvanced` — that transition already has its own dedicated feedback (`SuccessRing` at its full 1200ms hold + `allTunedHaptic`).
+
+---
+
 ## (Template for future entries)
 
 ## YYYY-MM-DD — Short title of decision

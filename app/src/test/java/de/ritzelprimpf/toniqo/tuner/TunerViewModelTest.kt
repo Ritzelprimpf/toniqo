@@ -220,6 +220,36 @@ class TunerViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, vm.uiState.value.currentStringIndex)
+        assertTrue(collectedEvents.any { it is TunerEvent.StringAdvanced && it.stringIndex == 1 })
+
+        eventsJob.cancel()
+    }
+
+    /**
+     * [TunerEvent.StringAdvanced] is a distinct signal from [TunerEvent.StringTuned] — it marks
+     * the moment auto-advance silently re-targets the next string, which previously had no
+     * dedicated cue at all (only the earlier "in tune" haptic).
+     */
+    @Test
+    fun `auto-advance disabled — sustained-in-tune does not emit StringAdvanced`() = runTest {
+        val repo = FakeTunerPresetRepository()
+        val preset = repo.getPresetById("six_string_standard_e")!!
+        val str0Hz = preset.notes[0].frequencyHz(440.0)
+
+        val source = FakeAudioCaptureSource(List(6) { samplesEvent() })
+        val detector = FakePitchDetector(List(6) { str0Hz })
+
+        val preferences = FakeTunerPreferences(initialAutoAdvance = false)
+        val collectedEvents = mutableListOf<TunerEvent>()
+        val vm = makeViewModel(preferences = preferences, repository = repo, source = source, detector = detector)
+        val eventsJob = launch { vm.events.toList(collectedEvents) }
+
+        advanceUntilIdle()
+        advanceTimeBy(TunerViewModel.STRING_LOCK_HOLD_MS + 1)
+        advanceUntilIdle()
+
+        assertEquals(0, vm.uiState.value.currentStringIndex)
+        assertTrue(collectedEvents.none { it is TunerEvent.StringAdvanced })
 
         eventsJob.cancel()
     }
@@ -271,6 +301,10 @@ class TunerViewModelTest {
         advanceTimeBy(TunerViewModel.STRING_LOCK_HOLD_MS + 1)
         runCurrent()
         assertEquals("should be on string 1", 1, vm.uiState.value.currentStringIndex)
+        assertTrue(
+            "advancing to string 1 should emit StringAdvanced",
+            collectedEvents.any { it is TunerEvent.StringAdvanced && it.stringIndex == 1 },
+        )
 
         // ── Phase 2: tune string 1 ────────────────────────────────────────────────
         // Session 2 was consumed; string 1 is now sustained.
@@ -282,6 +316,11 @@ class TunerViewModelTest {
 
         assertEquals(TuningStatus.ALL_STRINGS_TUNED, vm.uiState.value.status)
         assertTrue(collectedEvents.any { it is TunerEvent.AllStringsTuned })
+        assertEquals(
+            "the last string should not also emit StringAdvanced",
+            1,
+            collectedEvents.count { it is TunerEvent.StringAdvanced },
+        )
 
         // ── Phase 3: chromatic transition ─────────────────────────────────────────
         advanceTimeBy(TunerViewModel.ALL_TUNED_HOLD_MS + 1)

@@ -23,6 +23,19 @@ sealed interface TunerEvent {
     data class StringTuned(val stringIndex: Int) : TunerEvent
 
     /**
+     * Auto-advance just switched the target to a new string, [STRING_LOCK_HOLD_MS][de.ritzelprimpf.toniqo.tuner.presentation.viewmodel.TunerViewModel.STRING_LOCK_HOLD_MS]
+     * after [StringTuned] fired for the previous string.
+     *
+     * Distinct from [StringTuned]: that event marks "this string is now in tune"; this one marks
+     * "we moved on to the next string" — the moment the readout well silently re-targets. The UI
+     * should trigger a haptic pulse distinct from [StringTuned]'s and animate the active-pill
+     * highlight onto the new string, so the advance itself is noticeable, not just the tuning.
+     *
+     * @property stringIndex The zero-based index of the string auto-advance just moved to.
+     */
+    data class StringAdvanced(val stringIndex: Int) : TunerEvent
+
+    /**
      * All strings in the current preset have been brought in tune.
      *
      * Drives the 1.2 s success ring animation (`DESIGN.md` §8.1). After 1.2 s the ViewModel
