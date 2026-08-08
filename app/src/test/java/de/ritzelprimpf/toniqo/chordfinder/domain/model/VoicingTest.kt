@@ -72,7 +72,7 @@ class VoicingTest {
     fun `OPEN category takes precedence over barre`() {
         // Em has open strings AND a notional barre — OPEN wins
         val eMjBarre = Barre(2, 1, 2)
-        val rootIndices = setOf(0, 3, 5)
+        val rootIndices = setOf(0, 2, 5)
         val v = Voicing.validated(1, emMarks, listOf(0,2,3,0,0,0), eMjBarre, rootIndices, ChordToneRole.ROOT, emKey, openPcs)
         assertEquals(VoicingCategory.OPEN, v.category)
     }
@@ -80,7 +80,7 @@ class VoicingTest {
     // ── fretRange + baseFret derivation ───────────────────────────────────────────
 
     @Test
-    fun `fretRange for open C major is 1..3`() {
+    fun `fretRange for open C major is 1 to 3`() {
         val rootIndices = setOf(1, 4)
         val v = Voicing.validated(1, cMajMarks, cMajFingers, null, rootIndices, ChordToneRole.ROOT, cMajKey, openPcs)
         assertEquals(1..3, v.fretRange)
@@ -94,7 +94,7 @@ class VoicingTest {
     }
 
     @Test
-    fun `fretRange for C major barre is 8..10`() {
+    fun `fretRange for C major barre is 8 to 10`() {
         val rootIndices = setOf(0, 2, 5)
         val v = Voicing.validated(1, cMajBarreMarks, listOf(1,3,4,2,1,1), cMajBarreBarre, rootIndices, ChordToneRole.ROOT, cMajKey, openPcs)
         assertEquals(8..10, v.fretRange)

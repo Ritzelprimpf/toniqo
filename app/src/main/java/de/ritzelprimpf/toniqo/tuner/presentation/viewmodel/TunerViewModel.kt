@@ -323,7 +323,11 @@ class TunerViewModel @Inject constructor(
         when (event) {
             is DetectionEvent.Listening -> {
                 _state.update { state ->
-                    if (state.selectedPreset == null) state
+                    // onStringSustainedInTune() sets tunerInput to null to stop the mic during the
+                    // ALL_TUNED_HOLD_MS pause, which re-enters this branch via flatMapLatest. Without
+                    // this guard, that would immediately downgrade the just-set ALL_STRINGS_TUNED
+                    // status back to LISTENING for the whole hold, before the chromatic transition.
+                    if (state.selectedPreset == null || state.status == TuningStatus.ALL_STRINGS_TUNED) state
                     else state.copy(
                         status = TuningStatus.LISTENING,
                         detectedFrequencyHz = null,

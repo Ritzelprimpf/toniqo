@@ -16,9 +16,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -52,15 +54,23 @@ class TunerViewModelTest {
     /**
      * Builds a ViewModel wired to the given fakes. Uses a no-op source/detector by default
      * (suitable for tests that only exercise preset loading and user-action state transitions).
+     *
+     * [TunerViewModel.uiState] is `_state.stateIn(WhileSubscribed)` — it only mirrors `_state`
+     * once something actively collects it. [TestScope.backgroundScope] keeps a collector alive
+     * for the rest of the test (auto-cancelled on teardown), matching the idiomatic pattern for
+     * testing `WhileSubscribed`-shared flows; without it, `vm.uiState.value` reads would stay
+     * frozen at the initial `TunerUiState()` default.
      */
-    private fun makeViewModel(
+    private fun TestScope.makeViewModel(
         preferences: FakeTunerPreferences = FakeTunerPreferences(),
         repository: FakeTunerPresetRepository = FakeTunerPresetRepository(),
         source: FakeAudioCaptureSource = FakeAudioCaptureSource(emptyList()),
         detector: FakePitchDetector = FakePitchDetector(emptyList()),
     ): TunerViewModel {
         val useCase = DetectTunedStringUseCase(source, detector)
-        return TunerViewModel(repository, preferences, useCase, SelectedTuningStore())
+        val vm = TunerViewModel(repository, preferences, useCase, SelectedTuningStore())
+        backgroundScope.launch { vm.uiState.collect {} }
+        return vm
     }
 
     // ── Preset loading ────────────────────────────────────────────────────────────
@@ -195,7 +205,7 @@ class TunerViewModelTest {
         val detector = FakePitchDetector(List(6) { str0Hz })
 
         val collectedEvents = mutableListOf<TunerEvent>()
-        val vm = TunerViewModel(repo, FakeTunerPreferences(), DetectTunedStringUseCase(source, detector))
+        val vm = makeViewModel(repository = repo, source = source, detector = detector)
         val eventsJob = launch { vm.events.toList(collectedEvents) }
 
         // Let init run and consume all 6 samples — 6th fires isSustainedInTune.
@@ -245,16 +255,21 @@ class TunerViewModelTest {
         val detector = FakePitchDetector(List(6) { str0Hz } + List(6) { str1Hz })
 
         val collectedEvents = mutableListOf<TunerEvent>()
-        val vm = TunerViewModel(repo, FakeTunerPreferences(), DetectTunedStringUseCase(source, detector))
+        val vm = makeViewModel(repository = repo, source = source, detector = detector)
         val eventsJob = launch { vm.events.toList(collectedEvents) }
 
         // ── Phase 1: tune string 0 ────────────────────────────────────────────────
-        advanceUntilIdle()
+        // runCurrent() (not advanceUntilIdle()) processes the 6 queued samples without also
+        // fast-forwarding through the STRING_LOCK_HOLD_MS delay scheduled once they land — that
+        // delay is a *future* scheduled task, so advanceUntilIdle() would run straight through
+        // both holds and the chromatic transition in one call, skipping the intermediate states
+        // this test asserts.
+        runCurrent()
         assertTrue("string 0 should be tuned", 0 in vm.uiState.value.tunedStringIndices)
 
         // STRING_LOCK_HOLD_MS: advance to string 1
         advanceTimeBy(TunerViewModel.STRING_LOCK_HOLD_MS + 1)
-        advanceUntilIdle()
+        runCurrent()
         assertEquals("should be on string 1", 1, vm.uiState.value.currentStringIndex)
 
         // ── Phase 2: tune string 1 ────────────────────────────────────────────────
@@ -263,7 +278,7 @@ class TunerViewModelTest {
 
         // STRING_LOCK_HOLD_MS: all strings tuned
         advanceTimeBy(TunerViewModel.STRING_LOCK_HOLD_MS + 1)
-        advanceUntilIdle()
+        runCurrent()
 
         assertEquals(TuningStatus.ALL_STRINGS_TUNED, vm.uiState.value.status)
         assertTrue(collectedEvents.any { it is TunerEvent.AllStringsTuned })
@@ -343,7 +358,7 @@ class TunerViewModelTest {
         // Only 1 sample → window size = 1 < 6 → never sustained
         val source = FakeAudioCaptureSource(listOf(samplesEvent()))
         val detector = FakePitchDetector(listOf(inTuneHz))
-        val vm = TunerViewModel(repo, FakeTunerPreferences(), DetectTunedStringUseCase(source, detector))
+        val vm = makeViewModel(repository = repo, source = source, detector = detector)
 
         advanceUntilIdle()
 
@@ -360,9 +375,9 @@ class TunerViewModelTest {
         val vm = makeViewModel()
         advanceUntilIdle()
 
-        vm.onStringSelected(3)
+        vm.onStringSelected(1)
         advanceUntilIdle()
-        assertEquals(3, vm.uiState.value.currentStringIndex)
+        assertEquals(1, vm.uiState.value.currentStringIndex)
 
         vm.onEnterChromaticMode()
         advanceUntilIdle()
@@ -370,7 +385,7 @@ class TunerViewModelTest {
         assertEquals(TunerMode.CHROMATIC, vm.uiState.value.mode)
         vm.onExitChromaticMode()
         advanceUntilIdle()
-        assertEquals(3, vm.uiState.value.currentStringIndex)
+        assertEquals(1, vm.uiState.value.currentStringIndex)
     }
 
     @Test
@@ -378,7 +393,7 @@ class TunerViewModelTest {
         val vm = makeViewModel()
         advanceUntilIdle()
 
-        vm.onStringSelected(4)
+        vm.onStringSelected(1)
         advanceUntilIdle()
         vm.onEnterChromaticMode()
         advanceUntilIdle()
@@ -388,7 +403,7 @@ class TunerViewModelTest {
 
         val state = vm.uiState.value
         assertEquals(TunerMode.PRESET, state.mode)
-        assertEquals(4, state.currentStringIndex)
+        assertEquals(1, state.currentStringIndex)
         assertTrue(state.tunedStringIndices.isEmpty())
     }
 
@@ -407,7 +422,7 @@ class TunerViewModelTest {
             ),
         )
         val detector = FakePitchDetector(List(6) { str0Hz } + List(6) { str1Hz })
-        val vm = TunerViewModel(repo, FakeTunerPreferences(), DetectTunedStringUseCase(source, detector))
+        val vm = makeViewModel(repository = repo, source = source, detector = detector)
 
         advanceUntilIdle()
         advanceTimeBy(TunerViewModel.STRING_LOCK_HOLD_MS + 1)
@@ -431,7 +446,7 @@ class TunerViewModelTest {
         val vm = makeViewModel()
         advanceUntilIdle()
 
-        vm.onStringSelected(3)
+        vm.onStringSelected(1)
         advanceUntilIdle()
         vm.onEnterChromaticMode()
         advanceUntilIdle()
@@ -455,24 +470,26 @@ class TunerViewModelTest {
         val vm = makeViewModel()
         advanceUntilIdle()
 
-        vm.onStringSelected(3)
+        vm.onStringSelected(1)
         advanceUntilIdle()
         vm.onEnterChromaticMode()
         advanceUntilIdle()
 
-        vm.onStringSelected(1)
+        vm.onStringSelected(0)
         advanceUntilIdle()
 
         val state = vm.uiState.value
         assertEquals(TunerMode.PRESET, state.mode)
-        assertEquals(1, state.currentStringIndex)
+        assertEquals(0, state.currentStringIndex)
         assertTrue(state.tunedStringIndices.isEmpty())
 
+        // A fresh enter/exit round-trip must restore 0 (the snapshot taken just below), proving
+        // the stale snapshot of 1 captured above was cleared by onStringSelected, not carried over.
         vm.onEnterChromaticMode()
         advanceUntilIdle()
         vm.onExitChromaticMode()
         advanceUntilIdle()
-        assertEquals(1, vm.uiState.value.currentStringIndex)
+        assertEquals(0, vm.uiState.value.currentStringIndex)
     }
 
     // ── onAutoAdvanceChanged ──────────────────────────────────────────────────────
@@ -501,7 +518,7 @@ class TunerViewModelTest {
 
         val preferences = FakeTunerPreferences(initialAutoAdvance = false)
         val collectedEvents = mutableListOf<TunerEvent>()
-        val vm = TunerViewModel(repo, preferences, DetectTunedStringUseCase(source, detector))
+        val vm = makeViewModel(preferences = preferences, repository = repo, source = source, detector = detector)
         val eventsJob = launch { vm.events.toList(collectedEvents) }
 
         advanceUntilIdle()
@@ -574,7 +591,7 @@ class TunerViewModelTest {
         val detector = FakePitchDetector(List(6) { str0Hz })
 
         val preferences = FakeTunerPreferences()
-        val vm = TunerViewModel(repo, preferences, DetectTunedStringUseCase(source, detector))
+        val vm = makeViewModel(preferences = preferences, repository = repo, source = source, detector = detector)
 
         // String 0 tuned; 200 ms hold scheduled.
         advanceUntilIdle()

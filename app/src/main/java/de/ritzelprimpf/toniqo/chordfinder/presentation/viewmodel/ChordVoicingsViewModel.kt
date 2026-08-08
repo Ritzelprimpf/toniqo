@@ -7,11 +7,12 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import de.ritzelprimpf.toniqo.chordfinder.domain.model.ChordKey
 import de.ritzelprimpf.toniqo.chordfinder.domain.repository.VoicingLookupResult
 import de.ritzelprimpf.toniqo.chordfinder.domain.repository.VoicingRepository
+import de.ritzelprimpf.toniqo.common.di.IoDispatcher
 import de.ritzelprimpf.toniqo.common.model.ChordQuality
 import de.ritzelprimpf.toniqo.common.model.GuitarTuning
 import de.ritzelprimpf.toniqo.common.state.SelectedTuningStore
 import de.ritzelprimpf.toniqo.ui.navigation.Routes
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,6 +40,7 @@ class ChordVoicingsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val voicingRepository: VoicingRepository,
     private val selectedTuningStore: SelectedTuningStore,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
     private val rootPc: Int =
@@ -70,7 +72,7 @@ class ChordVoicingsViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             selectedTuningStore.selection.collect { (tuning, label) ->
-                val result = withContext(Dispatchers.IO) {
+                val result = withContext(ioDispatcher) {
                     voicingRepository.lookup(chordKey, tuning)
                 }
                 _uiState.update { prev -> mapResult(prev, result, label) }
@@ -102,7 +104,7 @@ class ChordVoicingsViewModel @Inject constructor(
         )
 
         is VoicingLookupResult.Unsupported -> {
-            val standardResult = withContext(Dispatchers.IO) {
+            val standardResult = withContext(ioDispatcher) {
                 voicingRepository.lookup(chordKey, GuitarTuning.STANDARD_6)
             }
             val fallbackVoicings = (standardResult as? VoicingLookupResult.Standard)?.voicings

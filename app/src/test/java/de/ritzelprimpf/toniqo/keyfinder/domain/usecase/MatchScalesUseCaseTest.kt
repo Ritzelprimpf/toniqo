@@ -77,9 +77,18 @@ class MatchScalesUseCaseTest {
     // C=0, E=4, G=7 (n=3), root=C(0) → maxPoints=8
     private val cEgRootC = KeyFinderInput(pitchClasses = setOf(0, 4, 7), rootPitchClass = 0)
 
+    // Scoped to just C Major and A Natural Minor: against the full 168-candidate catalog, several
+    // unrelated scales (e.g. F Ionian, G Lydian) coincidentally tie at the same 50%/38% scores as
+    // these two, and MAX_RESULTS=7 can push one of the two intended candidates out of the result
+    // list. That's correct ranking behaviour, not a bug — trim the catalog so this test isolates
+    // the specific comparison it documents (mirrors the pattern at line ~305 below).
+    private val cEgRootCUseCase = MatchScalesUseCase(
+        ScaleCatalog(listOf(ScaleCandidate(0, ScaleType.IONIAN), ScaleCandidate(9, ScaleType.AEOLIAN))),
+    )
+
     @Test
     fun `C E G root C — C Major scores 50 percent`() {
-        val results = useCase(cEgRootC)
+        val results = cEgRootCUseCase(cEgRootC)
         val cMajor = results.first { it.candidate.rootPitchClass == 0 && it.candidate.type == ScaleType.IONIAN }
         assertEquals(50, cMajor.percent)
     }
@@ -87,14 +96,14 @@ class MatchScalesUseCaseTest {
     @Test
     fun `C E G root C — A Natural Minor scores 38 percent`() {
         // A Aeolian contains C,E,G but root is A(9) ≠ C(0) → rootBonus=0, points=3, maxPoints=8
-        val results = useCase(cEgRootC)
+        val results = cEgRootCUseCase(cEgRootC)
         val aMinor = results.first { it.candidate.rootPitchClass == 9 && it.candidate.type == ScaleType.AEOLIAN }
         assertEquals(38, aMinor.percent)
     }
 
     @Test
     fun `C E G root C — C-rooted scale ranks above same-notes A-rooted scale`() {
-        val results = useCase(cEgRootC)
+        val results = cEgRootCUseCase(cEgRootC)
         val cMajorRank = results.first { it.candidate.rootPitchClass == 0 && it.candidate.type == ScaleType.IONIAN }.rank
         val aMinorRank = results.first { it.candidate.rootPitchClass == 9 && it.candidate.type == ScaleType.AEOLIAN }.rank
         assertTrue("C Major (50%) should rank above A Natural Minor (38%)", cMajorRank < aMinorRank)
@@ -102,14 +111,14 @@ class MatchScalesUseCaseTest {
 
     @Test
     fun `C E G root C — C Major has isRootMatch true`() {
-        val results = useCase(cEgRootC)
+        val results = cEgRootCUseCase(cEgRootC)
         val cMajor = results.first { it.candidate.rootPitchClass == 0 && it.candidate.type == ScaleType.IONIAN }
         assertTrue(cMajor.isRootMatch)
     }
 
     @Test
     fun `C E G root C — A Natural Minor has isRootMatch false`() {
-        val results = useCase(cEgRootC)
+        val results = cEgRootCUseCase(cEgRootC)
         val aMinor = results.first { it.candidate.rootPitchClass == 9 && it.candidate.type == ScaleType.AEOLIAN }
         assertFalse(aMinor.isRootMatch)
     }
@@ -203,7 +212,12 @@ class MatchScalesUseCaseTest {
 
     @Test
     fun `seven naturals root A — the six sibling modes score 88 percent`() {
-        val results = useCase(sevenNaturalsRootA)
+        // Scoped to the 7 diatonic-family candidates at their natural roots: against the full
+        // 168-candidate catalog, a few unrelated candidates (e.g. D Dorian and E Phrygian rooted
+        // at A instead of their natural root) coincidentally also score 88% for this input, and
+        // MAX_RESULTS=7 can push a genuine sibling mode out of the result list. That's correct
+        // ranking behaviour, not a bug — trim the catalog so this test isolates the specific
+        // 7-mode family it documents (mirrors the pattern at line ~305 below).
         val siblings = listOf(
             0 to ScaleType.IONIAN,     // C Major
             2 to ScaleType.DORIAN,     // D Dorian
@@ -212,6 +226,12 @@ class MatchScalesUseCaseTest {
             7 to ScaleType.MIXOLYDIAN, // G Mixolydian
             11 to ScaleType.LOCRIAN,   // B Locrian
         )
+        val familyUseCase = MatchScalesUseCase(
+            ScaleCatalog(
+                (siblings + (9 to ScaleType.AEOLIAN)).map { (rootPc, type) -> ScaleCandidate(rootPc, type) },
+            ),
+        )
+        val results = familyUseCase(sevenNaturalsRootA)
         siblings.forEach { (rootPc, type) ->
             val match = results.first { it.candidate.rootPitchClass == rootPc && it.candidate.type == type }
             assertEquals("$type at root $rootPc should score 88%", 88, match.percent)

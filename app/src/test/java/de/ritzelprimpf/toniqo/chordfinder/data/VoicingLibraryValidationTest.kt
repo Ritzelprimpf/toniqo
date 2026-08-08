@@ -10,12 +10,15 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Loads the shipped `assets/chordfinder/voicings_standard_6.json` and asserts that every entry
- * satisfies all five voicing invariants, that every chord key (12 roots × 4 qualities) is
- * present, and that C MAJOR specifically includes both a near-nut open voicing and a barre voicing.
+ * Loads a test-resource copy of `assets/chordfinder/voicings_standard_6.json` and asserts that
+ * every entry satisfies all five voicing invariants, that every chord key (12 roots × 4
+ * qualities) is present, and that C MAJOR specifically includes both a near-nut open voicing and
+ * a barre voicing.
  *
- * The JSON is available as a classpath resource in JVM unit tests because `build.gradle.kts`
- * adds `src/main/assets` to the `test` source set's `resources`.
+ * The copy lives at `src/test/resources/chordfinder/voicings_standard_6.json` — Gradle puts
+ * `src/test/resources` on the unit-test classpath automatically, no build.gradle.kts wiring
+ * needed. Keep it in sync with `src/main/assets/chordfinder/voicings_standard_6.json` if that
+ * file changes.
  */
 class VoicingLibraryValidationTest {
 
@@ -23,7 +26,7 @@ class VoicingLibraryValidationTest {
 
     private val library by lazy {
         val stream = javaClass.classLoader!!.getResourceAsStream("chordfinder/voicings_standard_6.json")
-            ?: error("Asset not found: chordfinder/voicings_standard_6.json — ensure src/main/assets is in the test resource path (build.gradle.kts sourceSets config)")
+            ?: error("Test resource not found: chordfinder/voicings_standard_6.json — expected at src/test/resources/chordfinder/")
         val json = stream.bufferedReader().readText()
         VoicingJsonParser.parse(json, tuning)
     }

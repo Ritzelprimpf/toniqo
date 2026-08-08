@@ -2,6 +2,7 @@ package de.ritzelprimpf.toniqo.common.di
 
 import dagger.Binds
 import dagger.Module
+import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import de.ritzelprimpf.toniqo.common.permission.AndroidAudioPermissionChecker
@@ -9,6 +10,8 @@ import de.ritzelprimpf.toniqo.common.permission.AudioPermissionChecker
 import de.ritzelprimpf.toniqo.common.util.Clock
 import de.ritzelprimpf.toniqo.common.util.SystemClock
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 
 /**
  * Hilt bindings for cross-feature common utilities.
@@ -33,4 +36,16 @@ abstract class CommonModule {
     @Binds
     @Singleton
     abstract fun bindClock(impl: SystemClock): Clock
+
+    companion object {
+        /**
+         * Provides [Dispatchers.IO] qualified by [IoDispatcher].
+         *
+         * Injected wherever a `withContext(Dispatchers.IO)`-style hop is needed so unit tests can
+         * substitute a `TestDispatcher` instead of hopping onto a real, untestable thread pool.
+         */
+        @Provides
+        @IoDispatcher
+        fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
+    }
 }

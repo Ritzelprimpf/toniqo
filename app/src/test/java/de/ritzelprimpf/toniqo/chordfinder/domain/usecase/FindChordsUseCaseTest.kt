@@ -73,7 +73,7 @@ class FindChordsUseCaseTest {
     }
 
     @Test
-    fun `C Ionian triads have degree 1..7`() {
+    fun `C Ionian triads have degree 1 to 7`() {
         val degrees = triads(C, ScaleType.IONIAN).chords.map { it.degree }
         assertEquals(listOf(1, 2, 3, 4, 5, 6, 7), degrees)
     }

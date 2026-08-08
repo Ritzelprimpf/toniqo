@@ -40,8 +40,9 @@ android {
         compose = true
     }
     sourceSets {
-        // Make assets available as classpath resources in JVM unit tests so the
-        // library validation test can load the shipped JSON without a Context.
+        // Make assets available as classpath resources in JVM unit tests (e.g. LicenseAssetTest
+        // loading assets/LICENSE.txt without a Context). The voicings JSON has its own dedicated
+        // copy under src/test/resources instead of relying on this (see VoicingLibraryValidationTest).
         getByName("test") {
             resources.srcDir("src/main/assets")
         }
@@ -69,6 +70,11 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.kotlinx.coroutines.test)
+    // Real org.json implementation for JVM unit tests. Android's org.json classes are stubs that
+    // throw "not mocked" at runtime outside an Android device/emulator; this jar shadows them on
+    // the unit test classpath only. Production code still uses the platform's org.json (no new
+    // runtime dependency is shipped in the app).
+    testImplementation(libs.org.json)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

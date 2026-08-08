@@ -291,3 +291,26 @@ The project has a separate design contract: `DESIGN.md`. It is authoritative for
 ### How design tokens get implemented
 
 Phase 3 implements the entire token layer (`ui/theme/Tq.kt`, `ToniqoTheme`, `NonScalingText`, fonts). Every subsequent UI phase consumes those tokens. If a screen needs a new component primitive that isn't yet built, build it in `ui/components/` as part of that phase and reuse it thereafter.
+
+---
+
+## 15. Compiling and Testing from the CLI
+
+This machine has no `JAVA_HOME` set and no `java`/`javac` on `PATH` by default, so a bare `./gradlew ...` fails immediately with a `JAVA_HOME is not set` error. Do not go hunting the filesystem for a JDK each time — use Android Studio's own bundled JBR (JetBrains Runtime), the same JDK Android Studio itself builds with:
+
+```
+JAVA_HOME=/home/ritzelprimpf/.local/share/JetBrains/Toolbox/apps/android-studio/jbr
+```
+
+Prefix any Gradle invocation with it, e.g.:
+
+```bash
+JAVA_HOME=/home/ritzelprimpf/.local/share/JetBrains/Toolbox/apps/android-studio/jbr ./gradlew :app:compileDebugKotlin -q
+JAVA_HOME=/home/ritzelprimpf/.local/share/JetBrains/Toolbox/apps/android-studio/jbr ./gradlew :app:testDebugUnitTest -q
+```
+
+Notes:
+
+- If Android Studio is ever reinstalled or updated to a new version directory, re-locate the JBR with `find /home/ritzelprimpf/.local/share/JetBrains/Toolbox/apps -maxdepth 2 -iname jbr -type d` and update this section.
+- `:app:testDebugUnitTest` compiles the **entire** unit test source set before running anything, even when filtered with `--tests`. A pre-existing compile error in an unrelated test file (e.g. a different feature module) will fail the whole task — that is not necessarily a regression caused by the current change. Check `git status`/`git diff` to confirm whether the failing file was touched before concluding a change broke it.
+- The agent may compile and run tests from the CLI using the above. This does not change Section 9: the agent still does not `git commit`, `git push`, or otherwise act on git history — compiling/testing is verification, not a git operation.

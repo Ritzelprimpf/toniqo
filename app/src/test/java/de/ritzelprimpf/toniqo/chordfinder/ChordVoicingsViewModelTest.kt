@@ -1,6 +1,6 @@
 package de.ritzelprimpf.toniqo.chordfinder
 
-import androidx.lifecycle.MutableSavedStateHandle
+import androidx.lifecycle.SavedStateHandle
 import de.ritzelprimpf.toniqo.chordfinder.domain.model.ChordKey
 import de.ritzelprimpf.toniqo.chordfinder.domain.repository.VoicingLookupResult
 import de.ritzelprimpf.toniqo.chordfinder.fakes.FakeVoicingRepository
@@ -71,7 +71,7 @@ class ChordVoicingsViewModelTest {
         repo: FakeVoicingRepository = FakeVoicingRepository(),
         store: SelectedTuningStore = SelectedTuningStore(),
     ) = ChordVoicingsViewModel(
-        savedStateHandle = MutableSavedStateHandle(
+        savedStateHandle = SavedStateHandle(
             mapOf(
                 Routes.ARG_ROOT_PC    to key.rootPitchClass,
                 Routes.ARG_QUALITY    to key.quality.name,
@@ -80,6 +80,7 @@ class ChordVoicingsViewModelTest {
         ),
         voicingRepository   = repo,
         selectedTuningStore = store,
+        ioDispatcher        = testDispatcher,
     )
 
     // ── Standard tier ─────────────────────────────────────────────────────────────

@@ -139,6 +139,18 @@ class AudioTrackMetronomePlayer @Inject constructor(
             "${initialConfig.timeSignatureNumerator}/${initialConfig.timeSignatureDenominator} " +
             "sub=${initialConfig.subdivision}")
 
+        // 4b. Prime the audio HAL with silence before the scheduler anchors.
+        //
+        // A freshly-played AudioTrack's *first* buffer write incurs extra cold-start latency
+        // (the mixer thread and HAL output path have to spin up) well beyond the steady-state
+        // output latency accepted in Phase6-Metronome-Decisions.md Item 55. If the scheduler's
+        // anchor were stamped before this warm-up completed, the first audible click would lag
+        // its target time by the cold-start delta while every later click stays on time. Writing
+        // silence here absorbs that one-time delay so the first real click gets the same
+        // steady-state latency as all the others.
+        val warmupSamples = MetronomeAudioFormat.SAMPLE_RATE_HZ * WARMUP_SILENCE_MS / MILLIS_PER_SECOND
+        audioTrack.write(ShortArray(warmupSamples), 0, warmupSamples, AudioTrack.WRITE_BLOCKING)
+
         // 5. Route config updates from configFlow into a conflated channel so the scheduler
         //    always sees the latest config without blocking on config delivery.
         val configChannel = Channel<MetronomeConfig>(Channel.CONFLATED)
@@ -202,5 +214,15 @@ class AudioTrackMetronomePlayer @Inject constructor(
 
     private companion object {
         const val TAG = "MetronomePlayer"
+
+        /**
+         * Duration of the silent priming buffer written immediately after [AudioTrack.play].
+         * Chosen to comfortably exceed typical AudioTrack cold-start latency across devices; see
+         * the warm-up note at the call site.
+         */
+        const val WARMUP_SILENCE_MS = 150
+
+        /** Milliseconds per second. Used to convert [WARMUP_SILENCE_MS] to a sample count. */
+        const val MILLIS_PER_SECOND = 1_000
     }
 }
