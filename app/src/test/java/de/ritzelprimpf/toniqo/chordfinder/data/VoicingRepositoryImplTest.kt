@@ -43,11 +43,51 @@ class VoicingRepositoryImplTest {
         }
     """.trimIndent()
 
-    // Fake repository backed by the minimal JSON
+    // C MAJOR, third (E, D-string fret 2) in the bass — an inversion, not the classic open shape.
+    private val inversionJson = """
+        {
+          "tuningId": "standard_6",
+          "version": 1,
+          "chords": [
+            {
+              "rootPitchClass": 0,
+              "quality": "MAJOR",
+              "voicings": [
+                { "frets": ["x","x",2,0,1,0], "fingers": [0,0,2,0,1,0], "barre": null }
+              ]
+            }
+          ]
+        }
+    """.trimIndent()
+
+    // Minimal drop-D-family JSON: G MAJOR as an all-open triad on the D-G-B strings
+    // (Drop D open pcs low→high: D=2 A=9 D=2 G=7 B=11 e=4 — D/G/B strings sound fifth/root/third).
+    private val dropJson = """
+        {
+          "tuningId": "drop_d_6",
+          "version": 1,
+          "chords": [
+            {
+              "rootPitchClass": 7,
+              "quality": "MAJOR",
+              "voicings": [
+                { "frets": ["x","x",0,0,0,"x"], "fingers": [0,0,0,0,0,0], "barre": null }
+              ]
+            }
+          ]
+        }
+    """.trimIndent()
+
+    // Fake repository backed by the minimal JSON (standard family only)
     private val fakeRepo: VoicingRepository = FakeVoicingRepository(minimalJson)
 
+    // Fake repository with both families curated
+    private val dropRepo: VoicingRepository = FakeVoicingRepository(minimalJson, dropJson)
+
     private val cMajKey = ChordKey(0, ChordQuality.MAJOR)
+    private val gMajKey = ChordKey(7, ChordQuality.MAJOR)
     private val standardTuning = GuitarTuning.STANDARD_6
+    private val dropDTuning = GuitarTuning.DROP_D_6
 
     // Eb standard (uniform offset -1)
     private val ebStandard = GuitarTuning(
@@ -58,12 +98,12 @@ class VoicingRepositoryImplTest {
         ),
     )
 
-    // Drop D (non-uniform)
-    private val dropD = GuitarTuning(
-        id = "drop_d",
+    // Open G (non-uniform relative to both STANDARD_6 and DROP_D_6 — genuinely unsupported)
+    private val openG = GuitarTuning(
+        id = "open_g",
         openNotes = listOf(
-            Note(NoteName.D, 2), Note(NoteName.A, 2), Note(NoteName.D, 3),
-            Note(NoteName.G, 3), Note(NoteName.B, 3), Note(NoteName.E, 4),
+            Note(NoteName.D, 2), Note(NoteName.G, 2), Note(NoteName.D, 3),
+            Note(NoteName.G, 3), Note(NoteName.B, 3), Note(NoteName.D, 4),
         ),
     )
 
@@ -113,25 +153,86 @@ class VoicingRepositoryImplTest {
         assertEquals(listOf(9, 11, 11, 10, 9, 9), frettedFrets)
     }
 
+    // ── bassDegree computation ────────────────────────────────────────────────────
+
+    @Test
+    fun `bassDegree is ROOT for a root-position voicing`() = runTest {
+        val result = fakeRepo.lookup(cMajKey, standardTuning) as VoicingLookupResult.Standard
+        assertTrue(result.voicings.all { it.bassDegree == ChordToneRole.ROOT })
+    }
+
+    @Test
+    fun `bassDegree is computed as THIRD for an inverted voicing`() = runTest {
+        val invertedRepo = FakeVoicingRepository(inversionJson)
+        val result = invertedRepo.lookup(cMajKey, standardTuning) as VoicingLookupResult.Standard
+        assertEquals(ChordToneRole.THIRD, result.voicings.single().bassDegree)
+    }
+
+    // ── tier 1/2: drop-D family ──────────────────────────────────────────────────
+
+    @Test
+    fun `tier 1 Drop D returns Standard result sourced from the drop library`() = runTest {
+        val result = dropRepo.lookup(gMajKey, dropDTuning)
+        assertTrue(result is VoicingLookupResult.Standard)
+        assertEquals(1, (result as VoicingLookupResult.Standard).voicings.size)
+    }
+
+    @Test
+    fun `tier 2 Drop C sharp returns UniformOffset with offset minus 1, drop family`() = runTest {
+        val dropCSharp = GuitarTuning(
+            id = "drop_cs",
+            openNotes = listOf(
+                Note(NoteName.CSharp, 2), Note(NoteName.GSharp, 2), Note(NoteName.CSharp, 3),
+                Note(NoteName.FSharp, 3), Note(NoteName.ASharp, 3), Note(NoteName.DSharp, 4),
+            ),
+        )
+        val result = dropRepo.lookup(gMajKey, dropCSharp)
+        assertTrue(result is VoicingLookupResult.UniformOffset)
+        assertEquals(-1, (result as VoicingLookupResult.UniformOffset).offsetSemitones)
+    }
+
+    @Test
+    fun `Drop D with no curated drop asset returns Standard with empty voicings, not Unsupported`() = runTest {
+        // fakeRepo only has a standard-family library. A missing/not-yet-curated family asset
+        // must behave as empty, not crash and not fall through to Unsupported -- Drop D is a
+        // real, matched family, it just has nothing curated for this chord yet.
+        val result = fakeRepo.lookup(gMajKey, dropDTuning)
+        assertTrue(result is VoicingLookupResult.Standard)
+        assertTrue((result as VoicingLookupResult.Standard).voicings.isEmpty())
+    }
+
     // ── tier 3: unsupported ───────────────────────────────────────────────────────
 
     @Test
-    fun `tier 3 Drop D returns Unsupported`() = runTest {
-        val result = fakeRepo.lookup(cMajKey, dropD)
+    fun `tier 3 Open G returns Unsupported`() = runTest {
+        val result = fakeRepo.lookup(cMajKey, openG)
         assertTrue(result is VoicingLookupResult.Unsupported)
     }
 
     @Test
     fun `tier 3 Unsupported carries the requested tuning`() = runTest {
-        val result = fakeRepo.lookup(cMajKey, dropD) as VoicingLookupResult.Unsupported
-        assertEquals(dropD, result.tuning)
+        val result = fakeRepo.lookup(cMajKey, openG) as VoicingLookupResult.Unsupported
+        assertEquals(openG, result.tuning)
     }
 
-    // ── Inner fake: delegates to parser with inline JSON ──────────────────────────
+    // ── Inner fake: delegates to parser with inline JSON, mirrors VoicingRepositoryImpl's
+    // multi-family resolution (standard family, then drop-D family) ────────────────
 
-    private class FakeVoicingRepository(private val json: String) : VoicingRepository {
-        private val library: Map<ChordKey, List<Voicing>> by lazy {
-            VoicingJsonParser.parse(json, GuitarTuning.STANDARD_6)
+    private class FakeVoicingRepository(
+        standardJson: String,
+        dropJson: String? = null,
+    ) : VoicingRepository {
+
+        private data class Family(val reference: GuitarTuning, val library: Map<ChordKey, List<Voicing>>)
+
+        private val families: List<Family> by lazy {
+            listOf(
+                Family(GuitarTuning.STANDARD_6, VoicingJsonParser.parse(standardJson, GuitarTuning.STANDARD_6)),
+                Family(
+                    GuitarTuning.DROP_D_6,
+                    dropJson?.let { VoicingJsonParser.parse(it, GuitarTuning.DROP_D_6) } ?: emptyMap(),
+                ),
+            )
         }
 
         companion object {
@@ -140,19 +241,20 @@ class VoicingRepositoryImplTest {
         }
 
         override suspend fun lookup(chord: ChordKey, tuning: GuitarTuning): VoicingLookupResult {
-            val standard = library[chord] ?: emptyList()
-            val offset = tuning.uniformOffsetFrom(GuitarTuning.STANDARD_6)
-            return when {
-                offset == null -> VoicingLookupResult.Unsupported(tuning)
-                offset == 0 -> VoicingLookupResult.Standard(standard.take(MAX_VOICINGS))
-                else -> {
-                    val shifted = standard
+            for (family in families) {
+                val offset = tuning.uniformOffsetFrom(family.reference) ?: continue
+                val reference = family.library[chord] ?: emptyList()
+                return if (offset == 0) {
+                    VoicingLookupResult.Standard(reference.take(MAX_VOICINGS))
+                } else {
+                    val shifted = reference
                         .mapNotNull { VoicingTransposer.shift(it, kotlin.math.abs(offset), MAX_FRET) }
                         .sortedBy { it.baseFret }
                         .take(MAX_VOICINGS)
                     VoicingLookupResult.UniformOffset(shifted, offset)
                 }
             }
+            return VoicingLookupResult.Unsupported(tuning)
         }
     }
 }

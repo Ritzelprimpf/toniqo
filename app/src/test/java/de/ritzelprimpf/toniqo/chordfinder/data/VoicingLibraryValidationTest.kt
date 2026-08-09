@@ -35,8 +35,14 @@ class VoicingLibraryValidationTest {
 
     @Test
     fun `all 12 roots times 4 qualities have at least one voicing`() {
+        // Deliberately the 4 triads only, not ChordQuality.entries: POWER chords belong to the
+        // drop-tuning library (voicings_drop_d_6.json), not this standard-6 one -- see
+        // ChordQuality's kdoc.
+        val triadQualities = listOf(
+            ChordQuality.MAJOR, ChordQuality.MINOR, ChordQuality.DIMINISHED, ChordQuality.AUGMENTED,
+        )
         for (root in 0..11) {
-            for (quality in ChordQuality.entries) {
+            for (quality in triadQualities) {
                 val key = de.ritzelprimpf.toniqo.chordfinder.domain.model.ChordKey(root, quality)
                 val voicings = library[key]
                 assertTrue(
@@ -68,12 +74,22 @@ class VoicingLibraryValidationTest {
     }
 
     @Test
-    fun `every voicing has bassDegree ROOT`() {
-        library.forEach { (key, voicings) ->
-            voicings.forEach { v ->
-                assertEquals("bassDegree for $key", de.ritzelprimpf.toniqo.chordfinder.domain.model.ChordToneRole.ROOT, v.bassDegree)
-            }
-        }
+    fun `curated library now includes inversions alongside root-position voicings`() {
+        // Updated once an inversion was actually curated into the shipped asset (upper-neck
+        // 3-string shapes with a third or fifth in the bass) — see this test's prior form for the
+        // tripwire that flagged the change. Voicing.validated() already proves per-voicing that
+        // whatever bassDegree is claimed matches the shape's true lowest note; this just confirms
+        // both root-position and inversions are represented, i.e. the library isn't accidentally
+        // root-only nor accidentally inversion-only.
+        val allBassDegrees = library.values.flatten().map { it.bassDegree }.toSet()
+        assertTrue(
+            "expected at least one root-position voicing",
+            de.ritzelprimpf.toniqo.chordfinder.domain.model.ChordToneRole.ROOT in allBassDegrees,
+        )
+        assertTrue(
+            "expected at least one inversion (third or fifth in bass)",
+            allBassDegrees.any { it != de.ritzelprimpf.toniqo.chordfinder.domain.model.ChordToneRole.ROOT },
+        )
     }
 
     @Test
@@ -82,9 +98,9 @@ class VoicingLibraryValidationTest {
             voicings.forEach { v ->
                 val range = v.fretRange
                 if (range != 0..0) {
-                    assertTrue("fret span ≤ 4 for $key: ${range.last - range.first}", range.last - range.first <= 4)
+                    assertTrue("fret span ≤ 6 for $key: ${range.last - range.first}", range.last - range.first <= 6)
                     assertTrue("baseFret ≥ 0 for $key", range.first >= 0)
-                    assertTrue("maxFret ≤ 15 for $key", range.last <= 15)
+                    assertTrue("maxFret ≤ 24 for $key", range.last <= 24)
                 }
             }
         }

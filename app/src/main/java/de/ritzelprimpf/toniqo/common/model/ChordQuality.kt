@@ -1,11 +1,17 @@
 package de.ritzelprimpf.toniqo.common.model
 
 /**
- * The harmonic quality of a triad — the colour produced by the combination of its intervals.
+ * The harmonic quality of a chord — the colour produced by the combination of its intervals.
  *
- * Exactly four values; these are the only triads two stacked thirds can produce. Seventh-chord
- * types are modelled separately in `chordfinder/domain/model/SeventhQuality`, which was
- * introduced in Phase 8.1 when the diatonic chord engine was built.
+ * The four triad values are the only triads two stacked thirds can produce. [POWER] is not a
+ * triad (it has no third, so it is neither major nor minor) — it is included here rather than
+ * as a triad variant because [de.ritzelprimpf.toniqo.chordfinder.domain.model.Voicing]'s
+ * "every chord tone must sound" invariant is keyed off exactly this list, and a power chord's
+ * tone set genuinely is just {root, fifth}. It is never produced by diatonic harmonization
+ * (`MusicTheory`, `ChordQualityResolver.triad`) — those only ever resolve to the four triads
+ * below — so it is reachable only where a caller deliberately asks the voicing repository for
+ * it. Seventh-chord types are modelled separately in `chordfinder/domain/model/SeventhQuality`,
+ * which was introduced in Phase 8.1 when the diatonic chord engine was built.
  *
  * Each value carries:
  * - [intervalsFromRoot] — semitone offsets of every chord tone from the root (e.g. major
@@ -31,4 +37,7 @@ enum class ChordQuality(
 
     /** Augmented triad: root, major third, augmented fifth. */
     AUGMENTED(intArrayOf(0, 4, 8), "aug"),
+
+    /** Power chord: root, perfect fifth. No third — neither major nor minor. */
+    POWER(intArrayOf(0, 7), "5"),
 }

@@ -1,7 +1,7 @@
 package de.ritzelprimpf.toniqo.chordfinder.presentation.ui
 
 import de.ritzelprimpf.toniqo.common.model.ChordQuality
-import de.ritzelprimpf.toniqo.ui.theme.Tq
+import de.ritzelprimpf.toniqo.ui.theme.TqPalette
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -10,30 +10,33 @@ import org.junit.Test
  *
  * Exhaustive — one case per [ChordQuality] value. If [ChordQuality] gains a new entry the
  * exhaustive `when` in [DegreeColor] will fail to compile, ensuring this test suite is updated.
+ * Uses [TqPalette.Dark] as a stand-in palette — the mapping itself is palette-agnostic.
  */
 class DegreeColorTest {
 
+    private val palette = TqPalette.Dark
+
     @Test
     fun `MAJOR maps to signal mint`() =
-        assertEquals(Tq.Color.SignalMint, DegreeColor.of(ChordQuality.MAJOR))
+        assertEquals(palette.signalMint, DegreeColor.of(ChordQuality.MAJOR, palette))
 
     @Test
     fun `MINOR maps to signal cyan`() =
-        assertEquals(Tq.Color.SignalCyan, DegreeColor.of(ChordQuality.MINOR))
+        assertEquals(palette.signalCyan, DegreeColor.of(ChordQuality.MINOR, palette))
 
     @Test
     fun `DIMINISHED maps to signal amber`() =
-        assertEquals(Tq.Color.SignalAmber, DegreeColor.of(ChordQuality.DIMINISHED))
+        assertEquals(palette.signalAmber, DegreeColor.of(ChordQuality.DIMINISHED, palette))
 
     @Test
     fun `AUGMENTED maps to signal violet`() =
-        assertEquals(Tq.Color.SignalViolet, DegreeColor.of(ChordQuality.AUGMENTED))
+        assertEquals(palette.signalViolet, DegreeColor.of(ChordQuality.AUGMENTED, palette))
 
     @Test
     fun `all ChordQuality values are handled — no unmatched entries`() {
         ChordQuality.entries.forEach { quality ->
             // Throws if the when is non-exhaustive at runtime (belt-and-suspenders guard)
-            DegreeColor.of(quality)
+            DegreeColor.of(quality, palette)
         }
     }
 }

@@ -13,10 +13,12 @@ Reference this document when implementing any module to understand expected beha
 - The app always has exactly one module active at a time.
 - Module switching is available from a persistent navigation element. The specific mechanism (bottom navigation bar vs. drawer) is decided in Phase 3 and recorded in `DECISIONS.md`.
 - An **Info / About section** is accessible from the navigation. Initial scope (see `DECISIONS.md`, 2026-07-19) contains:
+  - Dark Theme toggle — switches the whole app between dark (default) and light; persisted, does not follow the system setting (see `DECISIONS.md`, 2026-08-09)
   - Help articles (per module)
   - Open Source Licenses
-  - Feedback (GitHub Issues link)
-  - Support the Project (GitHub Sponsors link)
+  - Report a Bug (Tally.so web form, loaded in-app via an embedded WebView; see `DECISIONS.md`, 2026-08-09)
+  - Request a Feature (Tally.so web form, loaded in-app via an embedded WebView; see `DECISIONS.md`, 2026-08-09)
+  - Support the Project (GitHub Sponsors link) — currently hidden pending clearance, see `DECISIONS.md`
   - Privacy Policy and Rate/Share the App are deferred — not in the initial menu.
 
 ---
@@ -321,12 +323,13 @@ Given a musical mode (key), shows all diatonic chords that naturally belong to i
 
 ## Info / About Section
 
-Initial scope (see `DECISIONS.md`, 2026-07-19):
+Initial scope (see `DECISIONS.md`, 2026-07-19; feedback rows updated 2026-08-09):
 
 - **Help** — per-module help text explaining how to use each tool
 - **Open Source Licenses** — third-party library attribution
-- **Feedback** — opens the GitHub Issues page (`https://github.com/Ritzelprimpf/toniqo/issues`) in an external browser
-- **Support the Project** — opens the GitHub Sponsors page in an external browser
+- **Report a Bug** — loads the Tally.so bug-report form (`https://tally.so/r/WO64gv`) in an in-app WebView
+- **Request a Feature** — loads the Tally.so feature-request form (`https://tally.so/r/RGQOlj`) in an in-app WebView
+- **Support the Project** — opens the GitHub Sponsors page in an external browser; currently hidden behind a feature flag pending clearance (see `DECISIONS.md`, 2026-08-09)
 
 Deferred, not currently in the menu:
 

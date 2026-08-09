@@ -16,3 +16,39 @@ data class ChordKey(
     val rootPitchClass: Int,
     val quality: ChordQuality,
 )
+
+private const val PITCH_CLASSES = 12
+
+// Interval values (semitones above root) that count as "a third" / "a fifth", regardless of
+// which index they sit at in ChordQuality.intervalsFromRoot. Index-based lookup (e.g. "the third
+// is always intervalsFromRoot[1]") breaks for POWER, whose 2-element array has no third at all
+// and puts the fifth at index 1, not 2 -- classifying by interval *value* instead is correct for
+// every quality, present and future, without the caller needing to know each one's shape.
+private val THIRD_INTERVALS = setOf(3, 4) // minor third, major third
+private val FIFTH_INTERVALS = setOf(6, 7, 8) // diminished, perfect, augmented fifth
+
+/**
+ * Classifies [pitchClass] as the role it plays within this chord: [ChordToneRole.ROOT] if it's
+ * the root, [ChordToneRole.THIRD] / [ChordToneRole.FIFTH] if it matches this chord's actual
+ * third/fifth (a quality may have neither, e.g. [ChordQuality.POWER] has no third), or
+ * [ChordToneRole.OTHER] if it matches none of the above.
+ *
+ * Used to compute (never just trust) a voicing's [Voicing.bassDegree] from its lowest sounded
+ * string, in both [Voicing.validated] and the JSON parser.
+ */
+internal fun ChordKey.classifyToneRole(pitchClass: Int): ChordToneRole {
+    val root = ((rootPitchClass % PITCH_CLASSES) + PITCH_CLASSES) % PITCH_CLASSES
+    if (pitchClass == root) return ChordToneRole.ROOT
+
+    val thirdPc = quality.intervalsFromRoot
+        .firstOrNull { it in THIRD_INTERVALS }
+        ?.let { (rootPitchClass + it + PITCH_CLASSES) % PITCH_CLASSES }
+    if (pitchClass == thirdPc) return ChordToneRole.THIRD
+
+    val fifthPc = quality.intervalsFromRoot
+        .firstOrNull { it in FIFTH_INTERVALS }
+        ?.let { (rootPitchClass + it + PITCH_CLASSES) % PITCH_CLASSES }
+    if (pitchClass == fifthPc) return ChordToneRole.FIFTH
+
+    return ChordToneRole.OTHER
+}

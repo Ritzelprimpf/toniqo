@@ -60,12 +60,16 @@ internal fun ChordDegreeRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val qualityColor = DegreeColor.of(degreeChord.triadQuality)
+    val qualityColor = DegreeColor.of(degreeChord.triadQuality, Tq.Palette)
     val qualityAbbrev = when (degreeChord.triadQuality) {
         ChordQuality.MAJOR      -> stringResource(R.string.cf_quality_maj)
         ChordQuality.MINOR      -> stringResource(R.string.cf_quality_min)
         ChordQuality.DIMINISHED -> stringResource(R.string.cf_quality_dim)
         ChordQuality.AUGMENTED  -> stringResource(R.string.cf_quality_aug)
+        // Unreachable: DegreeChord.triadQuality always comes from ChordQualityResolver.triad(),
+        // which never resolves to POWER (it isn't a diatonic triad). Branch exists only because
+        // ChordQuality is an enum and this `when` must be exhaustive.
+        ChordQuality.POWER      -> stringResource(R.string.cf_quality_power)
     }
 
     Box(

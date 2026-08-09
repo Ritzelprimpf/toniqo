@@ -29,9 +29,19 @@ import de.ritzelprimpf.toniqo.ui.theme.ToniqoTheme
  * - [SnackbarHostState] is created here and threaded to screens that need it.
  * - Tab switching uses `saveState`/`restoreState` to preserve each tab's back
  *   stack across switches (see the `onNavigate` lambda below).
+ * - [isDarkTheme]/[onDarkThemeChanged] are owned by `MainActivity`'s
+ *   `de.ritzelprimpf.toniqo.ui.theme.ThemeViewModel` and threaded through here rather than
+ *   re-fetched inside a nav destination — see that ViewModel's kdoc for why.
+ *
+ * @param isDarkTheme The user's current dark/light theme choice, surfaced as a toggle in the
+ *   Info menu ([de.ritzelprimpf.toniqo.ui.info.InfoHomeScreen]).
+ * @param onDarkThemeChanged Called when the user flips that toggle.
  */
 @Composable
-fun MainScreen() {
+fun MainScreen(
+    isDarkTheme: Boolean = true,
+    onDarkThemeChanged: (Boolean) -> Unit = {},
+) {
     val navController = rememberNavController()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -66,6 +76,8 @@ fun MainScreen() {
     ) { innerPadding ->
         AppNavHost(
             navController = navController,
+            isDarkTheme = isDarkTheme,
+            onDarkThemeChanged = onDarkThemeChanged,
             modifier = Modifier.padding(innerPadding),
         )
     }

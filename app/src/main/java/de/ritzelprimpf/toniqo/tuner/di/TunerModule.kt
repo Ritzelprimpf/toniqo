@@ -4,9 +4,11 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import de.ritzelprimpf.toniqo.tuner.data.AudioTrackTonePlayer
 import de.ritzelprimpf.toniqo.tuner.data.TunerPreferences
 import de.ritzelprimpf.toniqo.tuner.data.TunerPreferencesImpl
 import de.ritzelprimpf.toniqo.tuner.data.TunerPresetRepositoryImpl
+import de.ritzelprimpf.toniqo.tuner.domain.repository.TonePlayer
 import de.ritzelprimpf.toniqo.tuner.domain.repository.TunerPresetRepository
 import javax.inject.Singleton
 
@@ -39,4 +41,10 @@ abstract class TunerModule {
     abstract fun bindTunerPreferences(
         impl: TunerPreferencesImpl,
     ): TunerPreferences
+
+    /** Binds [AudioTrackTonePlayer] as the implementation of [TonePlayer]. */
+    @Binds
+    abstract fun bindTonePlayer(
+        impl: AudioTrackTonePlayer,
+    ): TonePlayer
 }

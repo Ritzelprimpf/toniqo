@@ -64,7 +64,7 @@ fun StatusLine(
         Text(
             text = statusWord,
             style = Tq.Type.Kicker,
-            color = status.toSignalColor(),
+            color = status.toSignalColor(Tq.Palette),
         )
         Text(
             text = centsText,

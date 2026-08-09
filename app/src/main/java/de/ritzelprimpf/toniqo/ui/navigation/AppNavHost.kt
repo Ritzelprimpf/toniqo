@@ -13,6 +13,8 @@ import de.ritzelprimpf.toniqo.chordfinder.presentation.ui.ChordVoicingsScreen
 import de.ritzelprimpf.toniqo.keyfinder.presentation.ui.KeyFinderScreen
 import de.ritzelprimpf.toniqo.metronome.presentation.ui.MetronomeScreen
 import de.ritzelprimpf.toniqo.tuner.presentation.ui.TunerScreen
+import de.ritzelprimpf.toniqo.ui.info.BugReportScreen
+import de.ritzelprimpf.toniqo.ui.info.FeatureRequestScreen
 import de.ritzelprimpf.toniqo.ui.info.HelpScreen
 import de.ritzelprimpf.toniqo.ui.info.InfoHomeScreen
 import de.ritzelprimpf.toniqo.ui.info.LicensesScreen
@@ -29,9 +31,11 @@ import de.ritzelprimpf.toniqo.ui.info.LicensesScreen
  * ├── chordfinder_route          → ChordFinderScreen
  * ├── chordfinder/voicings/…     → ChordVoicingsScreen
  * └── info (nested graph)
- *     ├── info_home_route → InfoHomeScreen
- *     ├── help_route      → HelpScreen
- *     └── licenses_route  → LicensesScreen
+ *     ├── info_home_route      → InfoHomeScreen
+ *     ├── help_route           → HelpScreen
+ *     ├── licenses_route       → LicensesScreen
+ *     ├── bug_report_route     → BugReportScreen (in-app WebView)
+ *     └── feature_request_route → FeatureRequestScreen (in-app WebView)
  * ```
  *
  * The bottom bar remains visible during Info sub-screen navigation because the
@@ -40,10 +44,16 @@ import de.ritzelprimpf.toniqo.ui.info.LicensesScreen
  * remains visible there as well.
  *
  * @param navController Hoisted nav controller from [MainScreen].
+ * @param isDarkTheme Current dark/light theme choice, threaded through to the toggle in
+ *   [InfoHomeScreen] — see [MainScreen]'s kdoc for why this isn't fetched via `hiltViewModel()`
+ *   inside the `info_home` destination instead.
+ * @param onDarkThemeChanged Called when the user flips that toggle.
  */
 @Composable
 fun AppNavHost(
     navController: NavHostController,
+    isDarkTheme: Boolean,
+    onDarkThemeChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     NavHost(
@@ -96,6 +106,8 @@ fun AppNavHost(
             composable(Routes.INFO_HOME) {
                 InfoHomeScreen(
                     onNavigate = { route -> navController.navigate(route) },
+                    isDarkTheme = isDarkTheme,
+                    onDarkThemeChanged = onDarkThemeChanged,
                 )
             }
             composable(Routes.HELP) {
@@ -105,6 +117,16 @@ fun AppNavHost(
             }
             composable(Routes.LICENSES) {
                 LicensesScreen(
+                    onBack = { navController.popBackStack() },
+                )
+            }
+            composable(Routes.BUG_REPORT) {
+                BugReportScreen(
+                    onBack = { navController.popBackStack() },
+                )
+            }
+            composable(Routes.FEATURE_REQUEST) {
+                FeatureRequestScreen(
                     onBack = { navController.popBackStack() },
                 )
             }

@@ -1,8 +1,11 @@
 package de.ritzelprimpf.toniqo.keyfinder.presentation.ui
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -51,6 +54,75 @@ class KeyFinderScreenTest {
     fun `idle prompt shows when note list is empty`() {
         launch(KeyFinderUiState())
         composeTestRule.onNodeWithText("Add at least 3 notes to see matches").assertIsDisplayed()
+    }
+
+    @Test
+    fun `big add-note CTA shown in addition to the rail button when note list is empty`() {
+        launch(KeyFinderUiState())
+        // The small rail button and the large first-visit CTA both use the "Add note" content
+        // description, so an empty note list should surface two of them.
+        composeTestRule.onAllNodesWithContentDescription("Add note").assertCountEquals(2)
+    }
+
+    @Test
+    fun `big add-note CTA stays shown while fewer than 3 notes are present`() {
+        // A match is only ever attempted once MIN_NOTES_TO_MATCH (3) notes are present, so the
+        // CTA must stay visible through 1 and 2 notes, not disappear after the very first one.
+        launch(
+            KeyFinderUiState(
+                notes = listOf(NoteChip(0, "C", false), NoteChip(4, "E", false)),
+                results = emptyList(),
+            )
+        )
+        composeTestRule.onAllNodesWithContentDescription("Add note").assertCountEquals(2)
+    }
+
+    @Test
+    fun `big add-note CTA is hidden once 3 notes are present`() {
+        launch(
+            KeyFinderUiState(
+                notes = threeNoteChips(withRoot = false),
+                results = emptyList(),
+            )
+        )
+        composeTestRule.onAllNodesWithContentDescription("Add note").assertCountEquals(1)
+    }
+
+    @Test
+    fun `tapping the big add-note CTA opens the note picker sheet`() {
+        launch(KeyFinderUiState())
+        composeTestRule.onAllNodesWithContentDescription("Add note")[0].performClick()
+        composeTestRule.onNodeWithText("ADD NOTE").assertIsDisplayed()
+    }
+
+    @Test
+    fun `note picker sheet stays open after selecting a note`() {
+        val fake = launch(KeyFinderUiState())
+        composeTestRule.onAllNodesWithContentDescription("Add note")[0].performClick()
+        composeTestRule.onNodeWithText("ADD NOTE").assertIsDisplayed()
+
+        composeTestRule.onNodeWithText("C").performClick()
+
+        // The picker registers the tap but does not auto-close — the user can keep adding notes.
+        assert(fake.addedNotes.size == 1)
+        composeTestRule.onNodeWithText("ADD NOTE").assertIsDisplayed()
+    }
+
+    // ── Info dialog ─────────────────────────────────────────────────────────
+
+    @Test
+    fun `tapping the info button shows the info dialog`() {
+        launch(KeyFinderUiState())
+        composeTestRule.onNodeWithContentDescription("Key Finder info").performClick()
+        composeTestRule.onNodeWithText("About Key Finder").assertIsDisplayed()
+    }
+
+    @Test
+    fun `info dialog is dismissed by tapping Got it`() {
+        launch(KeyFinderUiState())
+        composeTestRule.onNodeWithContentDescription("Key Finder info").performClick()
+        composeTestRule.onNodeWithText("Got it").performClick()
+        composeTestRule.onNodeWithText("About Key Finder").assertIsNotDisplayed()
     }
 
     // ── Results ─────────────────────────────────────────────────────────────

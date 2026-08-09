@@ -16,46 +16,46 @@ class TqTokensTest {
 
     @Test
     fun `SignalMint dark matches design spec hex 9CFF8B`() {
-        assertEquals(0xFF9CFF8B.toInt(), Tq.Color.SignalMint.toArgb())
+        assertEquals(0xFF9CFF8B.toInt(), Tq.DarkColor.SignalMint.toArgb())
     }
 
     @Test
     fun `SignalCyan dark matches design spec hex 73B8E0`() {
-        assertEquals(0xFF73B8E0.toInt(), Tq.Color.SignalCyan.toArgb())
+        assertEquals(0xFF73B8E0.toInt(), Tq.DarkColor.SignalCyan.toArgb())
     }
 
     @Test
     fun `SignalAmber dark matches design spec hex E1B065`() {
-        assertEquals(0xFFE1B065.toInt(), Tq.Color.SignalAmber.toArgb())
+        assertEquals(0xFFE1B065.toInt(), Tq.DarkColor.SignalAmber.toArgb())
     }
 
     @Test
     fun `SignalViolet dark matches design spec hex B6A0E0`() {
-        assertEquals(0xFFB6A0E0.toInt(), Tq.Color.SignalViolet.toArgb())
+        assertEquals(0xFFB6A0E0.toInt(), Tq.DarkColor.SignalViolet.toArgb())
     }
 
     // ── Surface colours (dark) ───────────────────────────────────────────────
 
     @Test
     fun `BgBase dark matches design spec hex 1A1F22`() {
-        assertEquals(0xFF1A1F22.toInt(), Tq.Color.BgBase.toArgb())
+        assertEquals(0xFF1A1F22.toInt(), Tq.DarkColor.BgBase.toArgb())
     }
 
     @Test
     fun `BgInset dark matches design spec hex 161A1C`() {
-        assertEquals(0xFF161A1C.toInt(), Tq.Color.BgInset.toArgb())
+        assertEquals(0xFF161A1C.toInt(), Tq.DarkColor.BgInset.toArgb())
     }
 
     // ── Text colours (dark) ──────────────────────────────────────────────────
 
     @Test
     fun `FgPrimary dark matches design spec hex F2F4F5`() {
-        assertEquals(0xFFF2F4F5.toInt(), Tq.Color.FgPrimary.toArgb())
+        assertEquals(0xFFF2F4F5.toInt(), Tq.DarkColor.FgPrimary.toArgb())
     }
 
     @Test
     fun `FgQuaternary dark matches design spec hex 5E6468`() {
-        assertEquals(0xFF5E6468.toInt(), Tq.Color.FgQuaternary.toArgb())
+        assertEquals(0xFF5E6468.toInt(), Tq.DarkColor.FgQuaternary.toArgb())
     }
 
     // ── Light-theme colours ──────────────────────────────────────────────────

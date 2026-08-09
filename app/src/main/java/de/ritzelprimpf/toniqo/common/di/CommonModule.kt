@@ -5,6 +5,8 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import de.ritzelprimpf.toniqo.common.data.ThemePreferences
+import de.ritzelprimpf.toniqo.common.data.ThemePreferencesImpl
 import de.ritzelprimpf.toniqo.common.permission.AndroidAudioPermissionChecker
 import de.ritzelprimpf.toniqo.common.permission.AudioPermissionChecker
 import de.ritzelprimpf.toniqo.common.util.Clock
@@ -36,6 +38,11 @@ abstract class CommonModule {
     @Binds
     @Singleton
     abstract fun bindClock(impl: SystemClock): Clock
+
+    /** Binds [ThemePreferencesImpl] as the singleton implementation of [ThemePreferences]. */
+    @Binds
+    @Singleton
+    abstract fun bindThemePreferences(impl: ThemePreferencesImpl): ThemePreferences
 
     companion object {
         /**

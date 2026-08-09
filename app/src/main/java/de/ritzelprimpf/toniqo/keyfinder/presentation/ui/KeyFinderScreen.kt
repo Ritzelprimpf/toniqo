@@ -28,12 +28,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Mic
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,6 +44,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -76,6 +79,7 @@ import de.ritzelprimpf.toniqo.common.model.ScaleType
 import de.ritzelprimpf.toniqo.common.util.ScaleSpeller
 import de.ritzelprimpf.toniqo.keyfinder.domain.model.ScaleCandidate
 import de.ritzelprimpf.toniqo.keyfinder.domain.model.ScaleMatch
+import de.ritzelprimpf.toniqo.keyfinder.domain.usecase.MatchScalesUseCase
 import de.ritzelprimpf.toniqo.keyfinder.presentation.scaleDegreeLabel
 import de.ritzelprimpf.toniqo.keyfinder.presentation.scaleLabelData
 import de.ritzelprimpf.toniqo.keyfinder.presentation.util.findActivity
@@ -151,6 +155,7 @@ fun KeyFinderScreen(
     // ── Ephemeral UI state ───────────────────────────────────────────────────
     var showPickerSheet by rememberSaveable { mutableStateOf(false) }
     var selectedResult by remember { mutableStateOf<ScaleMatch?>(null) }
+    var showInfoDialog by rememberSaveable { mutableStateOf(false) }
 
     // ── Layout ───────────────────────────────────────────────────────────────
     LazyColumn(
@@ -168,6 +173,7 @@ fun KeyFinderScreen(
                 isListening = uiState.isListening,
                 onMicToggle = ::onMicToggle,
                 onClearAll = { viewModel.clearAll() },
+                onInfoClick = { showInfoDialog = true },
             )
             Spacer(Modifier.height(Tq.Sp.s3))
         }
@@ -187,7 +193,12 @@ fun KeyFinderScreen(
                     handleKeyFinderMicAccess(activity, permissionLauncher, hasRequestedMicPerm)
                 }
             ) }
-            uiState.results.isEmpty() -> item { IdlePrompt() }
+            uiState.results.isEmpty() -> item {
+                IdlePrompt(
+                    hasEnoughNotesToMatch = uiState.notes.size >= MatchScalesUseCase.MIN_NOTES_TO_MATCH,
+                    onAddNote = { showPickerSheet = true },
+                )
+            }
             else -> {
                 item {
                     ResultsHeader(
@@ -216,7 +227,6 @@ fun KeyFinderScreen(
             presentPitchClasses = uiState.notes.map { it.pitchClass }.toSet(),
             onAddNote = { pitchClass ->
                 viewModel.addNoteFromPicker(Note(name = NoteName.entries[pitchClass], octave = 4))
-                showPickerSheet = false
             },
             onDismiss = { showPickerSheet = false },
         )
@@ -224,6 +234,10 @@ fun KeyFinderScreen(
 
     selectedResult?.let { match ->
         ScaleDetailSheet(match = match, onDismiss = { selectedResult = null })
+    }
+
+    if (showInfoDialog) {
+        InfoDialog(onDismiss = { showInfoDialog = false })
     }
 }
 
@@ -241,6 +255,7 @@ private fun KeyFinderHeader(
     isListening: Boolean,
     onMicToggle: () -> Unit,
     onClearAll: () -> Unit,
+    onInfoClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
@@ -261,7 +276,7 @@ private fun KeyFinderHeader(
                 )
             }
             IconButton(
-                onClick = { /* Info navigation – not wired in this phase */ },
+                onClick = onInfoClick,
                 modifier = Modifier.align(Alignment.TopEnd),
             ) {
                 Icon(
@@ -418,10 +433,10 @@ private fun NoteChipItem(
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val rootChipBg = remember(chip.isRoot) {
-        if (chip.isRoot) lerp(Tq.Color.BgElev2, Tq.Color.SignalMint, 0.22f)
+    // Not wrapped in remember{} — Tq.Color is a theme-reactive composable getter, and lerp() on
+    // two colours is cheap enough that memoizing it isn't worth losing that reactivity for.
+    val rootChipBg = if (chip.isRoot) lerp(Tq.Color.BgElev2, Tq.Color.SignalMint, 0.22f)
         else Tq.Color.BgElev2
-    }
     val longClickLabel = stringResource(
         if (chip.isRoot) R.string.keyfinder_cd_unmark_tonic else R.string.keyfinder_cd_mark_tonic
     )
@@ -468,6 +483,10 @@ private fun AddNoteButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Captured here — Tq.Color is a theme-reactive composable getter, not readable from inside
+    // the non-composable Canvas draw lambda below.
+    val dashColor = Tq.Color.Line
+
     Box(
         modifier = modifier
             .size(44.dp)
@@ -477,7 +496,7 @@ private fun AddNoteButton(
         Canvas(modifier = Modifier.size(30.dp)) {
             val strokeWidth = 1.25.dp.toPx()
             drawCircle(
-                color = Tq.Color.Line,
+                color = dashColor,
                 radius = size.minDimension / 2f - strokeWidth / 2f,
                 style = Stroke(
                     width = strokeWidth,
@@ -545,10 +564,10 @@ private fun ResultCard(
     val primaryLabel = resolveScaleString(labelData.primaryLabelKey, labelData.spelledRoot)
     val subtitle = resolveScaleString(labelData.subtitleKey, labelData.spelledRoot)
 
-    val cardBg = remember(isFirst) {
-        if (isFirst) lerp(Tq.Color.BgElev1, Tq.Color.SignalMint, 0.06f)
+    // Not wrapped in remember{} — Tq.Color is a theme-reactive composable getter, and lerp() on
+    // two colours is cheap enough that memoizing it isn't worth losing that reactivity for.
+    val cardBg = if (isFirst) lerp(Tq.Color.BgElev1, Tq.Color.SignalMint, 0.06f)
         else Tq.Color.BgElev1
-    }
     val borderColor = if (isFirst) Tq.Color.SignalMint.copy(alpha = 0.30f) else Tq.Color.LineFaint
     val percentColor = if (isFirst) Tq.Color.SignalMint else Tq.Color.FgPrimary
 
@@ -642,14 +661,30 @@ private fun ScaleBadge(label: String, isMint: Boolean, modifier: Modifier = Modi
 
 // ─── Empty / idle state ───────────────────────────────────────────────────────
 
+/**
+ * Shown when there are no scale matches yet. While the note count is still below
+ * [MatchScalesUseCase.MIN_NOTES_TO_MATCH] ([hasEnoughNotesToMatch] false), a large mint CTA
+ * button is shown above the hint text — the small dashed add-button in the chip rail above isn't
+ * a strong enough call-to-action on an otherwise-empty screen, and the user has more notes to add
+ * before a match is even possible. Once enough notes are present, only the hint text is shown
+ * (results stay empty here only because none of them matched), matching the original design.
+ */
 @Composable
-private fun IdlePrompt(modifier: Modifier = Modifier) {
-    Box(
+private fun IdlePrompt(
+    hasEnoughNotesToMatch: Boolean,
+    onAddNote: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
         modifier = modifier
             .fillMaxWidth()
             .padding(vertical = Tq.Sp.s8),
-        contentAlignment = Alignment.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        if (!hasEnoughNotesToMatch) {
+            BigAddNoteButton(onClick = onAddNote)
+            Spacer(Modifier.height(Tq.Sp.s4))
+        }
         Text(
             text = stringResource(R.string.keyfinder_idle_prompt),
             style = Tq.Type.Body,
@@ -657,6 +692,69 @@ private fun IdlePrompt(modifier: Modifier = Modifier) {
             textAlign = TextAlign.Center,
         )
     }
+}
+
+/**
+ * Large first-visit call-to-action: a filled `signal.mint` circle with a `+` icon. Deliberately
+ * does not use the 24dp glow reserved for `btn.primary` at its 52dp variant / the bottom-nav
+ * indicator (DESIGN.md §10) — those are the only two glows the design language permits (§12).
+ */
+@Composable
+private fun BigAddNoteButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .size(72.dp)
+            .clip(CircleShape)
+            .background(Tq.Color.SignalMint)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Add,
+            contentDescription = stringResource(R.string.keyfinder_cd_add_note),
+            tint = Tq.Color.BgBase,
+            modifier = Modifier.size(28.dp),
+        )
+    }
+}
+
+// ─── Info dialog ────────────────────────────────────────────────────────────
+
+/**
+ * Explains what the matcher needs from the user, shown via the header's info button.
+ * Mirrors Chord Finder's `InfoDialog` (`ChordFinderScreen.kt`) — same `AlertDialog` structure.
+ */
+@Composable
+private fun InfoDialog(onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = stringResource(R.string.keyfinder_info_dialog_title),
+                style = Tq.Type.H2,
+                color = Tq.Color.FgPrimary,
+            )
+        },
+        text = {
+            Text(
+                text = stringResource(R.string.keyfinder_info_dialog_body),
+                style = Tq.Type.Body,
+                color = Tq.Color.FgSecondary,
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(
+                    text = stringResource(R.string.keyfinder_info_dialog_ok),
+                    style = Tq.Type.Body,
+                    color = Tq.Color.SignalMint,
+                )
+            }
+        },
+    )
 }
 
 // ─── Mic permission denied card ───────────────────────────────────────────────
@@ -680,6 +778,9 @@ private fun MicPermissionDeniedCard(
             verticalArrangement = Arrangement.spacedBy(Tq.Sp.s3),
         ) {
             Spacer(Modifier.height(Tq.Sp.s2))
+            // Captured here — Tq.Color is a theme-reactive composable getter, not readable from
+            // inside the non-composable Canvas draw lambda below.
+            val slashColor = Tq.Color.FgSecondary
             Box(modifier = Modifier.size(28.dp)) {
                 Icon(
                     imageVector = Icons.Outlined.Mic,
@@ -689,7 +790,7 @@ private fun MicPermissionDeniedCard(
                 )
                 Canvas(modifier = Modifier.size(28.dp)) {
                     drawLine(
-                        color = Tq.Color.FgSecondary,
+                        color = slashColor,
                         start = Offset(size.width * 0.75f, size.height * 0.10f),
                         end = Offset(size.width * 0.25f, size.height * 0.90f),
                         strokeWidth = 1.25.dp.toPx(),
@@ -731,8 +832,11 @@ private fun MicPermissionDeniedCard(
 // ─── Note picker sheet ────────────────────────────────────────────────────────
 
 /**
- * Bottom sheet listing all 12 pitch classes in a 4×3 grid. Tapping a cell adds the note.
- * Cells whose pitch class is already in [presentPitchClasses] are shown disabled.
+ * Bottom sheet listing all 12 pitch classes in a 4×3 grid. Tapping a cell adds the note and
+ * leaves the sheet open — cells whose pitch class is already in [presentPitchClasses] are shown
+ * disabled, so this doubles as an at-a-glance record of what's been added so far. The sheet only
+ * closes via [onDismiss] (swipe-down / tap-outside), letting the user add several notes in one
+ * sitting instead of reopening the sheet after each one.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

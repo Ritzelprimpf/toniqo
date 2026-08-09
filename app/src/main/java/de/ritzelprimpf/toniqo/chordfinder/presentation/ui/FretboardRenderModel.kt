@@ -67,15 +67,27 @@ internal const val FRET_WINDOW_SIZE = 5
  * Maps a domain [Voicing] to a [FretboardRenderModel] ready for canvas rendering.
  *
  * ### Windowing
- * The visible window starts at [Voicing.baseFret] and spans [FRET_WINDOW_SIZE] rows. An absolute
- * fret `f` maps to window position `f - baseFret + 1`.
+ * The visible window spans [FRET_WINDOW_SIZE] rows starting at a computed base fret. An absolute
+ * fret `f` maps to window position `f - base + 1`.
+ *
+ * - **Barre voicings** always window from [Voicing.baseFret] (the lowest fret in the shape, which
+ *   for a valid barre chord is the barre itself) — per product decision, a barre diagram must
+ *   start on the fret where the bar is, never nut-anchored.
+ * - **Non-barre voicings** (open or fingered shapes) window from the nut (base = 1) whenever the
+ *   whole shape fits within one window from there (`fretRange.last <= FRET_WINDOW_SIZE`), matching
+ *   the conventional "cowboy chord" diagram convention instead of left-aligning to the lowest
+ *   fretted note. Shapes that can't reach the nut fall back to windowing from [Voicing.baseFret].
  *
  * ### Nut vs position label
- * - `baseFret ≤ 1` → [FretboardRenderModel.showNut] = `true`, no position label.
- * - `baseFret > 1` → label `"${baseFret}fr"` shown to the left, no nut drawn.
+ * - `base ≤ 1` → [FretboardRenderModel.showNut] = `true`, no position label.
+ * - `base > 1` → label `"${base}fr"` shown to the left, no nut drawn.
  */
 fun Voicing.toRenderModel(): FretboardRenderModel {
-    val base = baseFret.coerceAtLeast(1)
+    val base = if (barre == null && fretRange.last <= FRET_WINDOW_SIZE) {
+        1
+    } else {
+        baseFret.coerceAtLeast(1)
+    }
     val showNut = base <= 1
     val positionLabel = if (showNut) null else "${base}fr"
 

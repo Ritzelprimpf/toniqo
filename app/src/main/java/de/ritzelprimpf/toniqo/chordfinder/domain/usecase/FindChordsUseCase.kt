@@ -132,6 +132,9 @@ class FindChordsUseCase @Inject constructor() {
         ChordQuality.MINOR -> TRIAD_SUFFIX_MINOR
         ChordQuality.DIMINISHED -> TRIAD_SUFFIX_DIMINISHED
         ChordQuality.AUGMENTED -> TRIAD_SUFFIX_AUGMENTED
+        // Unreachable: quality is always ChordQualityResolver.triad()'s return value, which
+        // never resolves to POWER (it isn't a diatonic triad — see ChordQuality's kdoc).
+        ChordQuality.POWER -> ChordQuality.POWER.symbol
     }
 
     /**
@@ -149,6 +152,9 @@ class FindChordsUseCase @Inject constructor() {
             ChordQuality.MINOR -> base.lowercase()
             ChordQuality.DIMINISHED -> "${base.lowercase()}°"
             ChordQuality.AUGMENTED -> "${base}+"
+            // Unreachable: quality is always ChordQualityResolver.triad()'s return value, which
+            // never resolves to POWER (it isn't a diatonic triad — see ChordQuality's kdoc).
+            ChordQuality.POWER -> "$base${ChordQuality.POWER.symbol}"
         }
     }
 }

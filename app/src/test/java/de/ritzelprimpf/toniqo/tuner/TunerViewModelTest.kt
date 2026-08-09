@@ -6,6 +6,7 @@ import de.ritzelprimpf.toniqo.tuner.domain.model.TuningStatus
 import de.ritzelprimpf.toniqo.tuner.domain.usecase.DetectTunedStringUseCase
 import de.ritzelprimpf.toniqo.tuner.fakes.FakeAudioCaptureSource
 import de.ritzelprimpf.toniqo.tuner.fakes.FakePitchDetector
+import de.ritzelprimpf.toniqo.tuner.fakes.FakeTonePlayer
 import de.ritzelprimpf.toniqo.tuner.fakes.FakeTunerPreferences
 import de.ritzelprimpf.toniqo.tuner.fakes.FakeTunerPresetRepository
 import de.ritzelprimpf.toniqo.tuner.presentation.viewmodel.TunerEvent
@@ -66,9 +67,10 @@ class TunerViewModelTest {
         repository: FakeTunerPresetRepository = FakeTunerPresetRepository(),
         source: FakeAudioCaptureSource = FakeAudioCaptureSource(emptyList()),
         detector: FakePitchDetector = FakePitchDetector(emptyList()),
+        tonePlayer: FakeTonePlayer = FakeTonePlayer(),
     ): TunerViewModel {
         val useCase = DetectTunedStringUseCase(source, detector)
-        val vm = TunerViewModel(repository, preferences, useCase, SelectedTuningStore())
+        val vm = TunerViewModel(repository, preferences, useCase, SelectedTuningStore(), tonePlayer)
         backgroundScope.launch { vm.uiState.collect {} }
         return vm
     }
@@ -647,5 +649,65 @@ class TunerViewModelTest {
         assertEquals(0, state.currentStringIndex)
         assertEquals(TunerMode.PRESET, state.mode)
         assertTrue(state.tunedStringIndices.isEmpty())
+    }
+
+    // ── String-pill reference tone ────────────────────────────────────────────────
+
+    @Test
+    fun `onStringSelected plays a reference tone at the target note's frequency`() = runTest {
+        val tonePlayer = FakeTonePlayer()
+        val vm = makeViewModel(tonePlayer = tonePlayer)
+        advanceUntilIdle()
+
+        vm.onStringSelected(1)
+        advanceUntilIdle()
+
+        val state = vm.uiState.value
+        val expectedHz = state.targetNote!!.frequencyHz(state.referencePitchHz)
+        assertEquals(1, tonePlayer.playedTones.size)
+        assertEquals(expectedHz, tonePlayer.playedTones[0].frequencyHz, 0.001)
+        assertEquals(TunerViewModel.TONE_DURATION_MS, tonePlayer.playedTones[0].durationMs)
+    }
+
+    /**
+     * While the reference tone plays, the mic must not be listening — otherwise the phone's own
+     * speaker output could be picked up by the mic and mistaken for the user's guitar. Proven here
+     * via [FakeAudioCaptureSource.samplesCallCount]: the pipeline only calls `samples()` again
+     * (resubscribes) once `tunerInput` goes non-null, which happens after the tone finishes.
+     */
+    @Test
+    fun `onStringSelected mutes the mic during tone playback and resumes it once the tone finishes`() = runTest {
+        val source = FakeAudioCaptureSource(emptyList())
+        val tonePlayer = FakeTonePlayer()
+        val vm = makeViewModel(source = source, tonePlayer = tonePlayer)
+        advanceUntilIdle() // initial preset load subscribes the mic once
+        val callsBeforeTap = source.samplesCallCount
+
+        vm.onStringSelected(1)
+        // Immediately after the tap — before the 1s tone finishes — the mic must not have
+        // resubscribed yet.
+        assertEquals(callsBeforeTap, source.samplesCallCount)
+
+        advanceUntilIdle() // let the tone finish
+        assertEquals(callsBeforeTap + 1, source.samplesCallCount)
+    }
+
+    @Test
+    fun `tapping a new string mid-tone cancels the previous tone's mic resume`() = runTest {
+        val source = FakeAudioCaptureSource(emptyList())
+        val tonePlayer = FakeTonePlayer()
+        val vm = makeViewModel(source = source, tonePlayer = tonePlayer)
+        advanceUntilIdle()
+        val callsBeforeTaps = source.samplesCallCount
+
+        vm.onStringSelected(0)
+        vm.onStringSelected(1) // interrupts the first tone before it can finish
+        advanceUntilIdle()
+
+        // Only string 1 is active once everything settles.
+        assertEquals(1, vm.uiState.value.currentStringIndex)
+        // The mic resumes exactly once (for string 1) — the interrupted first tone's resume
+        // never runs; if cancellation were broken, this would be callsBeforeTaps + 2.
+        assertEquals(callsBeforeTaps + 1, source.samplesCallCount)
     }
 }

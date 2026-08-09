@@ -94,6 +94,77 @@ class VoicingRenderModelMapperTest {
         assertEquals("9fr", voicing.toRenderModel().positionLabel)
     }
 
+    // ── Nut-anchored windowing for non-barre chords ───────────────────────────
+
+    @Test
+    fun `non-barre voicing windows from the nut when the shape fits within reach of it`() {
+        // Open G-style shape: lowest fretted note is fret 2, but no barre — should anchor to the
+        // nut (base = 1) rather than left-aligning to fret 2.
+        val model = sixStringVoicing(
+            marks = listOf(
+                FretMark.Fretted(3), FretMark.Fretted(2), FretMark.Open,
+                FretMark.Open, FretMark.Open, FretMark.Fretted(3),
+            ),
+        ).toRenderModel()
+
+        assertTrue(model.showNut)
+        assertNull(model.positionLabel)
+        val dotAtString1 = model.dots.first { it.stringIndex == 1 }
+        assertEquals(2, dotAtString1.fretWithinWindow)
+        val dotAtString0 = model.dots.first { it.stringIndex == 0 }
+        assertEquals(3, dotAtString0.fretWithinWindow)
+    }
+
+    @Test
+    fun `non-barre voicing with a single high fretted note still windows from the nut`() {
+        // Em-style shape: both fretted notes sit on fret 2 — should still anchor to the nut
+        // instead of showing a one-row window starting at fret 2.
+        val model = sixStringVoicing(
+            marks = listOf(
+                FretMark.Open, FretMark.Fretted(2), FretMark.Fretted(2),
+                FretMark.Open, FretMark.Open, FretMark.Open,
+            ),
+        ).toRenderModel()
+
+        assertTrue(model.showNut)
+        assertNull(model.positionLabel)
+        val dotAtString1 = model.dots.first { it.stringIndex == 1 }
+        assertEquals(2, dotAtString1.fretWithinWindow)
+    }
+
+    @Test
+    fun `non-barre voicing that cannot reach the nut still windows from its lowest fret`() {
+        // Open-position shape whose highest fret (7) exceeds the window size — cannot be
+        // nut-anchored, so it must fall back to windowing from the lowest fretted note.
+        val model = sixStringVoicing(
+            marks = listOf(
+                FretMark.Open, FretMark.Fretted(7), FretMark.Fretted(5),
+                FretMark.Fretted(4), FretMark.Fretted(5), FretMark.Open,
+            ),
+        ).toRenderModel()
+
+        assertFalse(model.showNut)
+        assertEquals("4fr", model.positionLabel)
+    }
+
+    @Test
+    fun `barre voicing windows from the barre fret even when the shape would fit from the nut`() {
+        // Shape spans frets 2-5, which would fit in a nut-anchored window for a non-barre voicing
+        // — but this is a barre chord, so it must still show its actual position, not the nut.
+        val model = sixStringVoicing(
+            marks = listOf(
+                FretMark.Fretted(2), FretMark.Fretted(4), FretMark.Fretted(5),
+                FretMark.Fretted(4), FretMark.Fretted(2), FretMark.Fretted(2),
+            ),
+            barre = Barre(fret = 2, fromString = 0, toString = 5),
+        ).toRenderModel()
+
+        assertFalse(model.showNut)
+        assertEquals("2fr", model.positionLabel)
+        val dotAtString2 = model.dots.first { it.stringIndex == 2 }
+        assertEquals(4, dotAtString2.fretWithinWindow)
+    }
+
     // ── Mark type conversion ──────────────────────────────────────────────────
 
     @Test
@@ -287,5 +358,60 @@ class VoicingRenderModelMapperTest {
 
         assertTrue(2 in model.openStrings)
         assertFalse(model.showNut) // baseFret = 5 > 1
+    }
+
+    // ── Regression: legal-schema edge cases from the regenerated voicing library ─────
+    // These shapes are all legal per the documented JSON schema but were absent from the
+    // original curated library: an all-open voicing, a 3-string voicing, and frets beyond the
+    // old 15-fret ceiling. See Voicing.MAX_FRET and VoicingLibraryValidationTest for the
+    // corresponding parsing-layer coverage.
+
+    @Test
+    fun `all-open voicing produces no dots and windows at the nut`() {
+        // Em-style shape sounding only open strings: ["x","x","x",0,0,0]
+        val model = sixStringVoicing(
+            marks = listOf(
+                FretMark.Muted, FretMark.Muted, FretMark.Muted,
+                FretMark.Open, FretMark.Open, FretMark.Open,
+            ),
+        ).toRenderModel()
+
+        assertTrue(model.dots.isEmpty())
+        assertEquals(setOf(3, 4, 5), model.openStrings)
+        assertEquals(setOf(0, 1, 2), model.mutedStrings)
+        assertTrue(model.showNut)
+        assertNull(model.positionLabel)
+    }
+
+    @Test
+    fun `three-string voicing renders only its sounded strings`() {
+        // ["x","x","x",4,3,2] — only half the strings sound.
+        val model = sixStringVoicing(
+            marks = listOf(
+                FretMark.Muted, FretMark.Muted, FretMark.Muted,
+                FretMark.Fretted(4), FretMark.Fretted(3), FretMark.Fretted(2),
+            ),
+        ).toRenderModel()
+
+        assertEquals(setOf(0, 1, 2), model.mutedStrings)
+        assertTrue(model.openStrings.isEmpty())
+        assertEquals(3, model.dots.size)
+        assertEquals(setOf(3, 4, 5), model.dots.map { it.stringIndex }.toSet())
+    }
+
+    @Test
+    fun `frets beyond the old 15-fret ceiling map into the window without throwing`() {
+        // [15,17,17,16,15,15] — exceeds the previous MAX_FRET of 15.
+        val model = sixStringVoicing(
+            marks = listOf(
+                FretMark.Fretted(15), FretMark.Fretted(17), FretMark.Fretted(17),
+                FretMark.Fretted(16), FretMark.Fretted(15), FretMark.Fretted(15),
+            ),
+            barre = Barre(fret = 15, fromString = 0, toString = 5),
+        ).toRenderModel()
+
+        assertEquals("15fr", model.positionLabel)
+        val highestDot = model.dots.first { it.stringIndex == 1 }
+        assertEquals(3, highestDot.fretWithinWindow) // 17 - 15 + 1
     }
 }

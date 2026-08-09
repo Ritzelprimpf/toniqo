@@ -25,6 +25,10 @@ class FakeAudioCaptureSource private constructor(
 
     private var sessionIndex = 0
 
+    /** Number of times [samples] has been called — one call per pipeline (re)subscription. */
+    var samplesCallCount = 0
+        private set
+
     /** Single-session constructor: every [samples] call replays the same [events]. */
     constructor(events: List<CaptureEvent>) : this(listOf(events), multiSession = false)
 
@@ -38,6 +42,7 @@ class FakeAudioCaptureSource private constructor(
     }
 
     override fun samples(): Flow<CaptureEvent> {
+        samplesCallCount++
         return if (multiSession) {
             val events = sessions.getOrElse(sessionIndex) { emptyList() }
             sessionIndex++

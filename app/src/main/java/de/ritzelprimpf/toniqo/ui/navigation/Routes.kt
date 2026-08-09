@@ -29,8 +29,10 @@ object Routes {
         "chordfinder/voicings/$rootPc/$quality/${Uri.encode(chordName)}"
 
     // Nested info graph
-    const val INFO_GRAPH    = "info"
-    const val INFO_HOME     = "info_home"
-    const val HELP          = "help"
-    const val LICENSES      = "licenses"
+    const val INFO_GRAPH       = "info"
+    const val INFO_HOME        = "info_home"
+    const val HELP             = "help"
+    const val LICENSES         = "licenses"
+    const val BUG_REPORT       = "bug_report"
+    const val FEATURE_REQUEST  = "feature_request"
 }

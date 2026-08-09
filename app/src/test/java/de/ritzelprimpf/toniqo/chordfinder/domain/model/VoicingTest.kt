@@ -122,9 +122,9 @@ class VoicingTest {
     }
 
     @Test
-    fun `validated throws when root not in bass`() {
-        // Start from D-string at fret 2 = E (pc 4, the third) — all chord tones present
-        // but lowest sounded string is E (third), not C (root)
+    fun `validated throws when bassDegree does not match the lowest sounded string's actual role`() {
+        // D-string at fret 2 = E (pc 4, the third) is the lowest sounded string here — a valid
+        // inversion in itself, but claiming ROOT for it is a lie the constructor must catch.
         val badMarks = listOf(
             FretMark.Muted, FretMark.Muted, FretMark.Fretted(2),
             FretMark.Open, FretMark.Fretted(1), FretMark.Open,
@@ -135,9 +135,51 @@ class VoicingTest {
     }
 
     @Test
-    fun `validated throws when fret span exceeds maximum`() {
+    fun `validated succeeds for a third-in-bass inversion when bassDegree is correctly THIRD`() {
+        // Same shape as the mismatch test above, but honestly labelled — root-in-bass is not
+        // required; only an incorrect claim about which tone is in the bass is rejected.
+        val thirdInBassMarks = listOf(
+            FretMark.Muted, FretMark.Muted, FretMark.Fretted(2),
+            FretMark.Open, FretMark.Fretted(1), FretMark.Open,
+        )
+        val v = Voicing.validated(
+            1, thirdInBassMarks, listOf(0,0,2,0,1,0), null, setOf(4), ChordToneRole.THIRD, cMajKey, openPcs,
+        )
+        assertEquals(ChordToneRole.THIRD, v.bassDegree)
+    }
+
+    @Test
+    fun `validated succeeds for a fifth-in-bass inversion when bassDegree is correctly FIFTH`() {
+        // D-string fret 5 = G (pc 7, the fifth) is the lowest sounded string.
+        val fifthInBassMarks = listOf(
+            FretMark.Muted, FretMark.Muted, FretMark.Fretted(5),
+            FretMark.Open, FretMark.Fretted(1), FretMark.Open,
+        )
+        val v = Voicing.validated(
+            1, fifthInBassMarks, listOf(0,0,3,0,1,0), null, setOf(4), ChordToneRole.FIFTH, cMajKey, openPcs,
+        )
+        assertEquals(ChordToneRole.FIFTH, v.bassDegree)
+    }
+
+    @Test
+    fun `validated succeeds when fret span is exactly the new maximum of 6`() {
+        // String0 fret8 = C (root, pc 0) and string4 fret8 = G (fifth, pc 7); string2 fret2 = E
+        // (third, pc 2+2=4). min fret 2, max fret 8 -> span exactly 6. All three chord tones
+        // present, lowest sounded string (0) carries the root.
+        val sixSpanMarks = listOf(
+            FretMark.Fretted(8), FretMark.Muted, FretMark.Fretted(2),
+            FretMark.Muted, FretMark.Fretted(8), FretMark.Muted,
+        )
+        val v = Voicing.validated(
+            1, sixSpanMarks, listOf(4, 0, 1, 0, 3, 0), null, setOf(0), ChordToneRole.ROOT, cMajKey, openPcs,
+        )
+        assertEquals(2, v.baseFret)
+    }
+
+    @Test
+    fun `validated throws when fret span exceeds the new maximum of 6`() {
         val bigSpanMarks = listOf(
-            FretMark.Fretted(1), FretMark.Fretted(6), FretMark.Fretted(4),
+            FretMark.Fretted(1), FretMark.Fretted(8), FretMark.Fretted(4),
             FretMark.Fretted(5), FretMark.Fretted(3), FretMark.Fretted(1),
         )
         assertThrows(IllegalArgumentException::class.java) {
@@ -150,6 +192,49 @@ class VoicingTest {
         val rootIndices = setOf(0) // wrong: string 0 is Muted
         assertThrows(IllegalArgumentException::class.java) {
             Voicing.validated(1, cMajMarks, cMajFingers, null, rootIndices, ChordToneRole.ROOT, cMajKey, openPcs)
+        }
+    }
+
+    // ── POWER quality: only 2 chord tones, no third ─────────────────────────────────
+
+    private val g5Key = ChordKey(7, ChordQuality.POWER) // G5: root G (pc 7), fifth D (pc 2)
+
+    @Test
+    fun `validated succeeds for a POWER chord voicing with only root and fifth`() {
+        // Low E string fret 3 = G (root); A string fret 5 = D (fifth). Classic 2-string G5.
+        val g5Marks = listOf(
+            FretMark.Fretted(3), FretMark.Fretted(5), FretMark.Muted,
+            FretMark.Muted, FretMark.Muted, FretMark.Muted,
+        )
+        val v = Voicing.validated(
+            1, g5Marks, listOf(1, 3, 0, 0, 0, 0), null, setOf(0), ChordToneRole.ROOT, g5Key, openPcs,
+        )
+        assertEquals(ChordToneRole.ROOT, v.bassDegree)
+        assertEquals(3, v.baseFret)
+    }
+
+    @Test
+    fun `validated succeeds for a POWER chord voicing with the fifth in bass`() {
+        // A string fret 5 = D (fifth, bass); D string fret 5 = G (root), above it.
+        val fifthBassG5Marks = listOf(
+            FretMark.Muted, FretMark.Fretted(5), FretMark.Fretted(5),
+            FretMark.Muted, FretMark.Muted, FretMark.Muted,
+        )
+        val v = Voicing.validated(
+            1, fifthBassG5Marks, listOf(0, 1, 2, 0, 0, 0), null, setOf(2), ChordToneRole.FIFTH, g5Key, openPcs,
+        )
+        assertEquals(ChordToneRole.FIFTH, v.bassDegree)
+    }
+
+    @Test
+    fun `validated throws when a POWER chord voicing is missing the fifth`() {
+        // Only the root sounds -- POWER still requires both of its 2 chord tones (invariant 2).
+        val rootOnlyMarks = listOf(
+            FretMark.Fretted(3), FretMark.Muted, FretMark.Muted,
+            FretMark.Muted, FretMark.Muted, FretMark.Muted,
+        )
+        assertThrows(IllegalArgumentException::class.java) {
+            Voicing.validated(1, rootOnlyMarks, listOf(1, 0, 0, 0, 0, 0), null, setOf(0), ChordToneRole.ROOT, g5Key, openPcs)
         }
     }
 }

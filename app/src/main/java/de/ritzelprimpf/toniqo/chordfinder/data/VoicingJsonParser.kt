@@ -5,6 +5,7 @@ import de.ritzelprimpf.toniqo.chordfinder.domain.model.ChordKey
 import de.ritzelprimpf.toniqo.chordfinder.domain.model.ChordToneRole
 import de.ritzelprimpf.toniqo.chordfinder.domain.model.FretMark
 import de.ritzelprimpf.toniqo.chordfinder.domain.model.Voicing
+import de.ritzelprimpf.toniqo.chordfinder.domain.model.classifyToneRole
 import de.ritzelprimpf.toniqo.common.model.ChordQuality
 import de.ritzelprimpf.toniqo.common.model.GuitarTuning
 import org.json.JSONArray
@@ -83,6 +84,10 @@ internal object VoicingJsonParser {
 
                 // Compute rootStringIndices from tuning + chord root
                 val rootStringIndices = computeRootStringIndices(marks, openPcs, rootPc)
+                // bassDegree is derived from the shape itself, not assumed to be ROOT — the JSON
+                // is free to contain inversions (bass = third or fifth), and Voicing.validated()
+                // requires whatever's passed in to be the truth, not just a convenient default.
+                val bassDegree = computeBassDegree(marks, openPcs, key)
 
                 val voicing = Voicing.validated(
                     labelKey = voicingList.size + 1, // 1-based within this chord key
@@ -90,7 +95,7 @@ internal object VoicingJsonParser {
                     fingers = fingers,
                     barre = barre,
                     rootStringIndices = rootStringIndices,
-                    bassDegree = ChordToneRole.ROOT,
+                    bassDegree = bassDegree,
                     chordKey = key,
                     openNotes = openPcs,
                 )
@@ -136,4 +141,23 @@ internal object VoicingJsonParser {
             is FretMark.Fretted -> (openPcs[i] + m.fret) % PITCH_CLASSES == rootPc
         }
     }.toSet()
+
+    /**
+     * Classifies the lowest-index sounded string's pitch class against [key]'s actual third/fifth
+     * (by interval value, via [classifyToneRole] — not by array index, which breaks for a
+     * 2-element quality like [ChordQuality.POWER] that has no third at all).
+     */
+    private fun computeBassDegree(
+        marks: List<FretMark>,
+        openPcs: List<Int>,
+        key: ChordKey,
+    ): ChordToneRole {
+        val bassIndex = marks.indices.first { marks[it] != FretMark.Muted }
+        val bassPc = when (val m = marks[bassIndex]) {
+            is FretMark.Muted -> error("unreachable — filtered out by indexOfFirst above")
+            is FretMark.Open -> openPcs[bassIndex]
+            is FretMark.Fretted -> (openPcs[bassIndex] + m.fret) % PITCH_CLASSES
+        }
+        return key.classifyToneRole(bassPc)
+    }
 }

@@ -61,6 +61,28 @@ data class GuitarTuning(
                 Note(NoteName.E, octave = 4),
             ),
         )
+
+        /**
+         * Drop D 6-string tuning: D2 A2 D3 G3 B3 E4.
+         *
+         * The reference tuning for the drop-tuning voicing library
+         * (`voicings_drop_d_6.json`). Not a uniform offset of [STANDARD_6] (only the lowest
+         * string moves), so it needs its own curated library — but every other 6-string drop
+         * tuning (Drop C#, Drop C, Drop B, Drop Bb, Drop A, …) *is* a uniform offset of this one,
+         * so they all reach that library via [VoicingRepositoryImpl]'s tier-2 fret-shifting,
+         * exactly like Eb/D/C#/C standard reach [STANDARD_6]'s library today.
+         */
+        val DROP_D_6: GuitarTuning = GuitarTuning(
+            id = "drop_d_6",
+            openNotes = listOf(
+                Note(NoteName.D, octave = 2),
+                Note(NoteName.A, octave = 2),
+                Note(NoteName.D, octave = 3),
+                Note(NoteName.G, octave = 3),
+                Note(NoteName.B, octave = 3),
+                Note(NoteName.E, octave = 4),
+            ),
+        )
     }
 }
 

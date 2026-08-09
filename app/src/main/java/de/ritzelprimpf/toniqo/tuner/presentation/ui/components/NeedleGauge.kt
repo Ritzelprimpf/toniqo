@@ -81,6 +81,17 @@ fun NeedleGauge(
 
     val isIdle = cents == null
 
+    // Colours — captured here in composable scope to avoid referencing Tq inside DrawScope
+    // (Tq.Color properties are theme-reactive composable getters; DrawScope draw* helpers below
+    // are plain, non-composable functions, so they receive colours as parameters instead).
+    val tickColor = Tq.Color.FgTertiary
+    val majorTickColor = Tq.Color.FgSecondary
+    val mintColor = Tq.Color.SignalMint
+    val idleColor = Tq.Color.FgQuaternary
+    val pivotCapFillColor = Tq.Color.BgElev3
+    val pivotCapBorderColor = Tq.Color.Line
+    val rangeLabelColor = Tq.Color.FgTertiary
+
     Canvas(
         modifier = modifier.requiredSize(CANVAS_WIDTH, CANVAS_HEIGHT),
     ) {
@@ -90,26 +101,31 @@ fun NeedleGauge(
         val pivotY = ch           // pivot at bottom-centre
         val radius = NEEDLE_RADIUS.toPx()
 
-        drawTickMarks(pivotX, pivotY, radius)
-        drawSweetSpotArc(pivotX, pivotY, radius, semanticColor, isIdle)
-        drawNeedle(animatedAngle, pivotX, pivotY, radius, semanticColor, isIdle)
-        drawPivotCap(pivotX, pivotY, semanticColor, isIdle)
-        drawRangeLabels(pivotX, pivotY, radius)
+        drawTickMarks(pivotX, pivotY, radius, tickColor, majorTickColor, mintColor)
+        drawSweetSpotArc(pivotX, pivotY, radius, semanticColor, isIdle, mintColor)
+        drawNeedle(animatedAngle, pivotX, pivotY, radius, semanticColor, isIdle, idleColor)
+        drawPivotCap(pivotX, pivotY, semanticColor, isIdle, idleColor, pivotCapFillColor, pivotCapBorderColor)
+        drawRangeLabels(pivotX, pivotY, radius, rangeLabelColor)
     }
 }
 
 // ── Drawing helpers ───────────────────────────────────────────────────────────
 
-private fun DrawScope.drawTickMarks(pivotX: Float, pivotY: Float, radius: Float) {
-    val tickPaint = Tq.Color.FgTertiary
-    val majorTickPaint = Tq.Color.FgSecondary
+private fun DrawScope.drawTickMarks(
+    pivotX: Float,
+    pivotY: Float,
+    radius: Float,
+    tickPaint: Color,
+    majorTickPaint: Color,
+    centerTickColor: Color,
+) {
     var angle = -MAX_ANGLE_DEG
     while (angle <= MAX_ANGLE_DEG + 0.01f) {
         val isMajor = (angle % MAJOR_TICK_INTERVAL_DEG) == 0f
         val isCenter = angle == 0f
         val tickLen = if (isMajor || isCenter) 10.dp.toPx() else 6.dp.toPx()
         val color = when {
-            isCenter -> Tq.Color.SignalMint
+            isCenter -> centerTickColor
             isMajor -> majorTickPaint
             else -> tickPaint
         }
@@ -135,9 +151,10 @@ private fun DrawScope.drawSweetSpotArc(
     radius: Float,
     semanticColor: Color,
     isIdle: Boolean,
+    mintColor: Color,
 ) {
-    val arcAlpha = if (semanticColor == Tq.Color.SignalMint && !isIdle) 1f else 0.4f
-    val arcColor = Tq.Color.SignalMint.copy(alpha = arcAlpha)
+    val arcAlpha = if (semanticColor == mintColor && !isIdle) 1f else 0.4f
+    val arcColor = mintColor.copy(alpha = arcAlpha)
     val sweepDeg = SWEET_SPOT_ANGLE_DEG * 2f
     val startAngle = -90f - SWEET_SPOT_ANGLE_DEG  // canvas angles are clockwise from 3-o'clock
 
@@ -171,6 +188,7 @@ private fun DrawScope.drawNeedle(
     radius: Float,
     semanticColor: Color,
     isIdle: Boolean,
+    idleColor: Color,
 ) {
     val rad = Math.toRadians((angleDeg - 90).toDouble())
     val tipX = pivotX + cos(rad).toFloat() * (radius - 4.dp.toPx())
@@ -193,7 +211,7 @@ private fun DrawScope.drawNeedle(
 
     // Needle proper
     drawLine(
-        color = if (isIdle) Tq.Color.FgQuaternary else semanticColor,
+        color = if (isIdle) idleColor else semanticColor,
         start = pivot,
         end = tip,
         strokeWidth = 2.dp.toPx(),
@@ -206,29 +224,32 @@ private fun DrawScope.drawPivotCap(
     pivotY: Float,
     semanticColor: Color,
     isIdle: Boolean,
+    idleColor: Color,
+    fillColor: Color,
+    borderColor: Color,
 ) {
     val outerR = 5.dp.toPx() / 2f
     val innerR = 2.dp.toPx() / 2f
     val pivot = Offset(pivotX, pivotY)
     // Outer circle: bg.elev3 fill + line border
-    drawCircle(color = Tq.Color.BgElev3, radius = outerR, center = pivot)
+    drawCircle(color = fillColor, radius = outerR, center = pivot)
     drawCircle(
-        color = Tq.Color.Line,
+        color = borderColor,
         radius = outerR,
         center = pivot,
         style = androidx.compose.ui.graphics.drawscope.Stroke(width = 0.8.dp.toPx()),
     )
     // Inner dot: semantic colour
     drawCircle(
-        color = if (isIdle) Tq.Color.FgQuaternary else semanticColor,
+        color = if (isIdle) idleColor else semanticColor,
         radius = innerR,
         center = pivot,
     )
 }
 
-private fun DrawScope.drawRangeLabels(pivotX: Float, pivotY: Float, radius: Float) {
+private fun DrawScope.drawRangeLabels(pivotX: Float, pivotY: Float, radius: Float, labelColor: Color) {
     val paint = android.graphics.Paint().apply {
-        color = Tq.Color.FgTertiary.copy(alpha = 0.6f).toArgb()
+        color = labelColor.copy(alpha = 0.6f).toArgb()
         textSize = 10.sp.toPx()
         textAlign = android.graphics.Paint.Align.CENTER
         isAntiAlias = true

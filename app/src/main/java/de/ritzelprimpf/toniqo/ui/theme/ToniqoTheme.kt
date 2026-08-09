@@ -8,6 +8,7 @@ import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 
 /**
  * Toniqo Material 3 theme. Wraps [MaterialTheme] with the brand's colour scheme,
@@ -15,14 +16,20 @@ import androidx.compose.runtime.Composable
  * `MaterialTheme.colorScheme.*` or `MaterialTheme.typography.*` receive on-brand values.
  *
  * Pass [useDarkTheme] = `true` for the primary dark theme (design target);
- * `false` for the light fallback. Defaults to the system setting.
+ * `false` for the light fallback. Defaults to the system setting when the caller doesn't override
+ * it — production call sites (`MainActivity`) pass the user's persisted preference instead, via
+ * `ThemeViewModel`; only Previews and tests rely on this default.
+ *
+ * Also provides [LocalTqPalette] (as [TqPalette.Dark] or [TqPalette.Light] matching
+ * [useDarkTheme]) for the duration of [content] — this is what makes every `Tq.Color.*` token
+ * read app-wide react to the current theme. See `DECISIONS.md`, "Runtime light/dark theme toggle".
  *
  * Material You dynamic colour is **off** — the static brand palette is always used.
  * (See DECISIONS.md: "Design system locked in via DESIGN.md".)
  *
  * ---
  *
- * ## [Tq.Color] → Material 3 `ColorScheme` mapping (dark theme; light uses [Tq.LightColor])
+ * ## [Tq.DarkColor] → Material 3 `ColorScheme` mapping (dark theme; light uses [Tq.LightColor])
  *
  * | Material slot           | Tq token                    | Rationale                              |
  * |-------------------------|-----------------------------|----------------------------------------|
@@ -100,35 +107,35 @@ fun ToniqoTheme(
 ) {
     val colorScheme = if (useDarkTheme) {
         darkColorScheme(
-            primary              = Tq.Color.SignalMint,
-            onPrimary            = Tq.Color.BgBase,
-            primaryContainer     = Tq.Color.BgElev2,
-            onPrimaryContainer   = Tq.Color.FgPrimary,
-            secondary            = Tq.Color.FgSecondary,
-            onSecondary          = Tq.Color.BgBase,
-            secondaryContainer   = Tq.Color.BgElev2,
-            onSecondaryContainer = Tq.Color.FgPrimary,
-            tertiary             = Tq.Color.FgTertiary,
-            onTertiary           = Tq.Color.BgBase,
-            tertiaryContainer    = Tq.Color.BgElev2,
-            onTertiaryContainer  = Tq.Color.FgPrimary,
-            error                = Tq.Color.SignalAmber,
-            onError              = Tq.Color.BgBase,
-            errorContainer       = Tq.Color.BgElev2,
-            onErrorContainer     = Tq.Color.SignalAmber,
-            background           = Tq.Color.BgBase,
-            onBackground         = Tq.Color.FgPrimary,
-            surface              = Tq.Color.BgElev1,
-            onSurface            = Tq.Color.FgPrimary,
-            surfaceVariant       = Tq.Color.BgElev2,
-            onSurfaceVariant     = Tq.Color.FgSecondary,
-            outline              = Tq.Color.Line,
-            outlineVariant       = Tq.Color.LineFaint,
-            surfaceTint          = Tq.Color.SignalMint,
-            inverseSurface       = Tq.Color.FgPrimary,
-            inverseOnSurface     = Tq.Color.BgBase,
-            inversePrimary       = Tq.Color.SignalMint,
-            scrim                = Tq.Color.BgBase,
+            primary              = Tq.DarkColor.SignalMint,
+            onPrimary            = Tq.DarkColor.BgBase,
+            primaryContainer     = Tq.DarkColor.BgElev2,
+            onPrimaryContainer   = Tq.DarkColor.FgPrimary,
+            secondary            = Tq.DarkColor.FgSecondary,
+            onSecondary          = Tq.DarkColor.BgBase,
+            secondaryContainer   = Tq.DarkColor.BgElev2,
+            onSecondaryContainer = Tq.DarkColor.FgPrimary,
+            tertiary             = Tq.DarkColor.FgTertiary,
+            onTertiary           = Tq.DarkColor.BgBase,
+            tertiaryContainer    = Tq.DarkColor.BgElev2,
+            onTertiaryContainer  = Tq.DarkColor.FgPrimary,
+            error                = Tq.DarkColor.SignalAmber,
+            onError              = Tq.DarkColor.BgBase,
+            errorContainer       = Tq.DarkColor.BgElev2,
+            onErrorContainer     = Tq.DarkColor.SignalAmber,
+            background           = Tq.DarkColor.BgBase,
+            onBackground         = Tq.DarkColor.FgPrimary,
+            surface              = Tq.DarkColor.BgElev1,
+            onSurface            = Tq.DarkColor.FgPrimary,
+            surfaceVariant       = Tq.DarkColor.BgElev2,
+            onSurfaceVariant     = Tq.DarkColor.FgSecondary,
+            outline              = Tq.DarkColor.Line,
+            outlineVariant       = Tq.DarkColor.LineFaint,
+            surfaceTint          = Tq.DarkColor.SignalMint,
+            inverseSurface       = Tq.DarkColor.FgPrimary,
+            inverseOnSurface     = Tq.DarkColor.BgBase,
+            inversePrimary       = Tq.DarkColor.SignalMint,
+            scrim                = Tq.DarkColor.BgBase,
         )
     } else {
         lightColorScheme(
@@ -190,10 +197,16 @@ fun ToniqoTheme(
         extraLarge = RoundedCornerShape(Tq.Radius.Xl),
     )
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography  = typography,
-        shapes      = shapes,
-        content     = content,
-    )
+    val palette = if (useDarkTheme) TqPalette.Dark else TqPalette.Light
+
+    // Provides LocalTqPalette so every Tq.Color.* / Tq.Palette read inside `content` resolves to
+    // this theme's colours — see Tq.kt's kdoc and DECISIONS.md, "Runtime light/dark theme toggle".
+    CompositionLocalProvider(LocalTqPalette provides palette) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography  = typography,
+            shapes      = shapes,
+            content     = content,
+        )
+    }
 }

@@ -22,15 +22,22 @@ sealed interface DetectionEvent {
     /**
      * A pitch was successfully detected and compared against the target.
      *
-     * @property detectedFrequencyHz The fundamental frequency returned by the detector.
-     * @property detectedNote The note nearest to [detectedFrequencyHz] (sharp-spelled), or `null`
-     *   if [de.ritzelprimpf.toniqo.common.util.MusicTheory.frequencyToNote] returned `null`.
+     * @property detectedFrequencyHz A 2-reading moving average of the last
+     *   [DetectTunedStringUseCase.FREQUENCY_SMOOTHING_WINDOW_SIZE] raw detector readings — takes
+     *   the edge off the per-buffer jitter that's most visible on low strings (see the use case's
+     *   kdoc). Not the same value [detectedNote] is resolved from; see below.
+     * @property detectedNote The note nearest to the *raw* (unsmoothed) detector reading for this
+     *   cycle, or `null` if [de.ritzelprimpf.toniqo.common.util.MusicTheory.frequencyToNote]
+     *   returned `null`. Deliberately not resolved from [detectedFrequencyHz] — note identity
+     *   should switch instantly, not lag behind the smoothing window.
      * @property targetNote The note the tuner is currently comparing against. In PRESET mode this
      *   is the preset string's note; in CHROMATIC mode it equals [detectedNote] (the nearest note
      *   is the target).
      * @property targetFrequencyHz Equal-tempered frequency (Hz) of [targetNote].
-     * @property centsOff Signed cents offset of [detectedFrequencyHz] from [targetFrequencyHz].
-     *   Raw (not clamped). Positive = sharp, negative = flat.
+     * @property centsOff Signed cents offset of the *smoothed* [detectedFrequencyHz] from
+     *   [targetFrequencyHz] (not clamped). Positive = sharp, negative = flat. [isSustainedInTune]
+     *   is decided from the raw, unsmoothed per-frame cents instead — smoothing only calms this
+     *   display value, it never delays or masks an out-of-tune reading.
      * @property isSustainedInTune `true` iff the sliding 6-element window has ≥ 5 in-tolerance
      *   detections. Only `true` after the window is full — never on the very first detection.
      */

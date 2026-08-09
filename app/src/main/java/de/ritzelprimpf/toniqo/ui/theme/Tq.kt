@@ -1,11 +1,93 @@
 package de.ritzelprimpf.toniqo.ui.theme
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+
+/**
+ * One fully-resolved set of [Tq.Color] values — either [TqPalette.Dark] or [TqPalette.Light].
+ * The payload of [LocalTqPalette]; [ToniqoTheme] provides the instance matching the user's
+ * current theme choice, and [Tq.Color]'s composable getters read from it.
+ *
+ * Non-composable functions that need a colour outside of ordinary composable scope (a mapper
+ * like `TuningStatus.toSignalColor()`, or a `DrawScope` helper) take a [TqPalette] as an explicit
+ * parameter instead of reading [Tq.Color] directly — see [Tq.Palette] for the composable-scope
+ * accessor that supplies it.
+ */
+data class TqPalette(
+    val bgBase: ComposeColor,
+    val bgElev1: ComposeColor,
+    val bgElev2: ComposeColor,
+    val bgElev3: ComposeColor,
+    val bgInset: ComposeColor,
+    val lineFaint: ComposeColor,
+    val line: ComposeColor,
+    val lineStrong: ComposeColor,
+    val fgPrimary: ComposeColor,
+    val fgSecondary: ComposeColor,
+    val fgTertiary: ComposeColor,
+    val fgQuaternary: ComposeColor,
+    val signalMint: ComposeColor,
+    val signalCyan: ComposeColor,
+    val signalAmber: ComposeColor,
+    val signalViolet: ComposeColor,
+) {
+    companion object {
+        /** Built from [Tq.DarkColor] — the primary design target (DESIGN.md §2.1). */
+        val Dark = TqPalette(
+            bgBase = Tq.DarkColor.BgBase,
+            bgElev1 = Tq.DarkColor.BgElev1,
+            bgElev2 = Tq.DarkColor.BgElev2,
+            bgElev3 = Tq.DarkColor.BgElev3,
+            bgInset = Tq.DarkColor.BgInset,
+            lineFaint = Tq.DarkColor.LineFaint,
+            line = Tq.DarkColor.Line,
+            lineStrong = Tq.DarkColor.LineStrong,
+            fgPrimary = Tq.DarkColor.FgPrimary,
+            fgSecondary = Tq.DarkColor.FgSecondary,
+            fgTertiary = Tq.DarkColor.FgTertiary,
+            fgQuaternary = Tq.DarkColor.FgQuaternary,
+            signalMint = Tq.DarkColor.SignalMint,
+            signalCyan = Tq.DarkColor.SignalCyan,
+            signalAmber = Tq.DarkColor.SignalAmber,
+            signalViolet = Tq.DarkColor.SignalViolet,
+        )
+
+        /** Built from [Tq.LightColor] — the light-theme fallback (DESIGN.md §2.2). */
+        val Light = TqPalette(
+            bgBase = Tq.LightColor.BgBase,
+            bgElev1 = Tq.LightColor.BgElev1,
+            bgElev2 = Tq.LightColor.BgElev2,
+            bgElev3 = Tq.LightColor.BgElev3,
+            bgInset = Tq.LightColor.BgInset,
+            lineFaint = Tq.LightColor.LineFaint,
+            line = Tq.LightColor.Line,
+            lineStrong = Tq.LightColor.LineStrong,
+            fgPrimary = Tq.LightColor.FgPrimary,
+            fgSecondary = Tq.LightColor.FgSecondary,
+            fgTertiary = Tq.LightColor.FgTertiary,
+            fgQuaternary = Tq.LightColor.FgQuaternary,
+            signalMint = Tq.LightColor.SignalMint,
+            signalCyan = Tq.LightColor.SignalCyan,
+            signalAmber = Tq.LightColor.SignalAmber,
+            signalViolet = Tq.LightColor.SignalViolet,
+        )
+    }
+}
+
+/**
+ * Holds the current [TqPalette]. [ToniqoTheme] is the only provider; every other read goes
+ * through [Tq.Color] or [Tq.Palette]. Accessing this before [ToniqoTheme] has run is a
+ * programming error — there is no sensible default to fall back to silently.
+ */
+val LocalTqPalette = staticCompositionLocalOf<TqPalette> {
+    error("No TqPalette provided — Tq.Color/Tq.Palette must be read from inside ToniqoTheme { }")
+}
 
 /**
  * Toniqo design token object — the single source of truth for every colour,
@@ -18,35 +100,74 @@ import androidx.compose.ui.unit.sp
  *
  * `Tq` is a pure, stateless top-level object — the documented exception to the
  * no-singletons rule in CLAUDE.md §4. It has no state, no I/O, and no platform
- * dependencies.
+ * dependencies. [Color]'s properties are the one deliberate exception to "stateless": they are
+ * `@Composable` getters reading [LocalTqPalette], so the app can switch themes at runtime without
+ * every one of Toniqo's ~300 `Tq.Color.*` call sites needing to change (see `DECISIONS.md`,
+ * "Runtime light/dark theme toggle"). [DarkColor] and [LightColor] remain plain, stateless raw
+ * value objects — they're the actual source of truth [TqPalette.Dark]/[TqPalette.Light] are built
+ * from, and are also read directly by [ToniqoTheme] to build the underlying Material `ColorScheme`.
  *
  * ## Namespaces
  *
- * - [Color] — dark-theme colour tokens (primary target, per DESIGN.md §2.1)
- * - [LightColor] — light-theme colour tokens (fallback, per DESIGN.md §2.2)
+ * - [Color] — the **theme-reactive** colour tokens; use this everywhere in ordinary composable
+ *   scope, exactly as before.
+ * - [Palette] — the current [TqPalette] as a value, for the rare non-composable mapper function
+ *   that needs a colour outside composable scope (pass it in as an explicit parameter).
+ * - [DarkColor] — raw dark-theme colour values (primary target, per DESIGN.md §2.1).
+ * - [LightColor] — raw light-theme colour values (fallback, per DESIGN.md §2.2).
  * - [Sp] — spacing scale (per DESIGN.md §4)
  * - [Radius] — border radii (per DESIGN.md §5)
  * - [Type] — full type scale (per DESIGN.md §3)
  */
 object Tq {
 
-    // ─── Colours — dark theme (primary) ─────────────────────────────────────
-    //
-    // Implementation note: the inner object is named `Color`, which would shadow the
-    // imported `androidx.compose.ui.graphics.Color` class within this file. The import
-    // is therefore aliased to `ComposeColor` at the top of this file to preserve access
-    // to the Compose Color constructor.
+    /** The current theme's resolved [TqPalette] — see [Color] for the everyday per-token accessor. */
+    val Palette: TqPalette
+        @Composable get() = LocalTqPalette.current
 
     /**
-     * Dark-theme colour tokens. This is the primary design target (DESIGN.md §2.1).
-     *
-     * Hex values are the source of truth for code; the OKLCH values in DESIGN.md
-     * are documentation only.
+     * Theme-reactive colour tokens. Each property reads [LocalTqPalette] under the hood, so it
+     * always reflects the user's current dark/light choice — callers use these exactly as they
+     * would a plain constant; nothing at the call site changes based on the theme.
      *
      * Do not use [FgQuaternary] for any text the user must read — it is for
      * hint/disabled states only.
      */
     object Color {
+        val BgBase: ComposeColor       @Composable get() = LocalTqPalette.current.bgBase
+        val BgElev1: ComposeColor      @Composable get() = LocalTqPalette.current.bgElev1
+        val BgElev2: ComposeColor      @Composable get() = LocalTqPalette.current.bgElev2
+        val BgElev3: ComposeColor      @Composable get() = LocalTqPalette.current.bgElev3
+        val BgInset: ComposeColor      @Composable get() = LocalTqPalette.current.bgInset
+        val LineFaint: ComposeColor    @Composable get() = LocalTqPalette.current.lineFaint
+        val Line: ComposeColor         @Composable get() = LocalTqPalette.current.line
+        val LineStrong: ComposeColor   @Composable get() = LocalTqPalette.current.lineStrong
+        val FgPrimary: ComposeColor    @Composable get() = LocalTqPalette.current.fgPrimary
+        val FgSecondary: ComposeColor  @Composable get() = LocalTqPalette.current.fgSecondary
+        val FgTertiary: ComposeColor   @Composable get() = LocalTqPalette.current.fgTertiary
+        val FgQuaternary: ComposeColor @Composable get() = LocalTqPalette.current.fgQuaternary
+        val SignalMint: ComposeColor   @Composable get() = LocalTqPalette.current.signalMint
+        val SignalCyan: ComposeColor   @Composable get() = LocalTqPalette.current.signalCyan
+        val SignalAmber: ComposeColor  @Composable get() = LocalTqPalette.current.signalAmber
+        val SignalViolet: ComposeColor @Composable get() = LocalTqPalette.current.signalViolet
+    }
+
+    // ─── Colours — dark theme (primary) ─────────────────────────────────────
+    //
+    // Implementation note: the inner object is named `DarkColor`, which would shadow the
+    // imported `androidx.compose.ui.graphics.Color` class within this file if it were named
+    // `Color` (that name is taken by the reactive accessor above). The import is aliased to
+    // `ComposeColor` at the top of this file to preserve access to the Compose Color constructor.
+
+    /**
+     * Raw dark-theme colour values. This is the primary design target (DESIGN.md §2.1).
+     *
+     * Hex values are the source of truth for code; the OKLCH values in DESIGN.md
+     * are documentation only. Read this directly only from [ToniqoTheme] (building the Material
+     * `ColorScheme`) or [TqPalette.Dark] — everywhere else, use [Color] (theme-reactive) or
+     * [Palette] instead.
+     */
+    object DarkColor {
 
         // ── Surface tokens ──────────────────────────────────────────────────
         /** `bg.base` — Chassis / screen root. `#1A1F22` */
@@ -92,9 +213,10 @@ object Tq {
     // ─── Colours — light theme (fallback) ───────────────────────────────────
 
     /**
-     * Light-theme colour tokens. Parallel namespace to [Color]. (DESIGN.md §2.2)
+     * Raw light-theme colour values. Parallel namespace to [DarkColor]. (DESIGN.md §2.2)
      *
-     * Same token names as [Color]; values shift to light-mode equivalents.
+     * Same token names as [DarkColor]; values shift to light-mode equivalents. Read this directly
+     * only from [ToniqoTheme] or [TqPalette.Light] — everywhere else, use [Color] or [Palette].
      */
     object LightColor {
 

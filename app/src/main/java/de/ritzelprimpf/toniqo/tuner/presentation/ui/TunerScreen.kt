@@ -162,7 +162,7 @@ fun TunerScreen(
                 ReadoutWell {
                     DetectedNoteHero(
                         note = uiState.detectedNote,
-                        semanticColor = uiState.status.toSignalColor(),
+                        semanticColor = uiState.status.toSignalColor(Tq.Palette),
                     )
                     StatusLine(
                         status = uiState.status,
@@ -170,7 +170,7 @@ fun TunerScreen(
                     )
                     NeedleGauge(
                         cents = uiState.centsOffTarget,
-                        semanticColor = uiState.status.toSignalColor(),
+                        semanticColor = uiState.status.toSignalColor(Tq.Palette),
                     )
                     HzReadoutPair(
                         detectedHz = uiState.detectedFrequencyHz,
@@ -189,7 +189,7 @@ fun TunerScreen(
             preset = uiState.selectedPreset,
             currentStringIndex = uiState.currentStringIndex,
             tunedStringIndices = uiState.tunedStringIndices,
-            activeSemanticColor = uiState.status.toSignalColor(),
+            activeSemanticColor = uiState.status.toSignalColor(Tq.Palette),
             mode = uiState.mode,
             onStringTap = viewModel::onStringSelected,
         )

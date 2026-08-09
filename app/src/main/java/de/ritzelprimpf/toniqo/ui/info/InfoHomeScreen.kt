@@ -16,12 +16,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.ChevronRight
-import androidx.compose.material.icons.outlined.Feedback
+import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.VolunteerActivism
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -43,8 +47,12 @@ import de.ritzelprimpf.toniqo.ui.theme.ToniqoTheme
  */
 private const val GITHUB_SPONSORS_URL = "https://github.com/sponsors/REPLACE_ME"
 
-/** GitHub Issues page opened by the "Feedback" row. */
-private const val GITHUB_ISSUES_URL = "https://github.com/Ritzelprimpf/toniqo/issues"
+/**
+ * Feature flag for the "Support the Project" row. GitHub Sponsors isn't cleared for release yet,
+ * so the row is hidden rather than deleted — flip this back to `true` once cleared instead of
+ * re-adding the row from scratch.
+ */
+private const val SUPPORT_ROW_ENABLED = false
 
 /**
  * Info section home screen.
@@ -59,6 +67,8 @@ private const val GITHUB_ISSUES_URL = "https://github.com/Ritzelprimpf/toniqo/is
 @Composable
 fun InfoHomeScreen(
     onNavigate: (String) -> Unit,
+    isDarkTheme: Boolean,
+    onDarkThemeChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -84,6 +94,13 @@ fun InfoHomeScreen(
         // pattern (single card with stacked rows, per the §8.5 card-list pattern).
         ToniqoCard(modifier = Modifier.fillMaxWidth()) {
             Column(verticalArrangement = Arrangement.spacedBy(Tq.Sp.s0)) {
+                InfoToggleRow(
+                    // TODO: Replace with custom `info` icon from DESIGN.md §7
+                    icon = Icons.Outlined.DarkMode,
+                    label = stringResource(R.string.info_item_dark_theme),
+                    checked = isDarkTheme,
+                    onCheckedChange = onDarkThemeChanged,
+                )
                 InfoNavRow(
                     // TODO: Replace with custom `info` icon from DESIGN.md §7
                     icon = Icons.Outlined.HelpOutline,
@@ -98,21 +115,28 @@ fun InfoHomeScreen(
                 )
                 InfoNavRow(
                     // TODO: Replace with custom `info` icon from DESIGN.md §7
-                    icon = Icons.Outlined.Feedback,
-                    label = stringResource(R.string.info_item_feedback),
-                    onClick = {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(GITHUB_ISSUES_URL)))
-                    },
+                    icon = Icons.Outlined.BugReport,
+                    label = stringResource(R.string.info_item_bug_report),
+                    onClick = { onNavigate(Routes.BUG_REPORT) },
                 )
                 InfoNavRow(
                     // TODO: Replace with custom `info` icon from DESIGN.md §7
-                    icon = Icons.Outlined.VolunteerActivism,
-                    label = stringResource(R.string.info_item_support),
-                    onClick = {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(GITHUB_SPONSORS_URL)))
-                    },
-                    isLast = true,
+                    icon = Icons.Outlined.Lightbulb,
+                    label = stringResource(R.string.info_item_feature_request),
+                    onClick = { onNavigate(Routes.FEATURE_REQUEST) },
+                    isLast = !SUPPORT_ROW_ENABLED,
                 )
+                if (SUPPORT_ROW_ENABLED) {
+                    InfoNavRow(
+                        // TODO: Replace with custom `info` icon from DESIGN.md §7
+                        icon = Icons.Outlined.VolunteerActivism,
+                        label = stringResource(R.string.info_item_support),
+                        onClick = {
+                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(GITHUB_SPONSORS_URL)))
+                        },
+                        isLast = true,
+                    )
+                }
             }
         }
 
@@ -160,13 +184,57 @@ private fun InfoNavRow(
     }
 }
 
+/**
+ * A row with a leading icon, label, and trailing [Switch] instead of [InfoNavRow]'s chevron —
+ * for an inline on/off preference rather than a navigation target. Tapping anywhere in the row
+ * (not just the switch) toggles it, matching standard Android settings-list behaviour.
+ */
+@Composable
+private fun InfoToggleRow(
+    icon: ImageVector,
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) }
+            .padding(vertical = Tq.Sp.s3),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Tq.Sp.s3),
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = Tq.Color.FgSecondary,
+            modifier = Modifier.size(Tq.Sp.s5), // 20dp icon size per DESIGN.md §8.5
+        )
+        Text(
+            text = label,
+            style = Tq.Type.BodyStrong,
+            color = Tq.Color.FgPrimary,
+            modifier = Modifier.weight(1f),
+        )
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedTrackColor = Tq.Color.SignalMint,
+                checkedThumbColor = Tq.Color.BgBase,
+            ),
+        )
+    }
+}
+
 // ─── Previews ─────────────────────────────────────────────────────────────────
 
 @Preview(name = "InfoHomeScreen — Dark", showBackground = true, backgroundColor = 0xFF1A1F22)
 @Composable
 private fun InfoHomeScreenPreviewDark() {
     ToniqoTheme(useDarkTheme = true) {
-        InfoHomeScreen(onNavigate = {})
+        InfoHomeScreen(onNavigate = {}, isDarkTheme = true, onDarkThemeChanged = {})
     }
 }
 
@@ -174,6 +242,6 @@ private fun InfoHomeScreenPreviewDark() {
 @Composable
 private fun InfoHomeScreenPreviewLight() {
     ToniqoTheme(useDarkTheme = false) {
-        InfoHomeScreen(onNavigate = {})
+        InfoHomeScreen(onNavigate = {}, isDarkTheme = false, onDarkThemeChanged = {})
     }
 }

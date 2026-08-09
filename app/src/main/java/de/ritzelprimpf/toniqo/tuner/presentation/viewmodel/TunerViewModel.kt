@@ -11,6 +11,7 @@ import de.ritzelprimpf.toniqo.tuner.domain.model.TunerInput
 import de.ritzelprimpf.toniqo.tuner.domain.model.TunerMode
 import de.ritzelprimpf.toniqo.tuner.domain.model.TunerPreset
 import de.ritzelprimpf.toniqo.tuner.domain.model.TuningStatus
+import de.ritzelprimpf.toniqo.tuner.domain.repository.TonePlayer
 import de.ritzelprimpf.toniqo.tuner.domain.repository.TunerPresetRepository
 import de.ritzelprimpf.toniqo.tuner.domain.usecase.DetectTunedStringUseCase
 import de.ritzelprimpf.toniqo.tuner.domain.usecase.DetectionEvent
@@ -63,6 +64,7 @@ class TunerViewModel @Inject constructor(
     private val preferences: TunerPreferences,
     private val detectTunedStringUseCase: DetectTunedStringUseCase,
     private val selectedTuningStore: SelectedTuningStore,
+    private val tonePlayer: TonePlayer,
 ) : ViewModel(), TunerScreenViewModel {
 
     // ── Internal mutable state ────────────────────────────────────────────────────
@@ -75,6 +77,9 @@ class TunerViewModel @Inject constructor(
 
     /** Job for the in-flight auto-advance hold (STRING_LOCK_HOLD_MS or ALL_TUNED_HOLD_MS). */
     private var autoAdvanceJob: Job? = null
+
+    /** Job for the in-flight reference-tone playback started by [playReferenceTone]. */
+    private var tonePlaybackJob: Job? = null
 
     /**
      * Job that owns the audio pipeline ([tunerInput] → [detectTunedStringUseCase] → events).
@@ -196,7 +201,8 @@ class TunerViewModel @Inject constructor(
      * Called when the user taps a string pill in the selector.
      *
      * Jumps to [stringIndex] in preset mode, resetting the tuned-string set and clearing the
-     * chromatic-re-entry snapshot.
+     * chromatic-re-entry snapshot. Also plays a [TONE_DURATION_MS] reference tone at the
+     * string's target pitch — see [playReferenceTone].
      */
     override fun onStringSelected(stringIndex: Int) {
         val preset = _state.value.selectedPreset ?: return
@@ -218,7 +224,26 @@ class TunerViewModel @Inject constructor(
                 status = TuningStatus.LISTENING,
             )
         }
-        tunerInput.value = buildInput(TunerMode.PRESET, targetNote, refHz)
+        playReferenceTone(targetNote, refHz)
+    }
+
+    /**
+     * Plays [targetNote]'s equal-tempered frequency (at [referencePitchHz]) for
+     * [TONE_DURATION_MS], muting the mic for the duration so the phone's own speaker output can't
+     * be picked back up by the mic and mistaken for the user's guitar — which would risk a false
+     * "in tune" reading (or even a spurious auto-advance) purely from the app playing its own
+     * reference tone.
+     *
+     * Cancels any tone already in flight — only one reference tone plays at a time, and tapping a
+     * new string pill mid-tone should switch to the new pitch immediately rather than queue.
+     */
+    private fun playReferenceTone(targetNote: Note, referencePitchHz: Double) {
+        tonePlaybackJob?.cancel()
+        tunerInput.value = null
+        tonePlaybackJob = viewModelScope.launch {
+            tonePlayer.play(targetNote.frequencyHz(referencePitchHz), TONE_DURATION_MS)
+            tunerInput.value = buildInput(TunerMode.PRESET, targetNote, referencePitchHz)
+        }
     }
 
     /**
@@ -500,6 +525,10 @@ class TunerViewModel @Inject constructor(
         const val DEFAULT_PRESET_ID = "six_string_standard_e"
         const val STRING_LOCK_HOLD_MS = 200L
         const val ALL_TUNED_HOLD_MS = 1200L
+
+        /** How long the string-pill reference tone plays for; see [playReferenceTone]. */
+        const val TONE_DURATION_MS = 1_000L
+
         private const val PIPELINE_GRACE_PERIOD_MS = 5_000L
         private const val IN_TUNE_TOLERANCE_CENTS = 5.0
     }

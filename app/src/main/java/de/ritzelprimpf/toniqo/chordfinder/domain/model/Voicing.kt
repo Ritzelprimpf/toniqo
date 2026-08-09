@@ -17,7 +17,11 @@ import de.ritzelprimpf.toniqo.common.model.ChordQuality
  * @property barre Optional barre; if present, [barre].fret must appear in [marks] as a
  *   [FretMark.Fretted] value (or be lower than other fretted marks — the lowest fret in the shape).
  * @property rootStringIndices Indices of sounded strings whose pitch class equals the chord root.
- * @property bassDegree Role of the lowest sounded string's note. Always [ChordToneRole.ROOT] in v1.
+ * @property bassDegree Role of the lowest sounded string's note — [ChordToneRole.ROOT] for a
+ *   root-position voicing, [ChordToneRole.THIRD] / [ChordToneRole.FIFTH] for an inversion.
+ *   [validated] computes the true value from [marks] and cross-checks it against whatever's
+ *   passed in, the same way it does for [rootStringIndices] — never trust a caller-supplied
+ *   value to already be correct.
  */
 data class Voicing(
     val labelKey: Int,
@@ -64,8 +68,11 @@ data class Voicing(
 
     companion object {
 
-        private const val MAX_FRET_SPAN = 4
-        private const val MAX_FRET = 15
+        private const val MAX_FRET_SPAN = 6
+
+        /** Highest playable fret a curated voicing may use; internal so the data layer can
+         * reuse it instead of redeclaring its own copy. */
+        internal const val MAX_FRET = 24
         private const val PITCH_CLASSES = 12
 
         /**
@@ -76,7 +83,10 @@ data class Voicing(
          * 1. `marks.size == fingers.size == tuning.stringCount`.
          * 2. Every sounded string's pitch class ∈ the chord's pitch classes; all chord tones
          *    present across sounded strings.
-         * 3. Lowest sounded string sounds the root (root-position).
+         * 3. [bassDegree] matches the actual role (root / third / fifth) of the lowest sounded
+         *    string's note. Root-position is no longer required — an inversion is valid — but
+         *    the claimed degree must be correct; it is never taken on faith. (Invariant 2 already
+         *    guarantees the bass note is one of the chord's own tones, never an unrelated pitch.)
          * 4. Fret span ≤ [MAX_FRET_SPAN]; all fretted marks in `1..[MAX_FRET]`.
          * 5. [rootStringIndices] exactly matches sounded strings whose pitch class is the root.
          *
@@ -85,7 +95,8 @@ data class Voicing(
          * @param fingers Per-string finger assignments.
          * @param barre Optional barre.
          * @param rootStringIndices Claimed root-string indices.
-         * @param bassDegree Bass degree (always ROOT in v1).
+         * @param bassDegree Claimed bass degree — root-position most of the time, but an
+         *   inversion's third/fifth-in-bass is equally valid; see invariant 3.
          * @param chordKey The chord this voicing represents (for validation).
          * @param openNotes Open-string pitch classes, lowest first (same length as [marks]).
          */
@@ -147,11 +158,14 @@ data class Voicing(
                 "Not all chord tones present: required=$chordPitchClasses, sounded=$soundedPcSet"
             }
 
-            // Invariant 3: lowest sounded string = root
+            // Invariant 3: bassDegree matches the lowest sounded string's actual role. Root
+            // position is no longer required -- an inversion (bass = third or fifth) is valid --
+            // but whatever degree is claimed must be the truth, computed here rather than trusted.
             val lowestSounded = soundedPcs.minByOrNull { it.first }!!
-            require(lowestSounded.second == chordKey.rootPitchClass) {
-                "Lowest sounded string ${lowestSounded.first} sounds pc ${lowestSounded.second}, " +
-                    "expected root ${chordKey.rootPitchClass}"
+            val expectedBassDegree = chordKey.classifyToneRole(lowestSounded.second)
+            require(bassDegree == expectedBassDegree) {
+                "bassDegree $bassDegree does not match the lowest sounded string's actual role " +
+                    "$expectedBassDegree (string ${lowestSounded.first}, pc ${lowestSounded.second})"
             }
 
             // Invariant 5: rootStringIndices

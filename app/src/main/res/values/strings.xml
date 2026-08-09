@@ -171,6 +171,11 @@
     <!-- Key Finder screen — idle / empty state (shown when fewer than 3 notes are entered) -->
     <string name="keyfinder_idle_prompt">Add at least 3 notes to see matches</string>
 
+    <!-- Key Finder screen — info dialog, explains what the matcher needs -->
+    <string name="keyfinder_info_dialog_title">About Key Finder</string>
+    <string name="keyfinder_info_dialog_body">Add at least 3 different notes to see matching keys and modes. The percentage shows how well your notes fit each one — a FULL badge means every note you entered fits that scale. Long-press a note to mark it as the tonic: matches sharing your tonic score higher and get a TONIC badge.</string>
+    <string name="keyfinder_info_dialog_ok">Got it</string>
+
     <!-- Key Finder screen — result card badges (uppercase; MonoMicro style) -->
     <string name="keyfinder_badge_tonic">TONIC</string>
     <string name="keyfinder_badge_full">FULL</string>
@@ -234,6 +239,7 @@
     <string name="cf_quality_min">MIN</string>
     <string name="cf_quality_dim">DIM</string>
     <string name="cf_quality_aug">AUG</string>
+    <string name="cf_quality_power">5</string>
 
     <!-- Chord Finder — list screen header and controls -->
     <!-- Kicker: all-caps with middle dot (U+00B7) separator; already uppercase -->
@@ -294,9 +300,11 @@
     <!-- Info / More section -->
     <string name="info_title">Info</string>
     <string name="info_cd_back">Back</string>
+    <string name="info_item_dark_theme">Dark Theme</string>
     <string name="info_item_help">Help</string>
     <string name="info_item_licenses">Open Source Licenses</string>
-    <string name="info_item_feedback">Feedback</string>
+    <string name="info_item_bug_report">Report a Bug</string>
+    <string name="info_item_feature_request">Request a Feature</string>
     <string name="info_item_support">Support the Project</string>
 
     <!-- Help screen -->
@@ -312,4 +320,8 @@
 
     <!-- Licenses screen -->
     <string name="licenses_title">Open Source Licenses</string>
+
+    <!-- Feedback web-form screens (bug report / feature request) -->
+    <string name="feedback_bug_report_title">Report a Bug</string>
+    <string name="feedback_feature_request_title">Request a Feature</string>
 </resources>

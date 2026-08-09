@@ -276,6 +276,51 @@ class DetectTunedStringUseCaseTest {
         assertEquals(-100.0, detections[0].centsOff, 0.1)
     }
 
+    // ── Displayed-value smoothing ─────────────────────────────────────────────────
+
+    @Test
+    fun `detectedFrequencyHz is a moving average of the last 2 valid detections`() = runTest {
+        val f1 = targetHz - 3.0
+        val f2 = targetHz
+        val f3 = targetHz + 3.0
+
+        val source = FakeAudioCaptureSource(List(3) { makeSamplesEvent() })
+        val detector = FakePitchDetector(listOf(f1, f2, f3))
+        val useCase = DetectTunedStringUseCase(source, detector)
+
+        val detections = useCase.execute(presetInput).toList()
+            .filterIsInstance<DetectionEvent.Detection>()
+
+        assertEquals(3, detections.size)
+        // Window fills incrementally: [f1], [f1,f2], then f1 is evicted (FIFO, size 2) → [f2,f3].
+        assertEquals(f1, detections[0].detectedFrequencyHz, 0.001)
+        assertEquals((f1 + f2) / 2.0, detections[1].detectedFrequencyHz, 0.001)
+        assertEquals((f2 + f3) / 2.0, detections[2].detectedFrequencyHz, 0.001)
+        // centsOff is derived from the same smoothed frequency, not the raw per-frame reading.
+        val expectedCents = MusicTheory.centsBetween(targetHz, (f2 + f3) / 2.0)
+        assertEquals(expectedCents, detections[2].centsOff, 0.001)
+    }
+
+    @Test
+    fun `null detections are skipped from the frequency smoothing window, not just the sustained window`() = runTest {
+        val f1 = targetHz - 3.0
+        val f2 = targetHz + 3.0
+
+        // f1, null, f2 — the null frame must not dilute/reset the frequency average.
+        val source = FakeAudioCaptureSource(List(3) { makeSamplesEvent() })
+        val detector = FakePitchDetector(listOf(f1, null, f2))
+        val useCase = DetectTunedStringUseCase(source, detector)
+
+        val detections = useCase.execute(presetInput).toList()
+            .filterIsInstance<DetectionEvent.Detection>()
+
+        // Only 2 Detection events (null frame emits nothing).
+        assertEquals(2, detections.size)
+        assertEquals(f1, detections[0].detectedFrequencyHz, 0.001)
+        // If the null had reset the window, this would equal f2 alone instead.
+        assertEquals((f1 + f2) / 2.0, detections[1].detectedFrequencyHz, 0.001)
+    }
+
     // ── Target and detected note in PRESET mode ───────────────────────────────────
 
     @Test
