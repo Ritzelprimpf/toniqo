@@ -5,9 +5,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import de.ritzelprimpf.toniqo.keyfinder.data.KeyFinderServiceImpl
 import de.ritzelprimpf.toniqo.keyfinder.data.StableNoteDetectorImpl
-import de.ritzelprimpf.toniqo.keyfinder.domain.repository.KeyFinderService
 import de.ritzelprimpf.toniqo.keyfinder.domain.repository.NoteDetector
 import de.ritzelprimpf.toniqo.keyfinder.domain.usecase.MatchScalesUseCase
 import javax.inject.Singleton
@@ -18,13 +16,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class KeyFinderModule {
-
-    /** Binds [KeyFinderServiceImpl] as the singleton implementation of [KeyFinderService]. */
-    @Binds
-    @Singleton
-    abstract fun bindKeyFinderService(
-        impl: KeyFinderServiceImpl,
-    ): KeyFinderService
 
     /**
      * Binds [StableNoteDetectorImpl] as the singleton implementation of [NoteDetector].

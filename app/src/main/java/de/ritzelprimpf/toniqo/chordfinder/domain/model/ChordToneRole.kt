@@ -1,9 +1,10 @@
 package de.ritzelprimpf.toniqo.chordfinder.domain.model
 
 /**
- * The role of the lowest sounding string's note within the chord — the inversion seam for FP-1.
+ * The role of the lowest sounding string's note within the chord.
  *
- * In v1 every shipped voicing is root-position, so all entries are [ROOT]. The field exists so
- * FP-1 (inversions/slash chords) can populate it without a model change.
+ * [SEVENTH] only ever applies when the chord's [ChordKey.seventhQuality] is non-null — a
+ * seventh-chord voicing may have the seventh itself in the bass, same as [THIRD] / [FIFTH] for
+ * an inverted triad.
  */
-enum class ChordToneRole { ROOT, THIRD, FIFTH, OTHER }
+enum class ChordToneRole { ROOT, THIRD, FIFTH, SEVENTH, OTHER }

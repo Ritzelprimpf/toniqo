@@ -35,7 +35,6 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Mic
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -44,7 +43,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -89,7 +87,9 @@ import de.ritzelprimpf.toniqo.keyfinder.presentation.viewmodel.KeyFinderScreenVi
 import de.ritzelprimpf.toniqo.keyfinder.presentation.viewmodel.KeyFinderUiState
 import de.ritzelprimpf.toniqo.keyfinder.presentation.viewmodel.KeyFinderViewModel
 import de.ritzelprimpf.toniqo.keyfinder.presentation.viewmodel.NoteChip
+import de.ritzelprimpf.toniqo.ui.components.InfoDialog
 import de.ritzelprimpf.toniqo.ui.components.PulsingDot
+import de.ritzelprimpf.toniqo.ui.components.ScreenHeader
 import de.ritzelprimpf.toniqo.ui.components.ToniqoCard
 import de.ritzelprimpf.toniqo.ui.theme.Tq
 import de.ritzelprimpf.toniqo.ui.theme.ToniqoTheme
@@ -196,7 +196,9 @@ fun KeyFinderScreen(
             uiState.results.isEmpty() -> item {
                 IdlePrompt(
                     hasEnoughNotesToMatch = uiState.notes.size >= MatchScalesUseCase.MIN_NOTES_TO_MATCH,
+                    isListening = uiState.isListening,
                     onAddNote = { showPickerSheet = true },
+                    onMicToggle = ::onMicToggle,
                 )
             }
             else -> {
@@ -237,7 +239,11 @@ fun KeyFinderScreen(
     }
 
     if (showInfoDialog) {
-        InfoDialog(onDismiss = { showInfoDialog = false })
+        InfoDialog(
+            title = stringResource(R.string.keyfinder_info_dialog_title),
+            body = stringResource(R.string.keyfinder_info_dialog_body),
+            onDismiss = { showInfoDialog = false },
+        )
     }
 }
 
@@ -259,34 +265,29 @@ private fun KeyFinderHeader(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        // Kicker + H1 title, with info button floating at top-end so its 48dp
-        // touch target does not inflate the row and push the H1 down.
-        Box(modifier = Modifier.fillMaxWidth()) {
-            Column {
+        ScreenHeader(
+            title = stringResource(R.string.keyfinder_screen_title),
+            kicker = {
                 Text(
                     text = stringResource(R.string.keyfinder_kicker),
                     style = Tq.Type.Kicker,
                     color = Tq.Color.FgTertiary,
                 )
-                Spacer(Modifier.height(Tq.Sp.s2))
-                Text(
-                    text = stringResource(R.string.keyfinder_screen_title),
-                    style = Tq.Type.H1,
-                    color = Tq.Color.FgPrimary,
-                )
-            }
-            IconButton(
-                onClick = onInfoClick,
-                modifier = Modifier.align(Alignment.TopEnd),
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Info,
-                    contentDescription = stringResource(R.string.keyfinder_cd_info),
-                    tint = Tq.Color.FgTertiary,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
-        }
+            },
+            trailingAction = {
+                IconButton(
+                    onClick = onInfoClick,
+                    modifier = Modifier.align(Alignment.TopEnd),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Info,
+                        contentDescription = stringResource(R.string.keyfinder_cd_info),
+                        tint = Tq.Color.FgTertiary,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            },
+        )
         Spacer(Modifier.height(Tq.Sp.s2))
         // Sub-header row
         Row(
@@ -668,11 +669,19 @@ private fun ScaleBadge(label: String, isMint: Boolean, modifier: Modifier = Modi
  * a strong enough call-to-action on an otherwise-empty screen, and the user has more notes to add
  * before a match is even possible. Once enough notes are present, only the hint text is shown
  * (results stay empty here only because none of them matched), matching the original design.
+ *
+ * A second mic button sits next to the big CTA in this same low-note-count state: the header's
+ * own mic toggle (44dp, top-right) is easy to overlook once the large mint circle is drawing all
+ * the attention on an otherwise-empty screen, so this repeats the same mic affordance right next
+ * to where the user's eye already is — same size as the `+` button, secondary colour so the `+`
+ * stays the visual default.
  */
 @Composable
 private fun IdlePrompt(
     hasEnoughNotesToMatch: Boolean,
+    isListening: Boolean,
     onAddNote: () -> Unit,
+    onMicToggle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -682,7 +691,13 @@ private fun IdlePrompt(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         if (!hasEnoughNotesToMatch) {
-            BigAddNoteButton(onClick = onAddNote)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Tq.Sp.s4),
+            ) {
+                BigAddNoteButton(onClick = onAddNote)
+                IdleMicButton(isListening = isListening, onClick = onMicToggle)
+            }
             Spacer(Modifier.height(Tq.Sp.s4))
         }
         Text(
@@ -721,40 +736,38 @@ private fun BigAddNoteButton(
     }
 }
 
-// ─── Info dialog ────────────────────────────────────────────────────────────
-
 /**
- * Explains what the matcher needs from the user, shown via the header's info button.
- * Mirrors Chord Finder's `InfoDialog` (`ChordFinderScreen.kt`) — same `AlertDialog` structure.
+ * Same 72dp size as [BigAddNoteButton] so the two read as equally valid ways to get started —
+ * differentiated by colour only: `bg.elev2` fill / `fg.secondary` icon (mint reserved for the
+ * `+` CTA, and for this button's own icon once listening starts) keeps the plus button as the
+ * visual default without making the mic option feel like an afterthought. Same mic
+ * icon/tint/content-description logic as the header's mic toggle — this is a second, more
+ * visible entry point to the same action, not a different one.
  */
 @Composable
-private fun InfoDialog(onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = stringResource(R.string.keyfinder_info_dialog_title),
-                style = Tq.Type.H2,
-                color = Tq.Color.FgPrimary,
-            )
-        },
-        text = {
-            Text(
-                text = stringResource(R.string.keyfinder_info_dialog_body),
-                style = Tq.Type.Body,
-                color = Tq.Color.FgSecondary,
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(
-                    text = stringResource(R.string.keyfinder_info_dialog_ok),
-                    style = Tq.Type.Body,
-                    color = Tq.Color.SignalMint,
-                )
-            }
-        },
-    )
+private fun IdleMicButton(
+    isListening: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .size(72.dp)
+            .clip(CircleShape)
+            .background(Tq.Color.BgElev2)
+            .border(1.dp, Tq.Color.LineFaint, CircleShape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Mic,
+            contentDescription = stringResource(
+                if (isListening) R.string.keyfinder_cd_mic_on else R.string.keyfinder_cd_mic_off
+            ),
+            tint = if (isListening) Tq.Color.SignalMint else Tq.Color.FgSecondary,
+            modifier = Modifier.size(28.dp),
+        )
+    }
 }
 
 // ─── Mic permission denied card ───────────────────────────────────────────────

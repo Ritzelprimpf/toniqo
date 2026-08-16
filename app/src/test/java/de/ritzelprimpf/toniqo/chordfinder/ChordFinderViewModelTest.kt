@@ -238,4 +238,29 @@ class ChordFinderViewModelTest {
         assertEquals(0, nav.chordKey.rootPitchClass) // C = pitch class 0
         collectJob.cancel()
     }
+
+    @Test
+    fun `selectChord carries seventhQuality into chordKey when seventh chords are shown`() = runTest {
+        // Regression coverage: selectChord used to build the lookup ChordKey from only
+        // degreeChord.triadQuality, discarding seventhQuality entirely -- so a 7th-chord
+        // selection resolved to the same key as its parent triad and the voicings screen
+        // silently showed the triad's shapes instead.
+        val vm = makeViewModel()
+        advanceUntilIdle()
+        vm.toggleSevenths()
+        advanceUntilIdle()
+
+        val events = mutableListOf<ChordNavEvent>()
+        val collectJob = launch { vm.navEvents.collect { events.add(it) } }
+        advanceUntilIdle()
+
+        val firstChord = vm.uiState.value.chords.first()
+        vm.selectChord(firstChord)
+        advanceUntilIdle()
+
+        val nav = events.single() as ChordNavEvent.NavigateToVoicings
+        assertEquals(firstChord.seventhQuality, nav.chordKey.seventhQuality)
+        assertTrue(firstChord.seventhQuality != null)
+        collectJob.cancel()
+    }
 }

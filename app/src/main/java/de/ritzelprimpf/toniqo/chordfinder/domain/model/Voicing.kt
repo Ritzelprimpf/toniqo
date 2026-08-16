@@ -132,8 +132,13 @@ data class Voicing(
                 }
             }
 
-            // Compute pitch classes for each sounded string
-            val chordPitchClasses = chordKey.quality.intervalsFromRoot
+            // Compute pitch classes for each sounded string. When chordKey carries a
+            // seventhQuality, the chord has a 4th required tone beyond the triad's own three
+            // (or two, for POWER) -- see ChordKey's kdoc for why a seventh chord is a distinct
+            // key from its parent triad.
+            val chordIntervals = chordKey.quality.intervalsFromRoot.toList() +
+                listOfNotNull(chordKey.seventhQuality?.semitonesFromRoot)
+            val chordPitchClasses = chordIntervals
                 .map { (chordKey.rootPitchClass + it + PITCH_CLASSES) % PITCH_CLASSES }.toSet()
             val soundedPcs = mutableListOf<Pair<Int, Int>>() // (stringIndex, pc)
             for (i in marks.indices) {

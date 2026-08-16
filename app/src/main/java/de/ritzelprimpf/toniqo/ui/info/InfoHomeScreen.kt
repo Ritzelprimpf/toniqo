@@ -1,5 +1,6 @@
 package de.ritzelprimpf.toniqo.ui.info
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
@@ -22,6 +23,9 @@ import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lightbulb
+import androidx.compose.material.icons.outlined.PrivacyTip
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.VolunteerActivism
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
@@ -33,7 +37,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import de.ritzelprimpf.toniqo.BuildConfig
 import de.ritzelprimpf.toniqo.R
 import de.ritzelprimpf.toniqo.ui.components.ToniqoCard
 import de.ritzelprimpf.toniqo.ui.navigation.Routes
@@ -53,6 +59,12 @@ private const val GITHUB_SPONSORS_URL = "https://github.com/sponsors/REPLACE_ME"
  * re-adding the row from scratch.
  */
 private const val SUPPORT_ROW_ENABLED = false
+
+/** Google Play Store's own package name — used to target the "Rate This App" intent at it directly. */
+private const val PLAY_STORE_PACKAGE_NAME = "com.android.vending"
+
+/** Web fallback for "Rate This App" when the Play Store app isn't installed, and the payload shared by "Share This App". */
+private fun playStoreUrl(applicationId: String) = "https://play.google.com/store/apps/details?id=$applicationId"
 
 /**
  * Info section home screen.
@@ -115,6 +127,12 @@ fun InfoHomeScreen(
                 )
                 InfoNavRow(
                     // TODO: Replace with custom `info` icon from DESIGN.md §7
+                    icon = Icons.Outlined.PrivacyTip,
+                    label = stringResource(R.string.info_item_data_privacy),
+                    onClick = { onNavigate(Routes.DATA_PRIVACY) },
+                )
+                InfoNavRow(
+                    // TODO: Replace with custom `info` icon from DESIGN.md §7
                     icon = Icons.Outlined.BugReport,
                     label = stringResource(R.string.info_item_bug_report),
                     onClick = { onNavigate(Routes.BUG_REPORT) },
@@ -124,6 +142,41 @@ fun InfoHomeScreen(
                     icon = Icons.Outlined.Lightbulb,
                     label = stringResource(R.string.info_item_feature_request),
                     onClick = { onNavigate(Routes.FEATURE_REQUEST) },
+                )
+                InfoNavRow(
+                    // TODO: Replace with custom `info` icon from DESIGN.md §7
+                    icon = Icons.Outlined.Star,
+                    label = stringResource(R.string.info_item_rate_app),
+                    onClick = {
+                        // Target the Play Store app directly (setPackage) so this never opens an
+                        // ambiguous chooser between the Play Store and some other app that also
+                        // registers the market:// scheme; fall back to the web listing if the
+                        // Play Store app isn't installed at all (e.g. some emulators, F-Droid-only
+                        // devices).
+                        try {
+                            context.startActivity(
+                                Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${BuildConfig.APPLICATION_ID}")).apply {
+                                    setPackage(PLAY_STORE_PACKAGE_NAME)
+                                },
+                            )
+                        } catch (e: ActivityNotFoundException) {
+                            context.startActivity(
+                                Intent(Intent.ACTION_VIEW, Uri.parse(playStoreUrl(BuildConfig.APPLICATION_ID))),
+                            )
+                        }
+                    },
+                )
+                InfoNavRow(
+                    // TODO: Replace with custom `info` icon from DESIGN.md §7
+                    icon = Icons.Outlined.Share,
+                    label = stringResource(R.string.info_item_share_app),
+                    onClick = {
+                        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_TEXT, playStoreUrl(BuildConfig.APPLICATION_ID))
+                        }
+                        context.startActivity(Intent.createChooser(sendIntent, null))
+                    },
                     isLast = !SUPPORT_ROW_ENABLED,
                 )
                 if (SUPPORT_ROW_ENABLED) {
@@ -139,6 +192,18 @@ fun InfoHomeScreen(
                 }
             }
         }
+
+        Spacer(modifier = Modifier.height(Tq.Sp.s5))
+
+        // App version footer — reads BuildConfig.VERSION_NAME so it can never drift from the
+        // actual shipped version (single source of truth: app/build.gradle.kts).
+        Text(
+            text = stringResource(R.string.info_app_version, BuildConfig.VERSION_NAME),
+            style = Tq.Type.Caption,
+            color = Tq.Color.FgQuaternary,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
 
         Spacer(modifier = Modifier.height(Tq.Sp.s5))
     }

@@ -9,12 +9,19 @@ import de.ritzelprimpf.toniqo.common.model.ChordQuality
  * and reused across every mode that contains it (e.g. G major appears in C Ionian, G Mixolydian,
  * D Dorian, etc., but the voicing library has exactly one entry for G MAJOR).
  *
+ * [seventhQuality] is `null` for a plain triad and non-null for a seventh chord — the two are
+ * distinct keys even at the same root/triad quality (e.g. `ChordKey(0, MAJOR)` for C major is a
+ * different library entry from `ChordKey(0, MAJOR, MAJOR_SEVENTH)` for Cmaj7), each backed by
+ * its own curated voicing set.
+ *
  * @property rootPitchClass The chord root, 0 (C) through 11 (B).
  * @property quality The triad quality.
+ * @property seventhQuality The seventh-chord quality, or `null` for a plain triad.
  */
 data class ChordKey(
     val rootPitchClass: Int,
     val quality: ChordQuality,
+    val seventhQuality: SeventhQuality? = null,
 )
 
 private const val PITCH_CLASSES = 12
@@ -30,7 +37,8 @@ private val FIFTH_INTERVALS = setOf(6, 7, 8) // diminished, perfect, augmented f
 /**
  * Classifies [pitchClass] as the role it plays within this chord: [ChordToneRole.ROOT] if it's
  * the root, [ChordToneRole.THIRD] / [ChordToneRole.FIFTH] if it matches this chord's actual
- * third/fifth (a quality may have neither, e.g. [ChordQuality.POWER] has no third), or
+ * third/fifth (a quality may have neither, e.g. [ChordQuality.POWER] has no third),
+ * [ChordToneRole.SEVENTH] if [seventhQuality] is present and it matches the seventh, or
  * [ChordToneRole.OTHER] if it matches none of the above.
  *
  * Used to compute (never just trust) a voicing's [Voicing.bassDegree] from its lowest sounded
@@ -49,6 +57,10 @@ internal fun ChordKey.classifyToneRole(pitchClass: Int): ChordToneRole {
         .firstOrNull { it in FIFTH_INTERVALS }
         ?.let { (rootPitchClass + it + PITCH_CLASSES) % PITCH_CLASSES }
     if (pitchClass == fifthPc) return ChordToneRole.FIFTH
+
+    val seventhPc = seventhQuality
+        ?.let { (rootPitchClass + it.semitonesFromRoot + PITCH_CLASSES) % PITCH_CLASSES }
+    if (pitchClass == seventhPc) return ChordToneRole.SEVENTH
 
     return ChordToneRole.OTHER
 }

@@ -4,6 +4,7 @@ import de.ritzelprimpf.toniqo.chordfinder.domain.VoicingTransposer
 import de.ritzelprimpf.toniqo.chordfinder.domain.model.ChordKey
 import de.ritzelprimpf.toniqo.chordfinder.domain.model.ChordToneRole
 import de.ritzelprimpf.toniqo.chordfinder.domain.model.FretMark
+import de.ritzelprimpf.toniqo.chordfinder.domain.model.SeventhQuality
 import de.ritzelprimpf.toniqo.chordfinder.domain.model.Voicing
 import de.ritzelprimpf.toniqo.chordfinder.domain.model.VoicingCategory
 import de.ritzelprimpf.toniqo.chordfinder.domain.repository.VoicingLookupResult
@@ -201,6 +202,43 @@ class VoicingRepositoryImplTest {
         assertTrue((result as VoicingLookupResult.Standard).voicings.isEmpty())
     }
 
+    // ── seventh-asset merge ──────────────────────────────────────────────────────
+
+    @Test
+    fun `seventh chord voicings are merged in from the seventh asset without colliding with the triad`() = runTest {
+        val standardSeventhJson = """
+            {
+              "tuningId": "standard_6",
+              "version": 1,
+              "chords": [
+                {
+                  "rootPitchClass": 0,
+                  "quality": "MAJOR",
+                  "seventhQuality": "MAJOR_SEVENTH",
+                  "voicings": [
+                    { "frets": ["x",3,2,0,0,0], "fingers": [0,3,2,0,0,0], "barre": null }
+                  ]
+                }
+              ]
+            }
+        """.trimIndent()
+        val repo = FakeVoicingRepository(minimalJson, standardSeventhJson = standardSeventhJson)
+        val seventhKey = ChordKey(0, ChordQuality.MAJOR, SeventhQuality.MAJOR_SEVENTH)
+
+        val triadResult = repo.lookup(cMajKey, standardTuning) as VoicingLookupResult.Standard
+        val seventhResult = repo.lookup(seventhKey, standardTuning) as VoicingLookupResult.Standard
+
+        assertEquals(2, triadResult.voicings.size) // unaffected by the seventh asset
+        assertEquals(1, seventhResult.voicings.size)
+    }
+
+    @Test
+    fun `a seventh chord with no curated seventh asset returns empty, not the triad's voicings`() = runTest {
+        val seventhKey = ChordKey(0, ChordQuality.MAJOR, SeventhQuality.MAJOR_SEVENTH)
+        val result = fakeRepo.lookup(seventhKey, standardTuning) as VoicingLookupResult.Standard
+        assertTrue(result.voicings.isEmpty())
+    }
+
     // ── tier 3: unsupported ───────────────────────────────────────────────────────
 
     @Test
@@ -216,21 +254,32 @@ class VoicingRepositoryImplTest {
     }
 
     // ── Inner fake: delegates to parser with inline JSON, mirrors VoicingRepositoryImpl's
-    // multi-family resolution (standard family, then drop-D family) ────────────────
+    // multi-family resolution (standard family, then drop-D family) and its triad/seventh
+    // asset merge ────────────────────────────────────────────────────────────────
 
     private class FakeVoicingRepository(
         standardJson: String,
         dropJson: String? = null,
+        standardSeventhJson: String? = null,
+        dropSeventhJson: String? = null,
     ) : VoicingRepository {
 
         private data class Family(val reference: GuitarTuning, val library: Map<ChordKey, List<Voicing>>)
 
+        private fun parseOrEmpty(json: String?, tuning: GuitarTuning): Map<ChordKey, List<Voicing>> =
+            json?.let { VoicingJsonParser.parse(it, tuning) } ?: emptyMap()
+
         private val families: List<Family> by lazy {
             listOf(
-                Family(GuitarTuning.STANDARD_6, VoicingJsonParser.parse(standardJson, GuitarTuning.STANDARD_6)),
+                Family(
+                    GuitarTuning.STANDARD_6,
+                    VoicingJsonParser.parse(standardJson, GuitarTuning.STANDARD_6) +
+                        parseOrEmpty(standardSeventhJson, GuitarTuning.STANDARD_6),
+                ),
                 Family(
                     GuitarTuning.DROP_D_6,
-                    dropJson?.let { VoicingJsonParser.parse(it, GuitarTuning.DROP_D_6) } ?: emptyMap(),
+                    parseOrEmpty(dropJson, GuitarTuning.DROP_D_6) +
+                        parseOrEmpty(dropSeventhJson, GuitarTuning.DROP_D_6),
                 ),
             )
         }

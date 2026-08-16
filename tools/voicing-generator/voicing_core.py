@@ -561,6 +561,87 @@ def generate_voicings(
 
 
 # ---------------------------------------------------------------------------
+# Seventh-chord derivation by mutation (used by generate_seventh_voicings*.py)
+# ---------------------------------------------------------------------------
+
+def mutate_add_seventh(
+    frets: tuple,
+    open_pcs: list[int],
+    root_pc: int,
+    chord_pcs_with_seventh: set[int],
+    seventh_pc: int,
+    max_fret: int,
+    max_span: int,
+) -> Optional[VoicingCandidate]:
+    """
+    Derives a seventh-chord voicing from a curated triad voicing by mutating exactly one
+    currently-sounded, non-bass string whose note is doubled elsewhere in the shape, changing
+    its fret so it sounds the seventh instead. Everything else about the shape -- which strings
+    sound, the bass note/degree, all other frets -- is left untouched.
+
+    Only a string whose current note already appears on another sounded string is eligible: its
+    occurrence is redundant (that chord tone survives via the other string), so repurposing it
+    for the seventh never drops a required tone. The bass string is never mutated, so the
+    voicing's bass degree (root-position, or an inversion with third/fifth in the bass) carries
+    through unchanged into the seventh-chord version.
+
+    Returns the mutation with the smallest fret change from the original (ties broken by lowest
+    string index, then lowest fret), or None if no doubled, non-bass string can reach the
+    seventh without breaking playability (max span, or needing a 5th finger).
+    """
+    sounded = [i for i, f in enumerate(frets) if f != "x"]
+    if not sounded:
+        return None
+    bass_idx = sounded[0]
+
+    sounded_pcs = [(open_pcs[i] + frets[i]) % 12 for i in sounded]
+    pc_counts: dict[int, int] = {}
+    for pc in sounded_pcs:
+        pc_counts[pc] = pc_counts.get(pc, 0) + 1
+
+    best: Optional[tuple] = None  # (delta, string_idx, new_fret, candidate)
+
+    for pos, string_idx in enumerate(sounded):
+        if string_idx == bass_idx:
+            continue
+        pc = sounded_pcs[pos]
+        if pc_counts[pc] < 2:
+            continue  # not a doubled tone -- mutating it would drop a required chord tone
+
+        original_fret = frets[string_idx]
+        for new_fret in range(0, max_fret + 1):
+            if (open_pcs[string_idx] + new_fret) % 12 != seventh_pc:
+                continue
+
+            trial = list(frets)
+            trial[string_idx] = new_fret
+            trial_tuple = tuple(trial)
+
+            trial_pcs = {(open_pcs[i] + trial[i]) % 12 for i in sounded}
+            if trial_pcs != chord_pcs_with_seventh:
+                continue  # should be unreachable given the doubled-tone precondition above
+
+            fretted_values = [trial[i] for i in sounded if trial[i] > 0]
+            if len(fretted_values) >= 2 and max(fretted_values) - min(fretted_values) > max_span:
+                continue
+
+            fingers, barre = assign_fingers_and_barre(trial_tuple)
+            if max(fingers) > MAX_FINGERS:
+                continue
+
+            delta = abs(new_fret - original_fret)
+            base_fret = min(fretted_values) if fretted_values else 0
+            candidate = VoicingCandidate(
+                frets=trial_tuple, fingers=tuple(fingers), barre=barre, base_fret=base_fret,
+            )
+            key = (delta, string_idx, new_fret)
+            if best is None or key < best[:3]:
+                best = (*key, candidate)
+
+    return best[3] if best is not None else None
+
+
+# ---------------------------------------------------------------------------
 # JSON serialisation
 # ---------------------------------------------------------------------------
 

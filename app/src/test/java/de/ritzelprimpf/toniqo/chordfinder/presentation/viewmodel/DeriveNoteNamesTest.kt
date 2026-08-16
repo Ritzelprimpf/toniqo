@@ -1,5 +1,6 @@
 package de.ritzelprimpf.toniqo.chordfinder.presentation.viewmodel
 
+import de.ritzelprimpf.toniqo.chordfinder.domain.model.SeventhQuality
 import de.ritzelprimpf.toniqo.common.model.ChordQuality
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -7,13 +8,14 @@ import org.junit.Test
 /**
  * Tests for [ChordVoicingsViewModel.Companion.deriveNoteNames].
  *
- * Covers: all four [ChordQuality] values, chromatic wrap-around, and
- * conventionally-spelled sharp/flat names at boundary pitch classes.
+ * Covers: all four [ChordQuality] values, chromatic wrap-around, conventionally-spelled
+ * sharp/flat names at boundary pitch classes, and the optional seventh-tone appended when a
+ * [SeventhQuality] is supplied.
  */
 class DeriveNoteNamesTest {
 
-    private fun derive(rootPc: Int, quality: ChordQuality): List<String> =
-        ChordVoicingsViewModel.deriveNoteNames(rootPc, quality)
+    private fun derive(rootPc: Int, quality: ChordQuality, seventhQuality: SeventhQuality? = null): List<String> =
+        ChordVoicingsViewModel.deriveNoteNames(rootPc, quality, seventhQuality)
 
     // ── Quality coverage ──────────────────────────────────────────────────────────
 
@@ -82,5 +84,36 @@ class DeriveNoteNamesTest {
         assertEquals("E", result[0])
         assertEquals("A♭", result[1])
         assertEquals("B", result[2])
+    }
+
+    // ── Seventh chords: 4th tone appended ───────────────────────────────────────────
+
+    @Test
+    fun `Cmaj7 returns C E G B`() {
+        assertEquals(
+            listOf("C", "E", "G", "B"),
+            derive(rootPc = 0, ChordQuality.MAJOR, SeventhQuality.MAJOR_SEVENTH),
+        )
+    }
+
+    @Test
+    fun `G7 dominant returns G B D F`() {
+        assertEquals(
+            listOf("G", "B", "D", "F"),
+            derive(rootPc = 7, ChordQuality.MAJOR, SeventhQuality.DOMINANT_SEVENTH),
+        )
+    }
+
+    @Test
+    fun `Bm7b5 half-diminished returns B D F A`() {
+        assertEquals(
+            listOf("B", "D", "F", "A"),
+            derive(rootPc = 11, ChordQuality.DIMINISHED, SeventhQuality.HALF_DIMINISHED),
+        )
+    }
+
+    @Test
+    fun `no seventh quality returns just the triad, unchanged from prior behaviour`() {
+        assertEquals(listOf("C", "E", "G"), derive(rootPc = 0, ChordQuality.MAJOR, seventhQuality = null))
     }
 }

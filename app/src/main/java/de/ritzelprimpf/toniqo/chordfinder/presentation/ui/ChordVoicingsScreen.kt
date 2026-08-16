@@ -19,11 +19,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -44,6 +40,7 @@ import de.ritzelprimpf.toniqo.chordfinder.presentation.viewmodel.ChordVoicingsUi
 import de.ritzelprimpf.toniqo.chordfinder.presentation.viewmodel.ChordVoicingsViewModel
 import de.ritzelprimpf.toniqo.chordfinder.presentation.viewmodel.VoicingTier
 import de.ritzelprimpf.toniqo.ui.components.FretboardDiagram
+import de.ritzelprimpf.toniqo.ui.components.ScreenHeader
 import de.ritzelprimpf.toniqo.ui.theme.Tq
 import de.ritzelprimpf.toniqo.ui.theme.ToniqoTheme
 import java.util.Locale
@@ -70,8 +67,8 @@ fun ChordVoicingsScreen(
 /**
  * Stateless Chord Voicings screen content.
  *
- * Shows a back arrow + kicker, a chord-name / note-pill header, optional tier annotations,
- * and a 2-column grid of [VoicingCard]s.
+ * Shows a [ScreenHeader] (kicker, back arrow inline with the chord-name H1 title), then a
+ * note-pill header, optional tier annotations, and a 2-column grid of [VoicingCard]s.
  *
  * When [ChordVoicingsUiState.tier] is [VoicingTier.UNIFORM_OFFSET], a one-line shift notice
  * is shown above the grid. When it is [VoicingTier.UNSUPPORTED], a prominent notice is shown
@@ -91,30 +88,23 @@ fun ChordVoicingsContent(
             .fillMaxSize()
             .background(Tq.Color.BgBase),
     ) {
-        // ── Back arrow + kicker ──────────────────────────────────────────────────
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = Tq.Sp.s3, end = Tq.Sp.s5, top = Tq.Sp.s2, bottom = Tq.Sp.s1),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector        = Icons.AutoMirrored.Outlined.ArrowBack,
-                    contentDescription = stringResource(R.string.cf_cd_back),
-                    tint               = Tq.Color.FgSecondary,
+        ScreenHeader(
+            title = state.chordName,
+            kicker = {
+                Text(
+                    text  = stringResource(R.string.cf_voicings_kicker),
+                    style = Tq.Type.Kicker,
+                    color = Tq.Color.FgTertiary,
                 )
-            }
-            Spacer(Modifier.width(Tq.Sp.s1))
-            Text(
-                text  = stringResource(
-                    R.string.cf_voicings_kicker,
-                    state.chordName.uppercase(Locale.ROOT),
-                ),
-                style = Tq.Type.Kicker,
-                color = Tq.Color.FgTertiary,
-            )
-        }
+            },
+            onBack = onBack,
+            modifier = Modifier.padding(
+                start  = Tq.Sp.s3,
+                end    = Tq.Sp.s5,
+                top    = Tq.Sp.s2,
+                bottom = Tq.Sp.s1,
+            ),
+        )
 
         // ── Content: loading spinner or voicings grid ────────────────────────────
         if (state.isLoading) {
@@ -175,15 +165,6 @@ private fun VoicingsHeaderSection(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        // Chord name (large)
-        Text(
-            text  = state.chordName,
-            style = Tq.Type.H1,
-            color = Tq.Color.FgPrimary,
-        )
-
-        Spacer(Modifier.height(Tq.Sp.s3))
-
         // Note pills
         Row(horizontalArrangement = Arrangement.spacedBy(Tq.Sp.s1)) {
             state.noteNames.forEachIndexed { i, name ->

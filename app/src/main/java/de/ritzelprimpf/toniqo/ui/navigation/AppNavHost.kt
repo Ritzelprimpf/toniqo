@@ -14,6 +14,7 @@ import de.ritzelprimpf.toniqo.keyfinder.presentation.ui.KeyFinderScreen
 import de.ritzelprimpf.toniqo.metronome.presentation.ui.MetronomeScreen
 import de.ritzelprimpf.toniqo.tuner.presentation.ui.TunerScreen
 import de.ritzelprimpf.toniqo.ui.info.BugReportScreen
+import de.ritzelprimpf.toniqo.ui.info.DataPrivacyScreen
 import de.ritzelprimpf.toniqo.ui.info.FeatureRequestScreen
 import de.ritzelprimpf.toniqo.ui.info.HelpScreen
 import de.ritzelprimpf.toniqo.ui.info.InfoHomeScreen
@@ -75,9 +76,10 @@ fun AppNavHost(
                 onChordSelected = { chordKey, chordName ->
                     navController.navigate(
                         Routes.chordVoicingsRoute(
-                            rootPc    = chordKey.rootPitchClass,
-                            quality   = chordKey.quality.name,
-                            chordName = chordName,
+                            rootPc         = chordKey.rootPitchClass,
+                            quality        = chordKey.quality.name,
+                            chordName      = chordName,
+                            seventhQuality = chordKey.seventhQuality?.name,
                         ),
                     )
                 },
@@ -86,9 +88,14 @@ fun AppNavHost(
         composable(
             route     = Routes.CHORD_VOICINGS,
             arguments = listOf(
-                navArgument(Routes.ARG_ROOT_PC)    { type = NavType.IntType },
-                navArgument(Routes.ARG_QUALITY)    { type = NavType.StringType },
-                navArgument(Routes.ARG_CHORD_NAME) { type = NavType.StringType },
+                navArgument(Routes.ARG_ROOT_PC)         { type = NavType.IntType },
+                navArgument(Routes.ARG_QUALITY)         { type = NavType.StringType },
+                navArgument(Routes.ARG_CHORD_NAME)      { type = NavType.StringType },
+                navArgument(Routes.ARG_SEVENTH_QUALITY) {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
             ),
         ) {
             ChordVoicingsScreen(
@@ -127,6 +134,11 @@ fun AppNavHost(
             }
             composable(Routes.FEATURE_REQUEST) {
                 FeatureRequestScreen(
+                    onBack = { navController.popBackStack() },
+                )
+            }
+            composable(Routes.DATA_PRIVACY) {
+                DataPrivacyScreen(
                     onBack = { navController.popBackStack() },
                 )
             }

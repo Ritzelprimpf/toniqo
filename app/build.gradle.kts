@@ -17,15 +17,16 @@ android {
         applicationId = "de.ritzelprimpf.toniqo"
         minSdk = 31
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.1"
+        versionCode = 4
+        versionName = "1.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -38,6 +39,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     sourceSets {
         // Make assets available as classpath resources in JVM unit tests (e.g. LicenseAssetTest

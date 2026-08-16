@@ -15,6 +15,11 @@
     <string name="nav_cd_chordfinder">Chord Finder</string>
     <string name="nav_cd_more">More</string>
 
+    <!-- Shared ScreenHeader (ui/components/ScreenHeader.kt) — used by every back-navigable sub-page -->
+    <string name="common_cd_back">Back</string>
+    <!-- Shared InfoDialog (ui/components/InfoDialog.kt) — confirm button, used by every screen's info dialog -->
+    <string name="common_info_dialog_ok">Got it</string>
+
     <!-- Tuner module -->
     <string name="tuner_title">Guitar Tuner</string>
     <string name="tuner_description">Chromatic and preset-driven guitar tuner using your device microphone</string>
@@ -44,9 +49,6 @@
     <string name="tuner_cd_mode_menu">Mode selector</string>
     <string name="tuner_mode_preset">Preset</string>
     <string name="tuner_mode_chromatic">Chromatic</string>
-
-    <!-- Tuner screen — MIC LIVE indicator (uppercase required) -->
-    <string name="tuner_mic_live">MIC LIVE</string>
 
     <!-- Tuner screen — permission denied card -->
     <string name="tuner_permission_heading">Microphone access needed</string>
@@ -108,6 +110,11 @@
 
     <!-- Metronome screen — BPM input dialog -->
     <string name="metronome_bpm_dialog_title">Set BPM</string>
+
+    <!-- Metronome screen — info dialog -->
+    <string name="metronome_cd_info">Metronome info</string>
+    <string name="metronome_info_dialog_title">About Metronome</string>
+    <string name="metronome_info_dialog_body">Set a tempo from 1 to 300 BPM by typing a number, dragging the slider, or using the ± buttons — or tap the TAP button a few times in rhythm to set it automatically. Choose a time signature and an optional subdivision to add quieter clicks between the main beats; the first beat of every bar is always accented so you can hear the downbeat.</string>
 
     <!-- Tempo descriptor labels (uppercased by composable) -->
     <string name="tempo_adagio">Adagio</string>
@@ -174,7 +181,6 @@
     <!-- Key Finder screen — info dialog, explains what the matcher needs -->
     <string name="keyfinder_info_dialog_title">About Key Finder</string>
     <string name="keyfinder_info_dialog_body">Add at least 3 different notes to see matching keys and modes. The percentage shows how well your notes fit each one — a FULL badge means every note you entered fits that scale. Long-press a note to mark it as the tonic: matches sharing your tonic score higher and get a TONIC badge.</string>
-    <string name="keyfinder_info_dialog_ok">Got it</string>
 
     <!-- Key Finder screen — result card badges (uppercase; MonoMicro style) -->
     <string name="keyfinder_badge_tonic">TONIC</string>
@@ -255,7 +261,6 @@
     <!-- Info dialog -->
     <string name="cf_info_dialog_title">About Chord Finder</string>
     <string name="cf_info_dialog_body">Shows the seven diatonic chords for any key and mode. Select a root and mode to see triads or seventh chords. Tap any row to explore voicings on your guitar.</string>
-    <string name="cf_info_dialog_ok">Got it</string>
 
     <!-- Chord Finder — mode dropdown display labels (root-free; short form for compact dropdown) -->
     <string name="cf_mode_label_ionian">Major · Ionian</string>
@@ -279,10 +284,8 @@
     <string name="cf_category_shape">SHAPE</string>
 
     <!-- Chord Finder — voicings screen labels (uppercase where required) -->
-    <!-- Kicker for the voicings detail screen; %s = chord name (uppercased by composable) -->
-    <string name="cf_voicings_kicker">VOICINGS · %s</string>
-    <!-- Content description for the back arrow on the voicings screen -->
-    <string name="cf_cd_back">Back</string>
+    <!-- Kicker for the voicings detail screen; the chord name itself is the H1 title below it -->
+    <string name="cf_voicings_kicker">CHORD FINDER · VOICINGS</string>
     <!-- Offset notice shown on UNIFORM_OFFSET tier; %s = e.g. "+1 st" or "-2 st" -->
     <string name="cf_offset_note">Diagrams shifted %s to match your tuning.</string>
     <!-- %d = number of voicings, e.g. "3 SHAPES" -->
@@ -299,15 +302,21 @@
 
     <!-- Info / More section -->
     <string name="info_title">Info</string>
-    <string name="info_cd_back">Back</string>
+    <!-- %s = BuildConfig.VERSION_NAME, e.g. "Version 1.3" -->
+    <string name="info_app_version">Version %s</string>
     <string name="info_item_dark_theme">Dark Theme</string>
     <string name="info_item_help">Help</string>
     <string name="info_item_licenses">Open Source Licenses</string>
     <string name="info_item_bug_report">Report a Bug</string>
     <string name="info_item_feature_request">Request a Feature</string>
+    <string name="info_item_data_privacy">Data Privacy</string>
+    <string name="info_item_rate_app">Rate This App</string>
+    <string name="info_item_share_app">Share This App</string>
     <string name="info_item_support">Support the Project</string>
 
     <!-- Help screen -->
+    <!-- Kicker for the Help sub-page; the specific page name is the H1 title below it -->
+    <string name="help_kicker">INFO · HELP</string>
     <string name="help_title">Help</string>
     <string name="help_section_tuner">Guitar Tuner</string>
     <string name="help_placeholder_tuner">Play a string and the needle shows how far off it is — tilted left means flat, right means sharp, centered and lit up means in tune. Pick a tuning from the preset picker (6, 7, or 8 string, standard, dropped, or open) and the tuner steps through your strings from lowest to highest automatically. Tap any string pill to jump to it directly. Once every string is in tune, the tuner switches to chromatic mode so you can fine-tune any string in any order. Needs microphone access to listen to your guitar.</string>
@@ -319,9 +328,18 @@
     <string name="help_placeholder_chordfinder">Pick a root note and a mode, and Chord Finder lays out the seven chords that naturally belong to that key, in order from I to vii°. Switch on the seventh-chord toggle to see richer voicings like Cmaj7 or G7 instead of plain triads. Tap any chord to see fingerings on a fretboard diagram.</string>
 
     <!-- Licenses screen -->
+    <string name="licenses_kicker">INFO · LICENSES</string>
     <string name="licenses_title">Open Source Licenses</string>
+    <string name="licenses_section_toniqo">Toniqo</string>
+    <string name="licenses_section_third_party">Third-Party Libraries</string>
 
     <!-- Feedback web-form screens (bug report / feature request) -->
+    <string name="feedback_bug_report_kicker">INFO · BUG REPORT</string>
     <string name="feedback_bug_report_title">Report a Bug</string>
+    <string name="feedback_feature_request_kicker">INFO · FEATURE REQUEST</string>
     <string name="feedback_feature_request_title">Request a Feature</string>
+
+    <!-- Data Privacy screen -->
+    <string name="data_privacy_kicker">INFO · DATA PRIVACY</string>
+    <string name="data_privacy_title">Data Privacy</string>
 </resources>

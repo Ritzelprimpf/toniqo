@@ -237,4 +237,67 @@ class VoicingTest {
             Voicing.validated(1, rootOnlyMarks, listOf(1, 0, 0, 0, 0, 0), null, setOf(0), ChordToneRole.ROOT, g5Key, openPcs)
         }
     }
+
+    // ── Seventh chords: chordKey.seventhQuality adds a required 4th tone ───────────
+
+    // Cmaj7 (root=0, tones={0,4,7,11}): x-3-2-0-0-0 — the B string (fret 1, doubled root)
+    // mutated to open B (pc 11, the major seventh); everything else identical to cMajMarks.
+    private val cMaj7Key = ChordKey(0, ChordQuality.MAJOR, SeventhQuality.MAJOR_SEVENTH)
+    private val cMaj7Marks = listOf(
+        FretMark.Muted, FretMark.Fretted(3), FretMark.Fretted(2),
+        FretMark.Open, FretMark.Open, FretMark.Open,
+    )
+    private val cMaj7Fingers = listOf(0, 3, 2, 0, 0, 0)
+
+    @Test
+    fun `validated succeeds for a seventh chord voicing sounding all four tones`() {
+        val rootIndices = setOf(1)
+        val v = Voicing.validated(1, cMaj7Marks, cMaj7Fingers, null, rootIndices, ChordToneRole.ROOT, cMaj7Key, openPcs)
+        assertEquals(ChordToneRole.ROOT, v.bassDegree)
+    }
+
+    @Test
+    fun `validated throws when a seventh chord voicing is missing the seventh`() {
+        // Same shape as cMajMarks (plain triad) but claimed as Cmaj7 -- the seventh (B) never sounds.
+        assertThrows(IllegalArgumentException::class.java) {
+            Voicing.validated(1, cMajMarks, cMajFingers, null, setOf(1, 4), ChordToneRole.ROOT, cMaj7Key, openPcs)
+        }
+    }
+
+    @Test
+    fun `validated succeeds when the seventh itself is in the bass`() {
+        // D string fret 9 = D(2)+9=11 = B, the seventh -- the lowest sounded string (E and A are
+        // muted). G string open = G(7)+0=7, the fifth. B string fret 5 = B(11)+5=16%12=4, the
+        // third. High e string fret 8 = e(4)+8=12%12=0, the root. All four Cmaj7 tones present;
+        // fretted span (D=9, B=5, e=8; G is open and excluded) is 9-5=4, within MAX_FRET_SPAN.
+        val seventhInBassMarks = listOf(
+            FretMark.Muted, FretMark.Muted, FretMark.Fretted(9),
+            FretMark.Open, FretMark.Fretted(5), FretMark.Fretted(8),
+        )
+        val v = Voicing.validated(
+            1,
+            seventhInBassMarks,
+            listOf(0, 0, 3, 0, 1, 4),
+            null,
+            setOf(5),
+            ChordToneRole.SEVENTH,
+            cMaj7Key,
+            openPcs,
+        )
+        assertEquals(ChordToneRole.SEVENTH, v.bassDegree)
+    }
+
+    @Test
+    fun `validated throws when bassDegree claims ROOT but the bass is actually the seventh`() {
+        val seventhInBassMarks = listOf(
+            FretMark.Muted, FretMark.Muted, FretMark.Fretted(9),
+            FretMark.Open, FretMark.Fretted(5), FretMark.Fretted(8),
+        )
+        assertThrows(IllegalArgumentException::class.java) {
+            Voicing.validated(
+                1, seventhInBassMarks, listOf(0, 0, 3, 0, 1, 4), null, setOf(5),
+                ChordToneRole.ROOT, cMaj7Key, openPcs,
+            )
+        }
+    }
 }

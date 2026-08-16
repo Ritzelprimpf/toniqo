@@ -22,7 +22,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -31,7 +30,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -60,6 +58,8 @@ import de.ritzelprimpf.toniqo.chordfinder.presentation.viewmodel.ChordFinderView
 import de.ritzelprimpf.toniqo.chordfinder.presentation.viewmodel.ChordNavEvent
 import de.ritzelprimpf.toniqo.common.model.ChordQuality
 import de.ritzelprimpf.toniqo.common.model.ScaleType
+import de.ritzelprimpf.toniqo.ui.components.InfoDialog
+import de.ritzelprimpf.toniqo.ui.components.ScreenHeader
 import de.ritzelprimpf.toniqo.ui.components.SegmentedControl
 import de.ritzelprimpf.toniqo.ui.theme.Tq
 import de.ritzelprimpf.toniqo.ui.theme.ToniqoTheme
@@ -152,7 +152,8 @@ internal fun ChordFinderContent(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .background(Tq.Color.BgBase),
+            .background(Tq.Color.BgBase)
+            .padding(top = Tq.Sp.s5),
         contentPadding = PaddingValues(
             start = Tq.Sp.s5,
             top = Tq.Sp.s0,
@@ -162,34 +163,28 @@ internal fun ChordFinderContent(
     ) {
         // ── Header ────────────────────────────────────────────────────────────
         item {
-            Spacer(Modifier.height(Tq.Sp.s5))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(R.string.cf_kicker),
-                    style = Tq.Type.Kicker,
-                    color = Tq.Color.FgTertiary,
-                )
-                // Info affordance — 48dp tap target
-                IconButton(
-                    onClick = { showInfoDialog = true },
-                    modifier = Modifier.size(Tq.Sp.s12),
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Info,
-                        contentDescription = stringResource(R.string.cf_cd_info),
-                        tint = Tq.Color.FgTertiary,
-                        modifier = Modifier.size(20.dp),
+            ScreenHeader(
+                title = screenTitle,
+                kicker = {
+                    Text(
+                        text = stringResource(R.string.cf_kicker),
+                        style = Tq.Type.Kicker,
+                        color = Tq.Color.FgTertiary,
                     )
-                }
-            }
-            Text(
-                text = screenTitle,
-                style = Tq.Type.H1,
-                color = Tq.Color.FgPrimary,
+                },
+                trailingAction = {
+                    IconButton(
+                        onClick = { showInfoDialog = true },
+                        modifier = Modifier.align(Alignment.TopEnd),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Info,
+                            contentDescription = stringResource(R.string.cf_cd_info),
+                            tint = Tq.Color.FgTertiary,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                },
             )
         }
 
@@ -302,7 +297,11 @@ internal fun ChordFinderContent(
     }
 
     if (showInfoDialog) {
-        InfoDialog(onDismiss = { showInfoDialog = false })
+        InfoDialog(
+            title = stringResource(R.string.cf_info_dialog_title),
+            body = stringResource(R.string.cf_info_dialog_body),
+            onDismiss = { showInfoDialog = false },
+        )
     }
 }
 
@@ -368,36 +367,6 @@ private fun ChordFinderDropdown(
             }
         }
     }
-}
-
-@Composable
-private fun InfoDialog(onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = stringResource(R.string.cf_info_dialog_title),
-                style = Tq.Type.H2,
-                color = Tq.Color.FgPrimary,
-            )
-        },
-        text = {
-            Text(
-                text = stringResource(R.string.cf_info_dialog_body),
-                style = Tq.Type.Body,
-                color = Tq.Color.FgSecondary,
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(
-                    text = stringResource(R.string.cf_info_dialog_ok),
-                    style = Tq.Type.Body,
-                    color = Tq.Color.SignalMint,
-                )
-            }
-        },
-    )
 }
 
 // Returns the canonical spelling for a pitch class (0–11) from the ROOT_DISPLAY_NAMES table.

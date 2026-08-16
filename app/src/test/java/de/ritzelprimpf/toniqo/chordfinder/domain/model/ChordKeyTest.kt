@@ -75,4 +75,45 @@ class ChordKeyTest {
         assertEquals(ChordToneRole.OTHER, key.classifyToneRole(3))
         assertEquals(ChordToneRole.OTHER, key.classifyToneRole(4))
     }
+
+    // ── Seventh chords: the 4th tone and its role classification ───────────────────
+
+    @Test
+    fun `classifyToneRole returns SEVENTH for a dominant seventh's minor seventh`() {
+        val key = ChordKey(7, ChordQuality.MAJOR, SeventhQuality.DOMINANT_SEVENTH) // G7: seventh = F (pc 5)
+        assertEquals(ChordToneRole.SEVENTH, key.classifyToneRole(5))
+    }
+
+    @Test
+    fun `classifyToneRole returns SEVENTH for a major seventh's major seventh`() {
+        val key = ChordKey(0, ChordQuality.MAJOR, SeventhQuality.MAJOR_SEVENTH) // Cmaj7: seventh = B (pc 11)
+        assertEquals(ChordToneRole.SEVENTH, key.classifyToneRole(11))
+    }
+
+    @Test
+    fun `classifyToneRole still returns ROOT THIRD FIFTH for a seventh chord's triad tones`() {
+        val key = ChordKey(0, ChordQuality.MAJOR, SeventhQuality.MAJOR_SEVENTH)
+        assertEquals(ChordToneRole.ROOT, key.classifyToneRole(0))
+        assertEquals(ChordToneRole.THIRD, key.classifyToneRole(4))
+        assertEquals(ChordToneRole.FIFTH, key.classifyToneRole(7))
+    }
+
+    @Test
+    fun `classifyToneRole returns OTHER for a pitch class outside a seventh chord`() {
+        val key = ChordKey(0, ChordQuality.MAJOR, SeventhQuality.MAJOR_SEVENTH)
+        assertEquals(ChordToneRole.OTHER, key.classifyToneRole(1)) // C# is not a Cmaj7 tone
+    }
+
+    @Test
+    fun `classifyToneRole never returns SEVENTH when seventhQuality is null`() {
+        val key = ChordKey(0, ChordQuality.MAJOR)
+        // B (pc 11) would be Cmaj7's seventh, but this key is a plain triad -- must be OTHER.
+        assertEquals(ChordToneRole.OTHER, key.classifyToneRole(11))
+    }
+
+    @Test
+    fun `classifyToneRole wraps seventh pitch class arithmetic across the octave boundary`() {
+        val key = ChordKey(11, ChordQuality.MAJOR, SeventhQuality.MAJOR_SEVENTH) // B major7: seventh = A# (pc 10)
+        assertEquals(ChordToneRole.SEVENTH, key.classifyToneRole(10))
+    }
 }

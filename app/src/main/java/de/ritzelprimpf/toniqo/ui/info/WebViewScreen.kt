@@ -19,11 +19,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -36,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import de.ritzelprimpf.toniqo.R
+import de.ritzelprimpf.toniqo.ui.components.ScreenHeader
 import de.ritzelprimpf.toniqo.ui.theme.Tq
 
 /**
@@ -54,40 +51,65 @@ private const val BUG_REPORT_URL = "https://tally.so/r/WO64gv"
  */
 private const val FEATURE_REQUEST_URL = "https://tally.so/r/RGQOlj"
 
-/** Wires [FeedbackWebViewScreen] to [BUG_REPORT_URL] for the "Report a Bug" nav destination. */
+/**
+ * Data privacy policy document URL for the "Data Privacy" menu item.
+ *
+ * Plain-text response (not HTML) — renders fine in a [WebView], same as any other page.
+ */
+private const val DATA_PRIVACY_URL = "https://toniqo.ritzelprimpf.de/datenschutz.txt"
+
+/** Wires [WebViewScreen] to [BUG_REPORT_URL] for the "Report a Bug" nav destination. */
 @Composable
 fun BugReportScreen(
     onBack: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    FeedbackWebViewScreen(
+    WebViewScreen(
         title = stringResource(R.string.feedback_bug_report_title),
+        kicker = stringResource(R.string.feedback_bug_report_kicker),
         url = BUG_REPORT_URL,
         onBack = onBack,
         modifier = modifier,
     )
 }
 
-/** Wires [FeedbackWebViewScreen] to [FEATURE_REQUEST_URL] for the "Request a Feature" nav destination. */
+/** Wires [WebViewScreen] to [FEATURE_REQUEST_URL] for the "Request a Feature" nav destination. */
 @Composable
 fun FeatureRequestScreen(
     onBack: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    FeedbackWebViewScreen(
+    WebViewScreen(
         title = stringResource(R.string.feedback_feature_request_title),
+        kicker = stringResource(R.string.feedback_feature_request_kicker),
         url = FEATURE_REQUEST_URL,
         onBack = onBack,
         modifier = modifier,
     )
 }
 
+/** Wires [WebViewScreen] to [DATA_PRIVACY_URL] for the "Data Privacy" nav destination. */
+@Composable
+fun DataPrivacyScreen(
+    onBack: () -> Unit = {},
+    modifier: Modifier = Modifier,
+) {
+    WebViewScreen(
+        title = stringResource(R.string.data_privacy_title),
+        kicker = stringResource(R.string.data_privacy_kicker),
+        url = DATA_PRIVACY_URL,
+        onBack = onBack,
+        modifier = modifier,
+    )
+}
+
 /**
- * Loads a feedback web form ([url]) inside an in-app [WebView], behind the same back-button +
- * H1-title chrome the other Info sub-screens use ([HelpScreen], [LicensesScreen]).
+ * Loads a URL ([url]) inside an in-app [WebView], behind the same [ScreenHeader] chrome the
+ * other Info sub-screens use ([HelpScreen], [LicensesScreen]) — shared by the feedback web
+ * forms ([BugReportScreen], [FeatureRequestScreen]) and the static [DataPrivacyScreen] document.
  *
  * The system/gesture back action navigates the WebView's own history first (so following a link
- * inside the form doesn't strand the user); only once the WebView has no more history does back
+ * inside the page doesn't strand the user); only once the WebView has no more history does back
  * fall through to [onBack] and pop this screen.
  *
  * ### File upload
@@ -97,11 +119,14 @@ fun FeatureRequestScreen(
  * page's behalf, then feed the chosen [Uri]s back through [filePathCallback]. [fileChooserLauncher]
  * does that: it launches whatever intent [WebChromeClient.FileChooserParams.createIntent] builds
  * (the standard system document/content picker) and resolves the pending callback with the result.
+ * Only [BugReportScreen]/[FeatureRequestScreen]'s Tally forms actually use this; it's harmless
+ * (never triggered) for [DataPrivacyScreen]'s plain-text document.
  */
 @SuppressLint("SetJavaScriptEnabled") // Required: Tally's form renderer needs JS to function.
 @Composable
-private fun FeedbackWebViewScreen(
+private fun WebViewScreen(
     title: String,
+    kicker: String,
     url: String,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
@@ -134,22 +159,17 @@ private fun FeedbackWebViewScreen(
     ) {
         Spacer(modifier = Modifier.height(Tq.Sp.s2))
 
-        IconButton(
-            onClick = onBack,
-            modifier = Modifier.padding(horizontal = Tq.Sp.s3),
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                contentDescription = stringResource(R.string.info_cd_back),
-                tint = Tq.Color.FgSecondary,
-            )
-        }
-
-        Text(
-            text = title,
-            style = Tq.Type.H1,
-            color = Tq.Color.FgPrimary,
-            modifier = Modifier.padding(horizontal = Tq.Sp.s5),
+        ScreenHeader(
+            title = title,
+            kicker = {
+                Text(
+                    text = kicker,
+                    style = Tq.Type.Kicker,
+                    color = Tq.Color.FgTertiary,
+                )
+            },
+            onBack = onBack,
+            modifier = Modifier.padding(start = Tq.Sp.s3, end = Tq.Sp.s5),
         )
 
         Spacer(modifier = Modifier.height(Tq.Sp.s3))

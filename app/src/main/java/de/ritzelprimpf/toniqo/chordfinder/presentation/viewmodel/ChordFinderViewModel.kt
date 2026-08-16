@@ -119,7 +119,11 @@ class ChordFinderViewModel @Inject constructor(
     fun selectChord(degreeChord: DegreeChord) {
         val state = _uiState.value
         val chordRootPc = (state.rootPitchClass + state.scaleType.intervalsFromRoot[degreeChord.degree - 1]) % PITCH_CLASSES
-        val key = ChordKey(rootPitchClass = chordRootPc, quality = degreeChord.triadQuality)
+        val key = ChordKey(
+            rootPitchClass = chordRootPc,
+            quality = degreeChord.triadQuality,
+            seventhQuality = degreeChord.seventhQuality,
+        )
         viewModelScope.launch {
             _navEvents.emit(ChordNavEvent.NavigateToVoicings(key, degreeChord.symbol, degreeChord.noteNames))
         }

@@ -1972,6 +1972,140 @@ Generator changes:
 
 ---
 
+## 2026-08-15 — Seventh chords: ChordKey gains a seventh dimension; sevenths derived by mutating curated triad shapes
+
+**Decision.** Fixed a bug where selecting any seventh chord in the Chord Finder (e.g. Cmaj7) silently showed its parent triad's voicings (e.g. plain C major) instead. Root cause: `ChordKey` — the identity used to look up voicings — carried only `rootPitchClass` + triad `ChordQuality`, with no seventh dimension at all, and `ChordFinderViewModel.selectChord()` built the lookup key from `degreeChord.triadQuality` only, discarding `degreeChord.seventhQuality`. Separately, no seventh-chord voicing data existed anywhere — `ChordQuality` itself has no seventh variants, and both curated JSON libraries only ever contained MAJOR/MINOR/DIMINISHED/AUGMENTED(/POWER) entries.
+
+Fixed end-to-end:
+- `ChordKey` gained `val seventhQuality: SeventhQuality? = null` — a seventh chord is now a distinct key from its parent triad (`ChordKey(0, MAJOR, MAJOR_SEVENTH)` ≠ `ChordKey(0, MAJOR)`), each backed by its own curated voicing set. Default `null` keeps every existing 2-arg call site source-compatible.
+- `SeventhQuality` gained `semitonesFromRoot` (mirrors the intervals already implicit in `ChordQualityResolver.seventh()`), used to compute the chord's 4th pitch class wherever needed.
+- `ChordToneRole` gained `SEVENTH`, and `ChordKey.classifyToneRole()` classifies it — needed so an inverted seventh-chord voicing (seventh in the bass) can be validated/labelled correctly, same as `THIRD`/`FIFTH` already were for triad inversions.
+- `Voicing.validated()`'s required-pitch-classes computation now adds the seventh's pitch class when `chordKey.seventhQuality != null`, so a seventh-chord voicing must sound all 4 tones, not just the triad's 3.
+- `VoicingJsonParser` parses an optional `seventhQuality` field per chord entry.
+- `VoicingRepositoryImpl` now loads a second asset per tuning family (`voicings_standard_6_seventh.json`, `voicings_drop_d_6_seventh.json`) and merges it into the same lookup map as the triad asset — safe as a plain `+` union since triad keys always have `seventhQuality == null` and seventh keys never do, so the two maps can never collide. A missing seventh asset behaves the same as a missing triad asset already did: empty, not a crash.
+- `ChordFinderViewModel.selectChord()` now passes `degreeChord.seventhQuality` through into the lookup `ChordKey`. `Routes`/`AppNavHost`/`ChordVoicingsViewModel` carry it as a new optional query-style nav arg (`?seventhQuality=...`, nullable, defaulting to absent) so triad navigation keeps its existing URL shape.
+- `ChordVoicingsViewModel.deriveNoteNames()` appends the seventh's spelled name as a 4th entry when present.
+
+Generator tooling: two new driver scripts, `generate_seventh_voicings.py` / `generate_seventh_voicings_drop_d.py`, sharing `voicing_core.py` with the existing triad drivers. Unlike the triad drivers (which search the whole fretboard from scratch), these **never** run an independent search — they read the **curated** triad JSON under `assets/chordfinder/` and, for each already-approved triad shape, try to derive a seventh-chord shape via a new `mutate_add_seventh()` in `voicing_core.py`: mutate exactly one currently-sounded, non-bass string whose note is doubled elsewhere in the shape, changing its fret so it sounds the seventh instead, keeping everything else (which strings sound, the bass note/degree, all other frets) identical. A triad shape with no doubled tone to sacrifice yields no derivative for that shape and is reported at the end, not silently dropped. Output goes to new, separate files (`voicings_standard_6_seventh.json`, `voicings_drop_d_6_seventh.json`) — the existing hand-curated triad files are never read-write, only read.
+
+Ran both generators against the real curated assets: 84/84 (root × triad-quality × applicable-seventh) combinations produced 2–6 voicings each, zero empty entries, in both the standard and drop-D families.
+
+**Alternatives considered.**
+- *Fresh independent search per seventh chord* (reuse `generate_voicings()`'s existing combinatorial search with a 4-tone pitch-class set, ignoring the specific curated triad shape — same mechanism used for the triads themselves before curation). Rejected (user's choice among two options) — would produce shapes unrelated to, and not vetted the way, the triad shapes the user already hand-reworked; the mutation approach guarantees every seventh voicing is anchored to a fingering already approved.
+- *Encode the seventh as a 5th/6th `ChordQuality` enum value* instead of a separate `seventhQuality` field on `ChordKey`. Rejected — `ChordQuality`'s kdoc already documents it as strictly the 4 triads + POWER, produced only by diatonic harmonization; conflating it with seventh chords (which are a triad *plus* a 4th tone, not a wholly different triad shape) would have broken that invariant and duplicated the triad/seventh split `DegreeChord` already models separately.
+- *Ship the generated seventh JSON directly into `assets/chordfinder/` as part of this change.* Rejected — matches the project's own generator convention (`README.md`'s "Curate and commit" step): raw generator output needs human review for awkward/unplayable shapes before becoming a shipped asset, same as every triad library before it. The seventh files were left as review output in `tools/voicing-generator/` (untracked), not copied into `assets/`.
+
+**Rationale.** The bug was a genuine identity-model gap, not a data gap alone: even with perfect seventh-chord voicing data available, the old `ChordKey` had no way to distinguish "C major" from "C major seventh" as lookup targets. Closing that gap needed a small, symmetric extension (mirroring `DegreeChord`'s existing `triadQuality`/`seventhQuality` split) rather than a new parallel data path. Deriving seventh shapes from the curated triads (rather than searching fresh) keeps the two curated libraries in sync by construction — re-running the seventh generator after any future triad re-curation regenerates matching sevenths for free.
+
+**Known gap.** `voicings_standard_6_seventh.json` and `voicings_drop_d_6_seventh.json` are **not shipped** — they exist only as review output under `tools/voicing-generator/` (untracked), per the alternative above. Until they're curated and copied to `assets/chordfinder/`, `VoicingRepositoryImpl` treats every seventh-chord lookup as "matched family, zero curated voicings" (empty list, not a crash, not a fallback to the triad) — the code-side fix is real and tested (`VoicingJsonParserTest`, `VoicingRepositoryImplTest`'s merge tests, `ChordKeyTest`/`VoicingTest`'s new `SEVENTH` coverage, a `ChordFinderViewModelTest` regression test reproducing the original bug), but the app won't show real seventh-chord diagrams to end users until that curation pass happens.
+
+---
+
+## 2026-08-15 — Shared ScreenHeader component across Tuner, Metronome, Key Finder, Chord Finder
+
+**Decision.** Extracted the kicker-line-above-H1-title header pattern, already duplicated near-identically across Key Finder and (as of the same session's earlier fix) Chord Finder, into a shared `ui/components/ScreenHeader.kt` composable, and migrated all four feature screens (Tuner, Metronome, Key Finder, Chord Finder) to use it — user's explicit request after noticing the duplication while reviewing the Chord Finder header fix.
+
+`ScreenHeader(title: String, kicker: @Composable () -> Unit, trailingAction: (@Composable BoxScope.() -> Unit)? = null)` renders only the structural skeleton: a `Box` containing a `Column` (kicker content, `Tq.Sp.s2` spacer, H1 title text), plus an optional trailing action the caller positions itself (typically via `Modifier.align(Alignment.TopEnd)` inside the `BoxScope` receiver) — mirroring the "info button floats independently so its touch target doesn't inflate the kicker line and push the title down" fix Key Finder's header already had. Both `kicker` and `trailingAction` are composable slots, not fixed content, because every screen's actual kicker/action differs:
+- Key Finder / Chord Finder: plain `Tq.Type.Kicker` text kicker, `Icons.Outlined.Info` trailing action (default `IconButton` sizing).
+- Metronome: `MetronomeStatusKicker` (pulsing dot + dynamic RUNNING/STOPPED text) as the kicker, no trailing action.
+- Tuner: `ReferencePitchKicker` (mic-active dot + reference-pitch text) as the kicker, `Icons.Outlined.Settings` trailing action sized per DESIGN.md §8.1's `Tq.Sp.s10` (40dp) icon-round spec — a size distinct from Key Finder/Chord Finder's, deliberately preserved unchanged rather than homogenized.
+
+`ReferencePitchKicker` was slimmed to render only the dot+text kicker line (dropped its former `presetDisplayName`/H1-title and `onSettingsClick`/settings-button responsibilities, which moved to `TunerScreen`'s `ScreenHeader` call) — no other file referenced its old 3-parameter signature.
+
+**Alternatives considered.**
+- *Standardize the trailing action's icon size/style across all four screens* as part of the shared component (e.g. force everything to Key Finder's default `IconButton` sizing). Rejected — Tuner's 40dp icon-round settings button is a documented DESIGN.md §8.1 value; changing it would be a visual spec change disguised as a refactor, not requested and not something to improvise per CLAUDE.md §14.
+- *A plain `String` kicker parameter* instead of a composable slot. Rejected — would only fit Key Finder/Chord Finder; Metronome's and Tuner's kickers both carry a leading dot plus dynamic content that a string can't express, and forcing them to a string would have required dropping real information (the pulsing/mic-active dots) to fit the abstraction.
+
+**Rationale.** The duplication was real (two screens with byte-for-byte-identical Box/Column/Spacer/Text skeletons before this change, a third about to grow the same way), and the parts that differ per screen (kicker content, trailing action content/size) were already cleanly separable as slots without forcing any screen's actual appearance to change — the shared component captures exactly the structural rule (kicker above title, action floats independently) and nothing else.
+
+**Known gap.** None — verified via `compileDebugKotlin` (clean) and the full `testDebugUnitTest` suite (unaffected, no unit tests target these composables directly). `MetronomeContentTest.kt` (an instrumented Compose UI test asserting kicker/title text via `onNodeWithText`, semantics-based rather than layout-tree-position-based) is unaffected by the `ScreenHeader` wrapping, but could not be *run* to confirm — this environment has no `adb`/emulator, and a pre-existing, unrelated `androidx.compose.ui.test` API mismatch (`onNode`/`onAllNodes` unresolved) already breaks `compileDebugAndroidTestKotlin` for the whole module, predating this change (confirmed via `git log` — last touched in an old "Phase 6.4" commit, files untouched by this change).
+
+---
+
+## 2026-08-15 — Removed the Tuner's `MIC LIVE` indicator (broken vertical-text layout)
+
+**Decision.** Removed the `MIC LIVE` mint-dot-plus-label indicator from the Tuner's preset chip row entirely, per explicit user report: it was rendering as unreadable single-character-per-line vertical text instead of the intended horizontal `MIC LIVE` label.
+
+Root cause: `PresetChip`'s internal layout puts its label `Box` inside a `Modifier.weight(1f)` within its own `Row`. A weighted child implicitly requires its `Row` to claim the full width available to it (weight has no defined meaning otherwise), so `PresetChip` — even though never explicitly given `fillMaxWidth()` at its call site — expanded to claim essentially all of the outer `PresetChipRow`'s width when placed as its first, unweighted child. That left the sibling `MIC LIVE` `Row` almost no width to measure into, and Compose's default `Text` wrapping broke the string one character per line — reading as vertical text. This was very likely a pre-existing bug (not introduced by the same session's `ScreenHeader` refactor, which never touched horizontal space above `PresetChipRow`), just not previously noticed/reported.
+
+Since `PresetChipRow` become a pure one-line pass-through to `PresetChip` once the indicator was deleted, and it had exactly one caller (`TunerScreen.kt`, no tests/previews), deleted `PresetChipRow.kt` entirely rather than leaving a pointless wrapper — `TunerScreen.kt` now calls `PresetChip` directly. Also removed the now-unused `tuner_mic_live` string resource and updated `DESIGN.md` §8.1 (Tuner preset chip row + idle-state bullets) to stop documenting an indicator that no longer exists.
+
+**Alternatives considered.**
+- *Fix the layout bug and keep the indicator* (e.g. give `PresetChip` its own bounded width via `Modifier.weight` at the call site, or drop its internal `weight` in favour of `wrapContentWidth`, so both children of the outer row get their natural size). Not pursued — user's request was explicitly to remove the indicator, not preserve it in a fixed form; the underlying `PresetChip` layout bug is separately worth revisiting only if something else in `PresetChip` needs its label to truncate/ellipsize against a bounded width, which nothing currently does (its labels are always short, fixed-format strings like "6-STRING · DROP").
+
+**Rationale.** Direct user request to remove a visibly broken UI element; no product requirement depends on `MIC LIVE` surviving in some fixed form, so removing it (rather than debugging and preserving it) is the correct, minimal-scope response.
+
+**Known gap.** None — verified via `compileDebugKotlin` (clean) and the full `testDebugUnitTest` suite (unaffected; no tests referenced `PresetChipRow` or `tuner_mic_live`). Not visually re-verified in a running app (no `adb`/emulator in this environment, same limitation noted in the preceding `ScreenHeader` entry).
+
+---
+
+## 2026-08-15 — ScreenHeader extended to back-navigable sub-pages, with an inline back arrow and meaningful kicker text everywhere
+
+**Decision.** Extended `ui/components/ScreenHeader.kt` (previously used only by the four top-level tab screens) to also cover every back-navigable sub-page: Chord Voicings, and the Info section's Help / Licenses / Bug Report / Feature Request screens — user's explicit follow-up request after the tab-screen consolidation.
+
+Added `onBack: (() -> Unit)? = null` to `ScreenHeader`. When non-null, it renders a standardized back arrow (`Icons.AutoMirrored.Outlined.ArrowBack`, `fg.secondary` tint, new shared `common_cd_back` string) inline, immediately before the H1 title, on the same line — the user's explicit ask ("the back-arrow can be on the same line as the big header"), replacing every sub-page's previous pattern of a back button alone on its own line/row above a separate title line. Unlike the existing `trailingAction`/`kicker` slots, `onBack` is not a composable slot: every back button in the app already rendered byte-identically (confirmed via a codebase-wide search — five call sites, one pattern), so standardizing it removes real duplication rather than forcing an artificial shared look.
+
+Consolidated the two duplicate "Back" content-description strings (`cf_cd_back`, `info_cd_back`) into one shared `common_cd_back`, now owned by `ScreenHeader` itself rather than repeated at each call site.
+
+Added a kicker line to every sub-page — user's explicit ask ("provide some meaningful text for the sub-headers"), since Help/Licenses/Bug Report/Feature Request had none at all, and Chord Voicings' existing kicker (`"VOICINGS · {chord name}"`) duplicated the H1 title now sitting right next to it. Settled on a `{PARENT SECTION} · {PAGE}` format mirroring the existing top-level kickers' own `SECTION · DETAIL` style (`CHORD FINDER · DIATONIC`, `TUNER · A4 = 440 HZ`):
+- Chord Voicings: `CHORD FINDER · VOICINGS` (static now — the chord name itself is the H1 title, no longer interpolated into the kicker too).
+- Help: `INFO · HELP`. Licenses: `INFO · LICENSES`. Bug Report: `INFO · BUG REPORT`. Feature Request: `INFO · FEATURE REQUEST`.
+
+Each sub-page's `ScreenHeader` call uses asymmetric horizontal padding (`start = Tq.Sp.s3`, `end = Tq.Sp.s5`, not the tab screens' symmetric `Tq.Sp.s5`) — carried over unchanged from Chord Voicings' pre-existing back-row code, which already worked this out: the back arrow's icon glyph sits inset within its own touch target, so a smaller container start-padding is needed for the glyph to visually line up with the kicker text above it. Applied uniformly to all five sub-pages for consistency, rather than only preserving it where it already existed.
+
+Where a sub-page's outer `Column` previously carried a single `.padding(horizontal = Tq.Sp.s5)` spanning both header and body content (Help, Licenses), that padding was moved down to wrap only the body content, so the header could carry its own distinct asymmetric padding without the two stacking.
+
+**Alternatives considered.**
+- *Keep `onBack` as a composable slot*, like `trailingAction`. Rejected — every back button already looked identical across all five call sites; a slot would just make callers repeat the same five lines of icon/tint/content-description code `ScreenHeader` can now own once.
+- *A per-screen bespoke kicker taxonomy* (e.g. "FEEDBACK" as a category distinct from "INFO" for the two web-form screens). Rejected in favour of the literal `{PARENT SECTION} · {PAGE}` pattern — inventing a new category not reflected anywhere in the actual navigation hierarchy (`Routes.INFO_GRAPH` covers all four Info sub-pages equally) would be guessing at an information architecture the product hasn't defined, where the literal parent-graph name is already unambiguous and consistent with how Chord Finder's own kicker names its section.
+- *Leave Chord Voicings' kicker dynamic* (`"VOICINGS · {chord}"`) alongside the newly-adjacent H1 chord name. Rejected — the two would show the same chord name twice, immediately next to each other, which reads as a mistake rather than information.
+
+**Rationale.** Same motivation as the tab-screen consolidation: real, growing duplication (five near-identical back-button-plus-title blocks) collapsed into one shared structural rule, while every screen-specific piece (icon/size of any trailing action, the kicker's exact text) stays exactly as specific as it needs to be.
+
+**Known gap.** None — verified via `compileDebugKotlin` (clean) and the full `testDebugUnitTest` suite (unaffected; no unit tests target any of the five migrated composables directly, confirmed via search). Not visually re-verified in a running app — same `adb`/emulator limitation noted in the preceding two 2026-08-15 entries.
+
+---
+
+## 2026-08-15 — Rate/Share/Data Privacy rows; FeedbackWebViewScreen generalized to WebViewScreen
+
+**Decision.** Added three rows to the Info section, per explicit user request: "Rate This App" (opens the Play Store listing), "Share This App" (system share sheet with the Play Store link), "Data Privacy" (in-app WebView of `https://toniqo.ritzelprimpf.de/datenschutz.txt`).
+
+"Rate This App" uses the standard Android pattern: `Intent.ACTION_VIEW` on `market://details?id={applicationId}` with `setPackage("com.android.vending")` (so it opens the Play Store app directly rather than showing an ambiguous chooser if some other installed app also registers the `market://` scheme), falling back to the `https://play.google.com/store/apps/details?id={applicationId}` web URL inside a `try`/`catch(ActivityNotFoundException)` for devices without the Play Store app installed. `{applicationId}` is `BuildConfig.APPLICATION_ID`, not a literal string — single source of truth with `app/build.gradle.kts`'s `applicationId`.
+
+"Share This App" uses a plain `Intent.ACTION_SEND` / `text/plain` / `Intent.createChooser`, sharing the same Play Store URL (also built from `BuildConfig.APPLICATION_ID`, which happens to produce byte-identical output to the literal URL the user specified, since it equals the app's own `applicationId`).
+
+"Data Privacy" reuses the existing in-app WebView screen — renamed from `FeedbackWebViewScreen.kt`/`FeedbackWebViewScreen` to `WebViewScreen.kt`/`WebViewScreen` (private composable) since it's no longer feedback-form-specific once a third, unrelated use case (a static legal document, not a Tally form) uses it. `BugReportScreen`/`FeatureRequestScreen` (existing) and the new `DataPrivacyScreen` are three thin public wrappers around the one shared private implementation, matching the file's existing wrapper pattern. `WebViewScreen`'s file-upload/`WebChromeClient` machinery (needed for Tally's forms) is harmless-but-unused for the plain-text privacy document — no new parameter was added to disable it, since a `.txt` response has no JS or file inputs to trigger it regardless.
+
+Added `Routes.DATA_PRIVACY` and wired it in `AppNavHost.kt`, following the exact same nested-info-graph pattern as `HELP`/`LICENSES`/`BUG_REPORT`/`FEATURE_REQUEST`.
+
+**Alternatives considered.**
+- *Google Play Core's in-app review API* (`ReviewManager`) for "Rate This App" instead of a plain market:// intent, which shows an in-app rating dialog without leaving the app. Rejected — a new dependency requiring explicit approval per CLAUDE.md §8, not requested (user asked for "pretty default" behavior, which the market:// intent pattern already is — it's the standard approach most apps use).
+- *A separate, simpler WebView composable for Data Privacy* instead of reusing/renaming `FeedbackWebViewScreen`. Rejected — the existing implementation already does exactly what's needed (`ScreenHeader` chrome, loading spinner, WebView history back-navigation); duplicating it for a cosmetic "not really feedback" distinction would be pure duplication for no behavioral gain, whereas renaming the file/composable to a name that fits all three current uses removes the naming mismatch instead of accepting it.
+- *Hardcode the literal Play Store URL the user provided*, verbatim, for both "Rate This App"'s fallback and "Share This App". Rejected in favour of building it from `BuildConfig.APPLICATION_ID` — produces the exact same string today, but stays correct automatically if `applicationId` ever changes, rather than needing a manual find-and-replace across two more call sites plus the two already in `build.gradle.kts`.
+
+**Rationale.** Straightforward feature addition; the one design choice worth recording is the `WebViewScreen` rename, since it's the kind of "quietly reuse a component under a name that no longer fits" drift that's worth catching immediately rather than accumulating.
+
+**Known gap.** None — verified via `compileDebugKotlin` (clean, confirms `Icons.Outlined.PrivacyTip`/`Share`/`Star` resolve from the already-present `material-icons-extended` dependency) and the full `testDebugUnitTest` suite (unaffected). The `market://` / Play Store intents cannot be exercised at all without a real device or emulator with Play Store installed — same `adb`/emulator limitation noted in every entry above; this one in particular should get an actual on-device tap-through before shipping, since intent-resolution behavior (chooser vs. direct launch, fallback triggering) is exactly the kind of thing that only shows itself at runtime.
+
+---
+
+## 2026-08-15 — Metronome info dialog; InfoDialog extracted as a shared component
+
+**Decision.** Added the same "i" info button + explanatory dialog that Key Finder and Chord Finder already had to Metronome, per explicit user request. Since this would have created a *third* byte-for-byte-identical `AlertDialog` implementation (Key Finder's and Chord Finder's `InfoDialog` composables already differed only in which string resources they read), extracted a shared `ui/components/InfoDialog.kt` (`title: String, body: String, onDismiss: () -> Unit`) instead of copy-pasting a third private copy, and migrated Key Finder/Chord Finder onto it too, deleting their private duplicates.
+
+Also consolidated the two identical "Got it" confirm-button strings (`keyfinder_info_dialog_ok`, `cf_info_dialog_ok`) into one shared `common_info_dialog_ok`, mirroring the `common_cd_back` consolidation from the same day's `ScreenHeader` work.
+
+Metronome's info button is wired the same way Key Finder's/Chord Finder's already were: an `Icons.Outlined.Info` `IconButton` (18dp icon, `fg.tertiary` tint) in `ScreenHeader`'s `trailingAction` slot, toggling local `showInfoDialog` state. New copy (`metronome_info_dialog_title` = "About Metronome", `metronome_info_dialog_body`) summarizes BPM entry (typed/slider/±/tap-tempo), time signature + subdivision, and the accented downbeat — mirroring the existing (longer) Help-screen Metronome placeholder text at dialog length rather than duplicating it verbatim.
+
+**Alternatives considered.**
+- *Copy-paste a third private `InfoDialog` into `MetronomeContent.kt`*, matching the (already duplicated) status quo exactly. Rejected — the user's own ask was the trigger to notice a second copy was about to become a third; extracting now is strictly cheaper than doing it after a fourth screen needs the same thing.
+
+**Rationale.** Same motivation as every other shared-component extraction this session: the parts that are genuinely identical (dialog chrome, confirm button) collapse into one place; the only per-screen variation (title/body text) stays exactly that specific.
+
+**Known gap.** None — verified via `compileDebugKotlin` (clean) and the full `testDebugUnitTest` suite (unaffected; no unit tests target any of the three migrated/added info-dialog call sites). Not visually re-verified in a running app — same `adb`/emulator limitation noted throughout this session's other entries.
+
+---
+
 ## (Template for future entries)
 
 ## YYYY-MM-DD — Short title of decision

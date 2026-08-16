@@ -9,6 +9,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -18,6 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -35,7 +41,7 @@ import de.ritzelprimpf.toniqo.tuner.presentation.ui.components.DetectedNoteHero
 import de.ritzelprimpf.toniqo.tuner.presentation.ui.components.HzReadoutPair
 import de.ritzelprimpf.toniqo.tuner.presentation.ui.components.NeedleGauge
 import de.ritzelprimpf.toniqo.tuner.presentation.ui.components.PermissionDeniedCard
-import de.ritzelprimpf.toniqo.tuner.presentation.ui.components.PresetChipRow
+import de.ritzelprimpf.toniqo.tuner.presentation.ui.components.PresetChip
 import de.ritzelprimpf.toniqo.tuner.presentation.ui.components.PresetPickerSheet
 import de.ritzelprimpf.toniqo.tuner.presentation.ui.components.ReadoutWell
 import de.ritzelprimpf.toniqo.tuner.presentation.ui.components.ReferencePitchKicker
@@ -51,6 +57,7 @@ import de.ritzelprimpf.toniqo.tuner.presentation.util.tunedStringHaptic
 import de.ritzelprimpf.toniqo.tuner.presentation.viewmodel.TunerEvent
 import de.ritzelprimpf.toniqo.tuner.presentation.viewmodel.TunerScreenViewModel
 import de.ritzelprimpf.toniqo.tuner.presentation.viewmodel.TunerViewModel
+import de.ritzelprimpf.toniqo.ui.components.ScreenHeader
 import de.ritzelprimpf.toniqo.ui.components.ToniqoCard
 import de.ritzelprimpf.toniqo.ui.theme.Tq
 import kotlinx.coroutines.delay
@@ -123,13 +130,26 @@ fun TunerScreen(
     var modeMenuExpanded by remember { mutableStateOf(false) }
 
     Column(modifier = modifier.padding(horizontal = Tq.Sp.s5).padding(top = Tq.Sp.s5)) {
-        ReferencePitchKicker(
-            referencePitchHz = uiState.referencePitchHz,
-            presetDisplayName = uiState.selectedPreset?.displayName ?: "—",
-            onSettingsClick = { settingsSheetOpen = true },
+        ScreenHeader(
+            title = uiState.selectedPreset?.displayName ?: "—",
+            kicker = { ReferencePitchKicker(referencePitchHz = uiState.referencePitchHz) },
+            trailingAction = {
+                // Settings icon button (uses 'settings' glyph per DECISIONS.md 2026-05-20)
+                IconButton(
+                    onClick = { settingsSheetOpen = true },
+                    modifier = Modifier.size(Tq.Sp.s10).align(Alignment.TopEnd),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Settings,
+                        contentDescription = stringResource(R.string.tuner_cd_settings),
+                        tint = Tq.Color.FgSecondary,
+                        modifier = Modifier.size(Tq.Sp.s5),
+                    )
+                }
+            },
         )
-        Spacer(Modifier.height(Tq.Sp.s2))
-        PresetChipRow(
+        Spacer(Modifier.height(Tq.Sp.s6))
+        PresetChip(
             preset = uiState.selectedPreset,
             mode = uiState.mode,
             expanded = modeMenuExpanded,
@@ -145,7 +165,7 @@ fun TunerScreen(
                 modeMenuExpanded = false
             },
         )
-        Spacer(Modifier.height(Tq.Sp.s3))
+        Spacer(Modifier.height(Tq.Sp.s4))
 
         when (uiState.status) {
             TuningStatus.PERMISSION_DENIED -> PermissionDeniedCard(

@@ -8,10 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -22,27 +18,25 @@ import de.ritzelprimpf.toniqo.R
 import de.ritzelprimpf.toniqo.ui.theme.Tq
 
 /**
- * Top header area of the Tuner screen.
+ * The Tuner screen's kicker-line content, for use as [de.ritzelprimpf.toniqo.ui.components.ScreenHeader]'s
+ * `kicker` slot.
  *
  * Layout (per DESIGN.md §8.1):
  * ```
- * ●  TUNER · A4 = 440 HZ                                    ☼
- * Drop D
+ * ●  TUNER · A4 = 440 HZ
  * ```
  * - A 6dp mint filled circle (acting as the MIC-active indicator shared with the chip row).
  * - The kicker text "TUNER · A4 = 440 HZ" (or 432 HZ) in [Tq.Type.Kicker].
- * - A [Tq.Sp.s10] (36dp) icon-round settings button on the far right.
- * - The preset display name below the kicker in [Tq.Type.H1].
+ *
+ * The settings button and the preset-name title live outside this composable, as
+ * `ScreenHeader`'s `trailingAction` and `title` respectively — this renders only the kicker line
+ * itself.
  *
  * @param referencePitchHz The current reference pitch (440.0 or 432.0). Used to build the kicker label.
- * @param presetDisplayName The display name of the selected preset (e.g. "Drop D"). Shown below the kicker.
- * @param onSettingsClick Called when the settings icon button is tapped.
  */
 @Composable
 fun ReferencePitchKicker(
     referencePitchHz: Double,
-    presetDisplayName: String,
-    onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val pitchLabel = if (referencePitchHz == 432.0) {
@@ -68,23 +62,5 @@ fun ReferencePitchKicker(
             color = Tq.Color.FgSecondary,
             modifier = Modifier.weight(1f),
         )
-        // Settings icon button (uses 'settings' glyph per DECISIONS.md 2026-05-20)
-        IconButton(
-            onClick = onSettingsClick,
-            modifier = Modifier.size(Tq.Sp.s10),
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Settings,
-                contentDescription = stringResource(R.string.tuner_cd_settings),
-                tint = Tq.Color.FgSecondary,
-                modifier = Modifier.size(Tq.Sp.s5),
-            )
-        }
     }
-
-    Text(
-        text = presetDisplayName,
-        style = Tq.Type.H1,
-        color = Tq.Color.FgPrimary,
-    )
 }

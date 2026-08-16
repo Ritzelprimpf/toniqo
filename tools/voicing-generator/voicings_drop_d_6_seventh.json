@@ -1,0 +1,7814 @@
+{
+  "tuningId": "drop_d_6",
+  "version": 1,
+  "chords": [
+    {
+      "rootPitchClass": 0,
+      "quality": "MAJOR",
+      "seventhQuality": "MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            3,
+            2,
+            0,
+            0,
+            0
+          ],
+          "fingers": [
+            0,
+            2,
+            1,
+            0,
+            0,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            3,
+            5,
+            4,
+            5,
+            3
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            2,
+            4,
+            1
+          ],
+          "barre": {
+            "fret": 3,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            10,
+            10,
+            10,
+            12,
+            12,
+            12
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            2,
+            3,
+            4
+          ],
+          "barre": {
+            "fret": 10,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "frets": [
+            "x",
+            15,
+            14,
+            12,
+            12,
+            12
+          ],
+          "fingers": [
+            0,
+            3,
+            2,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 12,
+            "from": 3,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 0,
+      "quality": "MAJOR",
+      "seventhQuality": "DOMINANT_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            3,
+            5,
+            3,
+            5,
+            3
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 3,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            10,
+            10,
+            8,
+            9,
+            8,
+            8
+          ],
+          "fingers": [
+            3,
+            4,
+            1,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 8,
+            "from": 2,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            10,
+            10,
+            10,
+            12,
+            11,
+            12
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            3,
+            2,
+            4
+          ],
+          "barre": {
+            "fret": 10,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "frets": [
+            "x",
+            15,
+            17,
+            15,
+            17,
+            15
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 15,
+            "from": 1,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 0,
+      "quality": "MINOR",
+      "seventhQuality": "MINOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            3,
+            5,
+            3,
+            4,
+            3
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            1,
+            2,
+            1
+          ],
+          "barre": {
+            "fret": 3,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            10,
+            10,
+            8,
+            8,
+            8,
+            8
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 8,
+            "from": 2,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            10,
+            10,
+            10,
+            12,
+            11,
+            11
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            4,
+            2,
+            3
+          ],
+          "barre": {
+            "fret": 10,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "frets": [
+            "x",
+            15,
+            17,
+            15,
+            16,
+            15
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            1,
+            2,
+            1
+          ],
+          "barre": {
+            "fret": 15,
+            "from": 1,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 0,
+      "quality": "MINOR",
+      "seventhQuality": "MINOR_MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            3,
+            5,
+            4,
+            4,
+            3
+          ],
+          "fingers": [
+            0,
+            1,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 3,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            10,
+            10,
+            9,
+            8,
+            8,
+            8
+          ],
+          "fingers": [
+            3,
+            4,
+            2,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 8,
+            "from": 3,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            10,
+            10,
+            10,
+            12,
+            12,
+            11
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            3,
+            4,
+            2
+          ],
+          "barre": {
+            "fret": 10,
+            "from": 0,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 0,
+      "quality": "DIMINISHED",
+      "seventhQuality": "HALF_DIMINISHED",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            3,
+            4,
+            3,
+            4,
+            "x"
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            0
+          ],
+          "barre": {
+            "fret": 3,
+            "from": 1,
+            "to": 3
+          }
+        },
+        {
+          "frets": [
+            10,
+            9,
+            8,
+            8,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            3,
+            2,
+            1,
+            1,
+            0,
+            0
+          ],
+          "barre": {
+            "fret": 8,
+            "from": 2,
+            "to": 3
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            10,
+            11,
+            11,
+            11
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            15,
+            16,
+            15,
+            16,
+            "x"
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            0
+          ],
+          "barre": {
+            "fret": 15,
+            "from": 1,
+            "to": 3
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 0,
+      "quality": "DIMINISHED",
+      "seventhQuality": "DIMINISHED_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            3,
+            4,
+            2,
+            4,
+            "x"
+          ],
+          "fingers": [
+            0,
+            2,
+            3,
+            1,
+            4,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            10,
+            9,
+            7,
+            8,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            4,
+            3,
+            1,
+            2,
+            0,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            10,
+            11,
+            10,
+            11
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            1,
+            3
+          ],
+          "barre": {
+            "fret": 10,
+            "from": 2,
+            "to": 4
+          }
+        },
+        {
+          "frets": [
+            "x",
+            15,
+            16,
+            14,
+            16,
+            "x"
+          ],
+          "fingers": [
+            0,
+            2,
+            3,
+            1,
+            4,
+            0
+          ],
+          "barre": null
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 0,
+      "quality": "AUGMENTED",
+      "seventhQuality": "AUGMENTED_MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            3,
+            2,
+            1,
+            0,
+            0
+          ],
+          "fingers": [
+            0,
+            3,
+            2,
+            1,
+            0,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            10,
+            9,
+            9,
+            7
+          ],
+          "fingers": [
+            0,
+            0,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            10,
+            11,
+            9,
+            9,
+            9,
+            "x"
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            0
+          ],
+          "barre": {
+            "fret": 9,
+            "from": 2,
+            "to": 4
+          }
+        },
+        {
+          "frets": [
+            "x",
+            15,
+            14,
+            13,
+            12,
+            12
+          ],
+          "fingers": [
+            0,
+            4,
+            3,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 12,
+            "from": 4,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 1,
+      "quality": "MAJOR",
+      "seventhQuality": "MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            4,
+            3,
+            1,
+            1,
+            1
+          ],
+          "fingers": [
+            0,
+            3,
+            2,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 1,
+            "from": 3,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            4,
+            6,
+            5,
+            6,
+            4
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            2,
+            4,
+            1
+          ],
+          "barre": {
+            "fret": 4,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            11,
+            13,
+            13,
+            13
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            16,
+            15,
+            13,
+            13,
+            13
+          ],
+          "fingers": [
+            0,
+            3,
+            2,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 13,
+            "from": 3,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 1,
+      "quality": "MAJOR",
+      "seventhQuality": "DOMINANT_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            4,
+            3,
+            1,
+            0,
+            1
+          ],
+          "fingers": [
+            0,
+            4,
+            3,
+            1,
+            0,
+            2
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            4,
+            6,
+            4,
+            6,
+            4
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 4,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            11,
+            11,
+            9,
+            10,
+            9,
+            9
+          ],
+          "fingers": [
+            3,
+            4,
+            1,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 9,
+            "from": 2,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            11,
+            13,
+            12,
+            13
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            3,
+            2,
+            4
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            16,
+            15,
+            13,
+            0,
+            13
+          ],
+          "fingers": [
+            0,
+            4,
+            3,
+            1,
+            0,
+            2
+          ],
+          "barre": null
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 1,
+      "quality": "MINOR",
+      "seventhQuality": "MINOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            4,
+            2,
+            1,
+            0,
+            0
+          ],
+          "fingers": [
+            0,
+            3,
+            2,
+            1,
+            0,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            4,
+            6,
+            4,
+            5,
+            4
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            1,
+            2,
+            1
+          ],
+          "barre": {
+            "fret": 4,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            11,
+            11,
+            9,
+            9,
+            9,
+            9
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 9,
+            "from": 2,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            11,
+            13,
+            12,
+            12
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            4,
+            2,
+            3
+          ],
+          "barre": null
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 1,
+      "quality": "MINOR",
+      "seventhQuality": "MINOR_MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            4,
+            2,
+            1,
+            1,
+            0
+          ],
+          "fingers": [
+            0,
+            3,
+            2,
+            1,
+            1,
+            0
+          ],
+          "barre": {
+            "fret": 1,
+            "from": 3,
+            "to": 4
+          }
+        },
+        {
+          "frets": [
+            "x",
+            4,
+            6,
+            5,
+            5,
+            4
+          ],
+          "fingers": [
+            0,
+            1,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 4,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            11,
+            11,
+            10,
+            9,
+            9,
+            9
+          ],
+          "fingers": [
+            3,
+            4,
+            2,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 9,
+            "from": 3,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            11,
+            13,
+            13,
+            12
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            3,
+            4,
+            2
+          ],
+          "barre": null
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 1,
+      "quality": "DIMINISHED",
+      "seventhQuality": "HALF_DIMINISHED",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            4,
+            2,
+            0,
+            0,
+            "x"
+          ],
+          "fingers": [
+            0,
+            2,
+            1,
+            0,
+            0,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            4,
+            5,
+            4,
+            5,
+            "x"
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            0
+          ],
+          "barre": {
+            "fret": 4,
+            "from": 1,
+            "to": 3
+          }
+        },
+        {
+          "frets": [
+            11,
+            10,
+            9,
+            9,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            3,
+            2,
+            1,
+            1,
+            0,
+            0
+          ],
+          "barre": {
+            "fret": 9,
+            "from": 2,
+            "to": 3
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            11,
+            12,
+            12,
+            12
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "barre": null
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 1,
+      "quality": "DIMINISHED",
+      "seventhQuality": "DIMINISHED_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            4,
+            5,
+            3,
+            5,
+            "x"
+          ],
+          "fingers": [
+            0,
+            2,
+            3,
+            1,
+            4,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            11,
+            10,
+            8,
+            9,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            4,
+            3,
+            1,
+            2,
+            0,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            11,
+            12,
+            11,
+            12
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            1,
+            3
+          ],
+          "barre": {
+            "fret": 11,
+            "from": 2,
+            "to": 4
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 1,
+      "quality": "AUGMENTED",
+      "seventhQuality": "AUGMENTED_MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            4,
+            3,
+            2,
+            1,
+            1
+          ],
+          "fingers": [
+            0,
+            4,
+            3,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 1,
+            "from": 4,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            11,
+            10,
+            10,
+            8
+          ],
+          "fingers": [
+            0,
+            0,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            11,
+            12,
+            10,
+            10,
+            10,
+            "x"
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            0
+          ],
+          "barre": {
+            "fret": 10,
+            "from": 2,
+            "to": 4
+          }
+        },
+        {
+          "frets": [
+            "x",
+            16,
+            15,
+            14,
+            13,
+            13
+          ],
+          "fingers": [
+            0,
+            4,
+            3,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 13,
+            "from": 4,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 2,
+      "quality": "MAJOR",
+      "seventhQuality": "MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            0,
+            0,
+            0,
+            2,
+            2,
+            2
+          ],
+          "fingers": [
+            0,
+            0,
+            0,
+            1,
+            2,
+            3
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            5,
+            7,
+            6,
+            7,
+            5
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            2,
+            4,
+            1
+          ],
+          "barre": {
+            "fret": 5,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            12,
+            12,
+            12,
+            14,
+            14,
+            14
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            2,
+            3,
+            4
+          ],
+          "barre": {
+            "fret": 12,
+            "from": 0,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 2,
+      "quality": "MAJOR",
+      "seventhQuality": "DOMINANT_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            0,
+            0,
+            0,
+            2,
+            1,
+            2
+          ],
+          "fingers": [
+            0,
+            0,
+            0,
+            2,
+            1,
+            3
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            5,
+            7,
+            5,
+            7,
+            5
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 5,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            12,
+            12,
+            10,
+            11,
+            10,
+            10
+          ],
+          "fingers": [
+            3,
+            4,
+            1,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 10,
+            "from": 2,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            12,
+            12,
+            12,
+            14,
+            13,
+            14
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            3,
+            2,
+            4
+          ],
+          "barre": {
+            "fret": 12,
+            "from": 0,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 2,
+      "quality": "MINOR",
+      "seventhQuality": "MINOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            0,
+            0,
+            0,
+            2,
+            1,
+            1
+          ],
+          "fingers": [
+            0,
+            0,
+            0,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 1,
+            "from": 4,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            5,
+            7,
+            5,
+            6,
+            5
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            1,
+            2,
+            1
+          ],
+          "barre": {
+            "fret": 5,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            12,
+            12,
+            10,
+            10,
+            10,
+            10
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 10,
+            "from": 2,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            12,
+            12,
+            12,
+            14,
+            13,
+            13
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            4,
+            2,
+            3
+          ],
+          "barre": {
+            "fret": 12,
+            "from": 0,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 2,
+      "quality": "MINOR",
+      "seventhQuality": "MINOR_MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            0,
+            0,
+            0,
+            2,
+            2,
+            1
+          ],
+          "fingers": [
+            0,
+            0,
+            0,
+            2,
+            3,
+            1
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            5,
+            7,
+            6,
+            6,
+            5
+          ],
+          "fingers": [
+            0,
+            1,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 5,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            12,
+            12,
+            11,
+            10,
+            10,
+            10
+          ],
+          "fingers": [
+            3,
+            4,
+            2,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 10,
+            "from": 3,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            12,
+            12,
+            12,
+            14,
+            14,
+            13
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            3,
+            4,
+            2
+          ],
+          "barre": {
+            "fret": 12,
+            "from": 0,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 2,
+      "quality": "DIMINISHED",
+      "seventhQuality": "HALF_DIMINISHED",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            "x",
+            0,
+            1,
+            1,
+            1
+          ],
+          "fingers": [
+            0,
+            0,
+            0,
+            1,
+            2,
+            3
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            5,
+            6,
+            5,
+            6,
+            "x"
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            0
+          ],
+          "barre": {
+            "fret": 5,
+            "from": 1,
+            "to": 3
+          }
+        },
+        {
+          "frets": [
+            12,
+            11,
+            10,
+            10,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            3,
+            2,
+            1,
+            1,
+            0,
+            0
+          ],
+          "barre": {
+            "fret": 10,
+            "from": 2,
+            "to": 3
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            12,
+            13,
+            13,
+            13
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "barre": null
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 2,
+      "quality": "DIMINISHED",
+      "seventhQuality": "DIMINISHED_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            "x",
+            0,
+            1,
+            0,
+            1
+          ],
+          "fingers": [
+            0,
+            0,
+            0,
+            1,
+            0,
+            2
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            5,
+            6,
+            4,
+            6,
+            "x"
+          ],
+          "fingers": [
+            0,
+            2,
+            3,
+            1,
+            4,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            12,
+            11,
+            9,
+            10,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            4,
+            3,
+            1,
+            2,
+            0,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            12,
+            13,
+            12,
+            13
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            1,
+            3
+          ],
+          "barre": {
+            "fret": 12,
+            "from": 2,
+            "to": 4
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 2,
+      "quality": "AUGMENTED",
+      "seventhQuality": "AUGMENTED_MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            "x",
+            0,
+            3,
+            2,
+            2
+          ],
+          "fingers": [
+            0,
+            0,
+            0,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 2,
+            "from": 4,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            5,
+            4,
+            3,
+            2,
+            2
+          ],
+          "fingers": [
+            0,
+            4,
+            3,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 2,
+            "from": 4,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            12,
+            11,
+            11,
+            9
+          ],
+          "fingers": [
+            0,
+            0,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            12,
+            13,
+            11,
+            11,
+            11,
+            "x"
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            0
+          ],
+          "barre": {
+            "fret": 11,
+            "from": 2,
+            "to": 4
+          }
+        },
+        {
+          "frets": [
+            "x",
+            17,
+            16,
+            15,
+            14,
+            14
+          ],
+          "fingers": [
+            0,
+            4,
+            3,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 14,
+            "from": 4,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 3,
+      "quality": "MAJOR",
+      "seventhQuality": "MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            1,
+            1,
+            0,
+            0,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            1,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            1,
+            3,
+            3,
+            3
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            6,
+            5,
+            3,
+            3,
+            3
+          ],
+          "fingers": [
+            0,
+            3,
+            2,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 3,
+            "from": 3,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            6,
+            8,
+            7,
+            8,
+            6
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            2,
+            4,
+            1
+          ],
+          "barre": {
+            "fret": 6,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            13,
+            13,
+            0,
+            12,
+            11,
+            11
+          ],
+          "fingers": [
+            3,
+            4,
+            0,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 11,
+            "from": 4,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            13,
+            13,
+            13,
+            15,
+            15,
+            15
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            2,
+            3,
+            4
+          ],
+          "barre": {
+            "fret": 13,
+            "from": 0,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 3,
+      "quality": "MAJOR",
+      "seventhQuality": "DOMINANT_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            "x",
+            1,
+            3,
+            2,
+            3
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            3,
+            2,
+            4
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            6,
+            8,
+            6,
+            8,
+            6
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 6,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            13,
+            13,
+            11,
+            12,
+            11,
+            11
+          ],
+          "fingers": [
+            3,
+            4,
+            1,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 11,
+            "from": 2,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            13,
+            13,
+            13,
+            15,
+            14,
+            15
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            3,
+            2,
+            4
+          ],
+          "barre": {
+            "fret": 13,
+            "from": 0,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 3,
+      "quality": "MINOR",
+      "seventhQuality": "MINOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            1,
+            1,
+            1,
+            3,
+            2,
+            2
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            4,
+            2,
+            3
+          ],
+          "barre": {
+            "fret": 1,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "frets": [
+            "x",
+            6,
+            8,
+            6,
+            7,
+            6
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            1,
+            2,
+            1
+          ],
+          "barre": {
+            "fret": 6,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            13,
+            13,
+            11,
+            11,
+            11,
+            11
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 11,
+            "from": 2,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            13,
+            13,
+            13,
+            15,
+            14,
+            14
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            4,
+            2,
+            3
+          ],
+          "barre": {
+            "fret": 13,
+            "from": 0,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 3,
+      "quality": "MINOR",
+      "seventhQuality": "MINOR_MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            1,
+            1,
+            0,
+            3,
+            4,
+            2
+          ],
+          "fingers": [
+            1,
+            1,
+            0,
+            3,
+            4,
+            2
+          ],
+          "barre": {
+            "fret": 1,
+            "from": 0,
+            "to": 1
+          }
+        },
+        {
+          "frets": [
+            "x",
+            6,
+            8,
+            7,
+            7,
+            6
+          ],
+          "fingers": [
+            0,
+            1,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 6,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            13,
+            13,
+            12,
+            11,
+            11,
+            11
+          ],
+          "fingers": [
+            3,
+            4,
+            2,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 11,
+            "from": 3,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            13,
+            13,
+            13,
+            15,
+            15,
+            14
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            3,
+            4,
+            2
+          ],
+          "barre": {
+            "fret": 13,
+            "from": 0,
+            "to": 2
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 3,
+      "quality": "DIMINISHED",
+      "seventhQuality": "HALF_DIMINISHED",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            "x",
+            1,
+            2,
+            2,
+            2
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            1,
+            4,
+            4,
+            2,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            1,
+            3,
+            4,
+            2,
+            0,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            6,
+            7,
+            6,
+            7,
+            "x"
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            0
+          ],
+          "barre": {
+            "fret": 6,
+            "from": 1,
+            "to": 3
+          }
+        },
+        {
+          "frets": [
+            13,
+            12,
+            11,
+            11,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            3,
+            2,
+            1,
+            1,
+            0,
+            0
+          ],
+          "barre": {
+            "fret": 11,
+            "from": 2,
+            "to": 3
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            13,
+            14,
+            14,
+            14
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "barre": null
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 3,
+      "quality": "DIMINISHED",
+      "seventhQuality": "DIMINISHED_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            "x",
+            1,
+            2,
+            1,
+            2
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            1,
+            3
+          ],
+          "barre": {
+            "fret": 1,
+            "from": 2,
+            "to": 4
+          }
+        },
+        {
+          "frets": [
+            1,
+            3,
+            4,
+            2,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            1,
+            3,
+            4,
+            2,
+            0,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            6,
+            7,
+            5,
+            7,
+            "x"
+          ],
+          "fingers": [
+            0,
+            2,
+            3,
+            1,
+            4,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            13,
+            12,
+            10,
+            11,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            4,
+            3,
+            1,
+            2,
+            0,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            13,
+            14,
+            13,
+            14
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            1,
+            3
+          ],
+          "barre": {
+            "fret": 13,
+            "from": 2,
+            "to": 4
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 3,
+      "quality": "AUGMENTED",
+      "seventhQuality": "AUGMENTED_MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            1,
+            2,
+            0,
+            0,
+            0,
+            3
+          ],
+          "fingers": [
+            1,
+            2,
+            0,
+            0,
+            0,
+            3
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            6,
+            5,
+            4,
+            3,
+            3
+          ],
+          "fingers": [
+            0,
+            4,
+            3,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 3,
+            "from": 4,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            6,
+            0,
+            8,
+            8,
+            7
+          ],
+          "fingers": [
+            0,
+            1,
+            0,
+            3,
+            4,
+            2
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            13,
+            12,
+            12,
+            10
+          ],
+          "fingers": [
+            0,
+            0,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            13,
+            14,
+            12,
+            12,
+            12,
+            "x"
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            0
+          ],
+          "barre": {
+            "fret": 12,
+            "from": 2,
+            "to": 4
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 4,
+      "quality": "MAJOR",
+      "seventhQuality": "MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            2,
+            2,
+            1,
+            1,
+            0,
+            0
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            0,
+            0
+          ],
+          "barre": {
+            "fret": 1,
+            "from": 2,
+            "to": 3
+          }
+        },
+        {
+          "frets": [
+            "x",
+            7,
+            6,
+            4,
+            4,
+            4
+          ],
+          "fingers": [
+            0,
+            3,
+            2,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 4,
+            "from": 3,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            7,
+            9,
+            8,
+            9,
+            7
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            2,
+            4,
+            1
+          ],
+          "barre": {
+            "fret": 7,
+            "from": 1,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 4,
+      "quality": "MAJOR",
+      "seventhQuality": "DOMINANT_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            2,
+            2,
+            0,
+            1,
+            0,
+            0
+          ],
+          "fingers": [
+            2,
+            3,
+            0,
+            1,
+            0,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            7,
+            0,
+            4,
+            5,
+            4
+          ],
+          "fingers": [
+            0,
+            3,
+            0,
+            1,
+            2,
+            1
+          ],
+          "barre": {
+            "fret": 4,
+            "from": 3,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            7,
+            9,
+            7,
+            9,
+            7
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 7,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            14,
+            14,
+            12,
+            13,
+            12,
+            12
+          ],
+          "fingers": [
+            3,
+            4,
+            1,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 12,
+            "from": 2,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            14,
+            16,
+            15,
+            16
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            3,
+            2,
+            4
+          ],
+          "barre": null
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 4,
+      "quality": "MINOR",
+      "seventhQuality": "MINOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            2,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "fingers": [
+            1,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            7,
+            9,
+            7,
+            8,
+            7
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            1,
+            2,
+            1
+          ],
+          "barre": {
+            "fret": 7,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            14,
+            14,
+            12,
+            12,
+            12,
+            12
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 12,
+            "from": 2,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            14,
+            16,
+            15,
+            15
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            4,
+            2,
+            3
+          ],
+          "barre": null
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 4,
+      "quality": "MINOR",
+      "seventhQuality": "MINOR_MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            2,
+            2,
+            1,
+            0,
+            0,
+            0
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            0,
+            0,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            7,
+            9,
+            8,
+            8,
+            7
+          ],
+          "fingers": [
+            0,
+            1,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 7,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            14,
+            14,
+            13,
+            12,
+            12,
+            12
+          ],
+          "fingers": [
+            3,
+            4,
+            2,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 12,
+            "from": 3,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 4,
+      "quality": "DIMINISHED",
+      "seventhQuality": "HALF_DIMINISHED",
+      "voicings": [
+        {
+          "frets": [
+            2,
+            1,
+            0,
+            0,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            2,
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            2,
+            3,
+            3,
+            3
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            7,
+            8,
+            7,
+            8,
+            "x"
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            0
+          ],
+          "barre": {
+            "fret": 7,
+            "from": 1,
+            "to": 3
+          }
+        },
+        {
+          "frets": [
+            14,
+            13,
+            12,
+            12,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            3,
+            2,
+            1,
+            1,
+            0,
+            0
+          ],
+          "barre": {
+            "fret": 12,
+            "from": 2,
+            "to": 3
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            14,
+            15,
+            15,
+            15
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "barre": null
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 4,
+      "quality": "DIMINISHED",
+      "seventhQuality": "DIMINISHED_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            "x",
+            2,
+            3,
+            2,
+            3
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            1,
+            3
+          ],
+          "barre": {
+            "fret": 2,
+            "from": 2,
+            "to": 4
+          }
+        },
+        {
+          "frets": [
+            "x",
+            7,
+            8,
+            6,
+            8,
+            "x"
+          ],
+          "fingers": [
+            0,
+            2,
+            3,
+            1,
+            4,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            14,
+            13,
+            11,
+            12,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            4,
+            3,
+            1,
+            2,
+            0,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            14,
+            15,
+            14,
+            15
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            1,
+            3
+          ],
+          "barre": {
+            "fret": 14,
+            "from": 2,
+            "to": 4
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 4,
+      "quality": "AUGMENTED",
+      "seventhQuality": "AUGMENTED_MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            0
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            0
+          ],
+          "barre": {
+            "fret": 1,
+            "from": 2,
+            "to": 4
+          }
+        },
+        {
+          "frets": [
+            "x",
+            7,
+            6,
+            5,
+            4,
+            4
+          ],
+          "fingers": [
+            0,
+            4,
+            3,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 4,
+            "from": 4,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            14,
+            13,
+            13,
+            11
+          ],
+          "fingers": [
+            0,
+            0,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            14,
+            15,
+            13,
+            13,
+            13,
+            "x"
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            0
+          ],
+          "barre": {
+            "fret": 13,
+            "from": 2,
+            "to": 4
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 5,
+      "quality": "MAJOR",
+      "seventhQuality": "MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            3,
+            3,
+            3,
+            5,
+            5,
+            5
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            2,
+            3,
+            4
+          ],
+          "barre": {
+            "fret": 3,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "frets": [
+            "x",
+            8,
+            10,
+            9,
+            10,
+            8
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            2,
+            4,
+            1
+          ],
+          "barre": {
+            "fret": 8,
+            "from": 1,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 5,
+      "quality": "MAJOR",
+      "seventhQuality": "DOMINANT_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            3,
+            3,
+            1,
+            2,
+            1,
+            1
+          ],
+          "fingers": [
+            3,
+            4,
+            1,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 1,
+            "from": 2,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            3,
+            3,
+            3,
+            5,
+            4,
+            5
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            3,
+            2,
+            4
+          ],
+          "barre": {
+            "fret": 3,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "frets": [
+            "x",
+            8,
+            10,
+            8,
+            10,
+            8
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 8,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            15,
+            15,
+            13,
+            14,
+            13,
+            13
+          ],
+          "fingers": [
+            3,
+            4,
+            1,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 13,
+            "from": 2,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 5,
+      "quality": "MINOR",
+      "seventhQuality": "MINOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            3,
+            3,
+            1,
+            1,
+            1,
+            1
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 1,
+            "from": 2,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            3,
+            3,
+            3,
+            5,
+            4,
+            4
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            4,
+            2,
+            3
+          ],
+          "barre": {
+            "fret": 3,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "frets": [
+            "x",
+            8,
+            10,
+            8,
+            9,
+            8
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            1,
+            2,
+            1
+          ],
+          "barre": {
+            "fret": 8,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            15,
+            15,
+            13,
+            13,
+            13,
+            13
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 13,
+            "from": 2,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 5,
+      "quality": "MINOR",
+      "seventhQuality": "MINOR_MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            3,
+            3,
+            2,
+            1,
+            1,
+            1
+          ],
+          "fingers": [
+            3,
+            4,
+            2,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 1,
+            "from": 3,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            3,
+            3,
+            3,
+            5,
+            5,
+            4
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            3,
+            4,
+            2
+          ],
+          "barre": {
+            "fret": 3,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "frets": [
+            "x",
+            8,
+            10,
+            9,
+            9,
+            8
+          ],
+          "fingers": [
+            0,
+            1,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 8,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            15,
+            15,
+            14,
+            13,
+            13,
+            13
+          ],
+          "fingers": [
+            3,
+            4,
+            2,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 13,
+            "from": 3,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 5,
+      "quality": "DIMINISHED",
+      "seventhQuality": "HALF_DIMINISHED",
+      "voicings": [
+        {
+          "frets": [
+            3,
+            2,
+            1,
+            1,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            3,
+            2,
+            1,
+            1,
+            0,
+            0
+          ],
+          "barre": {
+            "fret": 1,
+            "from": 2,
+            "to": 3
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            3,
+            4,
+            4,
+            4
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            8,
+            9,
+            8,
+            9,
+            "x"
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            0
+          ],
+          "barre": {
+            "fret": 8,
+            "from": 1,
+            "to": 3
+          }
+        },
+        {
+          "frets": [
+            15,
+            14,
+            13,
+            13,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            3,
+            2,
+            1,
+            1,
+            0,
+            0
+          ],
+          "barre": {
+            "fret": 13,
+            "from": 2,
+            "to": 3
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 5,
+      "quality": "DIMINISHED",
+      "seventhQuality": "DIMINISHED_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            3,
+            2,
+            0,
+            1,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            3,
+            2,
+            0,
+            1,
+            0,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            3,
+            4,
+            3,
+            4
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            1,
+            3
+          ],
+          "barre": {
+            "fret": 3,
+            "from": 2,
+            "to": 4
+          }
+        },
+        {
+          "frets": [
+            "x",
+            8,
+            9,
+            7,
+            9,
+            "x"
+          ],
+          "fingers": [
+            0,
+            2,
+            3,
+            1,
+            4,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            15,
+            14,
+            12,
+            13,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            4,
+            3,
+            1,
+            2,
+            0,
+            0
+          ],
+          "barre": null
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 5,
+      "quality": "AUGMENTED",
+      "seventhQuality": "AUGMENTED_MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            "x",
+            3,
+            2,
+            2,
+            0
+          ],
+          "fingers": [
+            0,
+            0,
+            2,
+            1,
+            1,
+            0
+          ],
+          "barre": {
+            "fret": 2,
+            "from": 3,
+            "to": 4
+          }
+        },
+        {
+          "frets": [
+            3,
+            0,
+            2,
+            2,
+            2,
+            "x"
+          ],
+          "fingers": [
+            2,
+            0,
+            1,
+            1,
+            1,
+            0
+          ],
+          "barre": {
+            "fret": 2,
+            "from": 2,
+            "to": 4
+          }
+        },
+        {
+          "frets": [
+            "x",
+            8,
+            7,
+            6,
+            5,
+            5
+          ],
+          "fingers": [
+            0,
+            4,
+            3,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 5,
+            "from": 4,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            15,
+            14,
+            14,
+            12
+          ],
+          "fingers": [
+            0,
+            0,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            15,
+            16,
+            14,
+            14,
+            14,
+            "x"
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            0
+          ],
+          "barre": {
+            "fret": 14,
+            "from": 2,
+            "to": 4
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 6,
+      "quality": "MAJOR",
+      "seventhQuality": "MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            4,
+            4,
+            4,
+            6,
+            6,
+            6
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            2,
+            3,
+            4
+          ],
+          "barre": {
+            "fret": 4,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "frets": [
+            "x",
+            9,
+            8,
+            6,
+            6,
+            6
+          ],
+          "fingers": [
+            0,
+            3,
+            2,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 6,
+            "from": 3,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            9,
+            11,
+            10,
+            11,
+            9
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            2,
+            4,
+            1
+          ],
+          "barre": {
+            "fret": 9,
+            "from": 1,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 6,
+      "quality": "MAJOR",
+      "seventhQuality": "DOMINANT_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            4,
+            4,
+            2,
+            3,
+            2,
+            2
+          ],
+          "fingers": [
+            3,
+            4,
+            1,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 2,
+            "from": 2,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            4,
+            4,
+            4,
+            6,
+            5,
+            6
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            3,
+            2,
+            4
+          ],
+          "barre": {
+            "fret": 4,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "frets": [
+            "x",
+            9,
+            8,
+            6,
+            7,
+            0
+          ],
+          "fingers": [
+            0,
+            4,
+            3,
+            1,
+            2,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            9,
+            11,
+            9,
+            11,
+            9
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 9,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            16,
+            16,
+            14,
+            15,
+            14,
+            14
+          ],
+          "fingers": [
+            3,
+            4,
+            1,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 14,
+            "from": 2,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 6,
+      "quality": "MINOR",
+      "seventhQuality": "MINOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            4,
+            4,
+            2,
+            2,
+            2,
+            2
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 2,
+            "from": 2,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            4,
+            4,
+            4,
+            6,
+            5,
+            5
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            4,
+            2,
+            3
+          ],
+          "barre": {
+            "fret": 4,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "frets": [
+            "x",
+            9,
+            11,
+            9,
+            10,
+            9
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            1,
+            2,
+            1
+          ],
+          "barre": {
+            "fret": 9,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            16,
+            16,
+            14,
+            14,
+            14,
+            14
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 14,
+            "from": 2,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 6,
+      "quality": "MINOR",
+      "seventhQuality": "MINOR_MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            4,
+            4,
+            3,
+            2,
+            2,
+            2
+          ],
+          "fingers": [
+            3,
+            4,
+            2,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 2,
+            "from": 3,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            4,
+            4,
+            4,
+            6,
+            6,
+            5
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            3,
+            4,
+            2
+          ],
+          "barre": {
+            "fret": 4,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "frets": [
+            "x",
+            9,
+            11,
+            10,
+            10,
+            9
+          ],
+          "fingers": [
+            0,
+            1,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 9,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            16,
+            16,
+            15,
+            14,
+            14,
+            14
+          ],
+          "fingers": [
+            3,
+            4,
+            2,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 14,
+            "from": 3,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 6,
+      "quality": "DIMINISHED",
+      "seventhQuality": "HALF_DIMINISHED",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            "x",
+            4,
+            2,
+            1,
+            0
+          ],
+          "fingers": [
+            0,
+            0,
+            3,
+            2,
+            1,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            4,
+            3,
+            2,
+            2,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            3,
+            2,
+            1,
+            1,
+            0,
+            0
+          ],
+          "barre": {
+            "fret": 2,
+            "from": 2,
+            "to": 3
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            4,
+            5,
+            5,
+            5
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            9,
+            10,
+            9,
+            10,
+            "x"
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            0
+          ],
+          "barre": {
+            "fret": 9,
+            "from": 1,
+            "to": 3
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            16,
+            14,
+            13,
+            0
+          ],
+          "fingers": [
+            0,
+            0,
+            3,
+            2,
+            1,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            16,
+            15,
+            14,
+            14,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            3,
+            2,
+            1,
+            1,
+            0,
+            0
+          ],
+          "barre": {
+            "fret": 14,
+            "from": 2,
+            "to": 3
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 6,
+      "quality": "DIMINISHED",
+      "seventhQuality": "DIMINISHED_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            4,
+            3,
+            1,
+            2,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            4,
+            3,
+            1,
+            2,
+            0,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            4,
+            5,
+            4,
+            5
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            1,
+            3
+          ],
+          "barre": {
+            "fret": 4,
+            "from": 2,
+            "to": 4
+          }
+        },
+        {
+          "frets": [
+            "x",
+            9,
+            10,
+            8,
+            10,
+            "x"
+          ],
+          "fingers": [
+            0,
+            2,
+            3,
+            1,
+            4,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            16,
+            15,
+            13,
+            14,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            4,
+            3,
+            1,
+            2,
+            0,
+            0
+          ],
+          "barre": null
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 6,
+      "quality": "AUGMENTED",
+      "seventhQuality": "AUGMENTED_MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            "x",
+            4,
+            3,
+            3,
+            1
+          ],
+          "fingers": [
+            0,
+            0,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            4,
+            5,
+            3,
+            3,
+            3,
+            "x"
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            0
+          ],
+          "barre": {
+            "fret": 3,
+            "from": 2,
+            "to": 4
+          }
+        },
+        {
+          "frets": [
+            "x",
+            9,
+            8,
+            7,
+            6,
+            6
+          ],
+          "fingers": [
+            0,
+            4,
+            3,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 6,
+            "from": 4,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            16,
+            15,
+            15,
+            13
+          ],
+          "fingers": [
+            0,
+            0,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            16,
+            17,
+            15,
+            15,
+            15,
+            "x"
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            0
+          ],
+          "barre": {
+            "fret": 15,
+            "from": 2,
+            "to": 4
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 7,
+      "quality": "MAJOR",
+      "seventhQuality": "MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            "x",
+            5,
+            7,
+            7,
+            7
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            10,
+            9,
+            7,
+            7,
+            7
+          ],
+          "fingers": [
+            0,
+            3,
+            2,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 7,
+            "from": 3,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            10,
+            12,
+            11,
+            12,
+            10
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            2,
+            4,
+            1
+          ],
+          "barre": {
+            "fret": 10,
+            "from": 1,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 7,
+      "quality": "MAJOR",
+      "seventhQuality": "DOMINANT_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            5,
+            5,
+            3,
+            4,
+            3,
+            3
+          ],
+          "fingers": [
+            3,
+            4,
+            1,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 3,
+            "from": 2,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            5,
+            7,
+            6,
+            7
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            3,
+            2,
+            4
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            10,
+            12,
+            10,
+            12,
+            10
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 10,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            17,
+            17,
+            15,
+            16,
+            15,
+            15
+          ],
+          "fingers": [
+            3,
+            4,
+            1,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 15,
+            "from": 2,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 7,
+      "quality": "MINOR",
+      "seventhQuality": "MINOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            5,
+            5,
+            3,
+            3,
+            3,
+            3
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 3,
+            "from": 2,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            5,
+            7,
+            6,
+            6
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            4,
+            2,
+            3
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            10,
+            12,
+            10,
+            11,
+            10
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            1,
+            2,
+            1
+          ],
+          "barre": {
+            "fret": 10,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            17,
+            17,
+            15,
+            15,
+            15,
+            15
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 15,
+            "from": 2,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 7,
+      "quality": "MINOR",
+      "seventhQuality": "MINOR_MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            5,
+            5,
+            4,
+            3,
+            3,
+            3
+          ],
+          "fingers": [
+            3,
+            4,
+            2,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 3,
+            "from": 3,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            5,
+            7,
+            7,
+            6
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            3,
+            4,
+            2
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            10,
+            12,
+            11,
+            11,
+            10
+          ],
+          "fingers": [
+            0,
+            1,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 10,
+            "from": 1,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 7,
+      "quality": "DIMINISHED",
+      "seventhQuality": "HALF_DIMINISHED",
+      "voicings": [
+        {
+          "frets": [
+            5,
+            4,
+            3,
+            3,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            3,
+            2,
+            1,
+            1,
+            0,
+            0
+          ],
+          "barre": {
+            "fret": 3,
+            "from": 2,
+            "to": 3
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            5,
+            6,
+            6,
+            6
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            10,
+            11,
+            10,
+            11,
+            "x"
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            0
+          ],
+          "barre": {
+            "fret": 10,
+            "from": 1,
+            "to": 3
+          }
+        },
+        {
+          "frets": [
+            17,
+            16,
+            15,
+            15,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            3,
+            2,
+            1,
+            1,
+            0,
+            0
+          ],
+          "barre": {
+            "fret": 15,
+            "from": 2,
+            "to": 3
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 7,
+      "quality": "DIMINISHED",
+      "seventhQuality": "DIMINISHED_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            "x",
+            5,
+            3,
+            2,
+            0
+          ],
+          "fingers": [
+            0,
+            0,
+            3,
+            2,
+            1,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            5,
+            4,
+            2,
+            3,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            4,
+            3,
+            1,
+            2,
+            0,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            5,
+            6,
+            5,
+            6
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            1,
+            3
+          ],
+          "barre": {
+            "fret": 5,
+            "from": 2,
+            "to": 4
+          }
+        },
+        {
+          "frets": [
+            "x",
+            10,
+            11,
+            9,
+            11,
+            "x"
+          ],
+          "fingers": [
+            0,
+            2,
+            3,
+            1,
+            4,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            17,
+            15,
+            14,
+            0
+          ],
+          "fingers": [
+            0,
+            0,
+            3,
+            2,
+            1,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            17,
+            16,
+            14,
+            15,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            4,
+            3,
+            1,
+            2,
+            0,
+            0
+          ],
+          "barre": null
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 7,
+      "quality": "AUGMENTED",
+      "seventhQuality": "AUGMENTED_MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            "x",
+            5,
+            4,
+            4,
+            2
+          ],
+          "fingers": [
+            0,
+            0,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            5,
+            6,
+            4,
+            4,
+            4,
+            "x"
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            0
+          ],
+          "barre": {
+            "fret": 4,
+            "from": 2,
+            "to": 4
+          }
+        },
+        {
+          "frets": [
+            "x",
+            10,
+            9,
+            8,
+            7,
+            7
+          ],
+          "fingers": [
+            0,
+            4,
+            3,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 7,
+            "from": 4,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            17,
+            16,
+            16,
+            14
+          ],
+          "fingers": [
+            0,
+            0,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": null
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 8,
+      "quality": "MAJOR",
+      "seventhQuality": "MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            6,
+            6,
+            6,
+            8,
+            8,
+            8
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            2,
+            3,
+            4
+          ],
+          "barre": {
+            "fret": 6,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "frets": [
+            "x",
+            11,
+            13,
+            12,
+            13,
+            11
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            2,
+            4,
+            1
+          ],
+          "barre": {
+            "fret": 11,
+            "from": 1,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 8,
+      "quality": "MAJOR",
+      "seventhQuality": "DOMINANT_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            6,
+            6,
+            4,
+            5,
+            4,
+            4
+          ],
+          "fingers": [
+            3,
+            4,
+            1,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 4,
+            "from": 2,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            6,
+            6,
+            6,
+            8,
+            7,
+            8
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            3,
+            2,
+            4
+          ],
+          "barre": {
+            "fret": 6,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "frets": [
+            "x",
+            11,
+            13,
+            11,
+            13,
+            11
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 11,
+            "from": 1,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 8,
+      "quality": "MINOR",
+      "seventhQuality": "MINOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            6,
+            6,
+            4,
+            4,
+            4,
+            4
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 4,
+            "from": 2,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            6,
+            6,
+            6,
+            8,
+            7,
+            7
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            4,
+            2,
+            3
+          ],
+          "barre": {
+            "fret": 6,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "frets": [
+            "x",
+            11,
+            13,
+            11,
+            12,
+            11
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            1,
+            2,
+            1
+          ],
+          "barre": {
+            "fret": 11,
+            "from": 1,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 8,
+      "quality": "MINOR",
+      "seventhQuality": "MINOR_MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            6,
+            6,
+            5,
+            4,
+            4,
+            4
+          ],
+          "fingers": [
+            3,
+            4,
+            2,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 4,
+            "from": 3,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            6,
+            6,
+            6,
+            8,
+            8,
+            7
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            3,
+            4,
+            2
+          ],
+          "barre": {
+            "fret": 6,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "frets": [
+            "x",
+            11,
+            13,
+            12,
+            12,
+            11
+          ],
+          "fingers": [
+            0,
+            1,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 11,
+            "from": 1,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 8,
+      "quality": "DIMINISHED",
+      "seventhQuality": "HALF_DIMINISHED",
+      "voicings": [
+        {
+          "frets": [
+            6,
+            5,
+            4,
+            4,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            3,
+            2,
+            1,
+            1,
+            0,
+            0
+          ],
+          "barre": {
+            "fret": 4,
+            "from": 2,
+            "to": 3
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            6,
+            7,
+            7,
+            7
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            11,
+            12,
+            11,
+            12,
+            "x"
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            0
+          ],
+          "barre": {
+            "fret": 11,
+            "from": 1,
+            "to": 3
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 8,
+      "quality": "DIMINISHED",
+      "seventhQuality": "DIMINISHED_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            6,
+            5,
+            3,
+            4,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            4,
+            3,
+            1,
+            2,
+            0,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            6,
+            7,
+            6,
+            7
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            1,
+            3
+          ],
+          "barre": {
+            "fret": 6,
+            "from": 2,
+            "to": 4
+          }
+        },
+        {
+          "frets": [
+            "x",
+            11,
+            12,
+            10,
+            12,
+            "x"
+          ],
+          "fingers": [
+            0,
+            2,
+            3,
+            1,
+            4,
+            0
+          ],
+          "barre": null
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 8,
+      "quality": "AUGMENTED",
+      "seventhQuality": "AUGMENTED_MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            "x",
+            6,
+            5,
+            5,
+            3
+          ],
+          "fingers": [
+            0,
+            0,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            6,
+            7,
+            5,
+            5,
+            5,
+            "x"
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            0
+          ],
+          "barre": {
+            "fret": 5,
+            "from": 2,
+            "to": 4
+          }
+        },
+        {
+          "frets": [
+            "x",
+            11,
+            10,
+            9,
+            8,
+            8
+          ],
+          "fingers": [
+            0,
+            4,
+            3,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 8,
+            "from": 4,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 9,
+      "quality": "MAJOR",
+      "seventhQuality": "MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            0,
+            2,
+            1,
+            2,
+            0
+          ],
+          "fingers": [
+            0,
+            0,
+            2,
+            1,
+            3,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            7,
+            7,
+            7,
+            9,
+            9,
+            9
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            2,
+            3,
+            4
+          ],
+          "barre": {
+            "fret": 7,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "frets": [
+            "x",
+            12,
+            11,
+            9,
+            9,
+            9
+          ],
+          "fingers": [
+            0,
+            3,
+            2,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 9,
+            "from": 3,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            12,
+            14,
+            13,
+            14,
+            12
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            2,
+            4,
+            1
+          ],
+          "barre": {
+            "fret": 12,
+            "from": 1,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 9,
+      "quality": "MAJOR",
+      "seventhQuality": "DOMINANT_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            0,
+            2,
+            0,
+            2,
+            0
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            0,
+            2,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            7,
+            7,
+            5,
+            6,
+            5,
+            5
+          ],
+          "fingers": [
+            3,
+            4,
+            1,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 5,
+            "from": 2,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            7,
+            7,
+            7,
+            9,
+            8,
+            9
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            3,
+            2,
+            4
+          ],
+          "barre": {
+            "fret": 7,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "frets": [
+            "x",
+            12,
+            14,
+            12,
+            14,
+            12
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 12,
+            "from": 1,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 9,
+      "quality": "MINOR",
+      "seventhQuality": "MINOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            0,
+            2,
+            0,
+            1,
+            0
+          ],
+          "fingers": [
+            0,
+            0,
+            2,
+            0,
+            1,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            7,
+            7,
+            5,
+            5,
+            5,
+            5
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 5,
+            "from": 2,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            7,
+            7,
+            7,
+            9,
+            8,
+            8
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            4,
+            2,
+            3
+          ],
+          "barre": {
+            "fret": 7,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "frets": [
+            "x",
+            12,
+            14,
+            12,
+            13,
+            12
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            1,
+            2,
+            1
+          ],
+          "barre": {
+            "fret": 12,
+            "from": 1,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 9,
+      "quality": "MINOR",
+      "seventhQuality": "MINOR_MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            0,
+            2,
+            1,
+            1,
+            0
+          ],
+          "fingers": [
+            0,
+            0,
+            2,
+            1,
+            1,
+            0
+          ],
+          "barre": {
+            "fret": 1,
+            "from": 3,
+            "to": 4
+          }
+        },
+        {
+          "frets": [
+            7,
+            7,
+            6,
+            5,
+            5,
+            5
+          ],
+          "fingers": [
+            3,
+            4,
+            2,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 5,
+            "from": 3,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            7,
+            7,
+            7,
+            9,
+            9,
+            8
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            3,
+            4,
+            2
+          ],
+          "barre": {
+            "fret": 7,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "frets": [
+            "x",
+            12,
+            14,
+            13,
+            13,
+            12
+          ],
+          "fingers": [
+            0,
+            1,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 12,
+            "from": 1,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 9,
+      "quality": "DIMINISHED",
+      "seventhQuality": "HALF_DIMINISHED",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            0,
+            1,
+            0,
+            1,
+            "x"
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            0,
+            2,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            7,
+            6,
+            5,
+            5,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            3,
+            2,
+            1,
+            1,
+            0,
+            0
+          ],
+          "barre": {
+            "fret": 5,
+            "from": 2,
+            "to": 3
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            7,
+            8,
+            8,
+            8
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            12,
+            13,
+            12,
+            13,
+            "x"
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            0
+          ],
+          "barre": {
+            "fret": 12,
+            "from": 1,
+            "to": 3
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 9,
+      "quality": "DIMINISHED",
+      "seventhQuality": "DIMINISHED_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            7,
+            6,
+            4,
+            5,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            4,
+            3,
+            1,
+            2,
+            0,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            7,
+            8,
+            7,
+            8
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            1,
+            3
+          ],
+          "barre": {
+            "fret": 7,
+            "from": 2,
+            "to": 4
+          }
+        },
+        {
+          "frets": [
+            "x",
+            12,
+            13,
+            11,
+            13,
+            "x"
+          ],
+          "fingers": [
+            0,
+            2,
+            3,
+            1,
+            4,
+            0
+          ],
+          "barre": null
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 9,
+      "quality": "AUGMENTED",
+      "seventhQuality": "AUGMENTED_MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            0,
+            3,
+            1,
+            2,
+            1
+          ],
+          "fingers": [
+            0,
+            0,
+            3,
+            1,
+            2,
+            1
+          ],
+          "barre": {
+            "fret": 1,
+            "from": 3,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            7,
+            6,
+            6,
+            4
+          ],
+          "fingers": [
+            0,
+            0,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            7,
+            8,
+            6,
+            6,
+            6,
+            "x"
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            0
+          ],
+          "barre": {
+            "fret": 6,
+            "from": 2,
+            "to": 4
+          }
+        },
+        {
+          "frets": [
+            "x",
+            12,
+            11,
+            10,
+            9,
+            9
+          ],
+          "fingers": [
+            0,
+            4,
+            3,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 9,
+            "from": 4,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 10,
+      "quality": "MAJOR",
+      "seventhQuality": "MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            1,
+            3,
+            2,
+            3,
+            1
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            2,
+            4,
+            1
+          ],
+          "barre": {
+            "fret": 1,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            8,
+            0,
+            8,
+            7,
+            6,
+            6
+          ],
+          "fingers": [
+            3,
+            0,
+            4,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 6,
+            "from": 4,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            8,
+            10,
+            10,
+            10
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            13,
+            12,
+            10,
+            10,
+            10
+          ],
+          "fingers": [
+            0,
+            3,
+            2,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 10,
+            "from": 3,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            13,
+            15,
+            14,
+            15,
+            13
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            2,
+            4,
+            1
+          ],
+          "barre": {
+            "fret": 13,
+            "from": 1,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 10,
+      "quality": "MAJOR",
+      "seventhQuality": "DOMINANT_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            1,
+            3,
+            1,
+            3,
+            1
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 1,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            8,
+            8,
+            6,
+            7,
+            6,
+            6
+          ],
+          "fingers": [
+            3,
+            4,
+            1,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 6,
+            "from": 2,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            8,
+            10,
+            9,
+            10
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            3,
+            2,
+            4
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            13,
+            15,
+            13,
+            15,
+            13
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 13,
+            "from": 1,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 10,
+      "quality": "MINOR",
+      "seventhQuality": "MINOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            1,
+            3,
+            1,
+            2,
+            1
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            1,
+            2,
+            1
+          ],
+          "barre": {
+            "fret": 1,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            8,
+            8,
+            6,
+            6,
+            6,
+            6
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 6,
+            "from": 2,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            8,
+            10,
+            9,
+            9
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            4,
+            2,
+            3
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            13,
+            15,
+            13,
+            14,
+            13
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            1,
+            2,
+            1
+          ],
+          "barre": {
+            "fret": 13,
+            "from": 1,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 10,
+      "quality": "MINOR",
+      "seventhQuality": "MINOR_MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            1,
+            3,
+            2,
+            2,
+            1
+          ],
+          "fingers": [
+            0,
+            1,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 1,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            8,
+            8,
+            7,
+            6,
+            6,
+            6
+          ],
+          "fingers": [
+            3,
+            4,
+            2,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 6,
+            "from": 3,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            8,
+            10,
+            10,
+            9
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            3,
+            4,
+            2
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            13,
+            15,
+            14,
+            14,
+            13
+          ],
+          "fingers": [
+            0,
+            1,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 13,
+            "from": 1,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 10,
+      "quality": "DIMINISHED",
+      "seventhQuality": "HALF_DIMINISHED",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            1,
+            2,
+            1,
+            2,
+            "x"
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            0
+          ],
+          "barre": {
+            "fret": 1,
+            "from": 1,
+            "to": 3
+          }
+        },
+        {
+          "frets": [
+            8,
+            7,
+            6,
+            6,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            3,
+            2,
+            1,
+            1,
+            0,
+            0
+          ],
+          "barre": {
+            "fret": 6,
+            "from": 2,
+            "to": 3
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            8,
+            9,
+            9,
+            9
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            13,
+            14,
+            13,
+            14,
+            "x"
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            0
+          ],
+          "barre": {
+            "fret": 13,
+            "from": 1,
+            "to": 3
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 10,
+      "quality": "DIMINISHED",
+      "seventhQuality": "DIMINISHED_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            1,
+            2,
+            0,
+            2,
+            "x"
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            0,
+            3,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            8,
+            7,
+            5,
+            6,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            4,
+            3,
+            1,
+            2,
+            0,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            8,
+            9,
+            8,
+            9
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            1,
+            3
+          ],
+          "barre": {
+            "fret": 8,
+            "from": 2,
+            "to": 4
+          }
+        },
+        {
+          "frets": [
+            "x",
+            13,
+            14,
+            12,
+            14,
+            "x"
+          ],
+          "fingers": [
+            0,
+            2,
+            3,
+            1,
+            4,
+            0
+          ],
+          "barre": null
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 10,
+      "quality": "AUGMENTED",
+      "seventhQuality": "AUGMENTED_MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            1,
+            0,
+            2,
+            3,
+            2
+          ],
+          "fingers": [
+            0,
+            1,
+            0,
+            2,
+            4,
+            3
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            8,
+            7,
+            7,
+            5
+          ],
+          "fingers": [
+            0,
+            0,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            8,
+            9,
+            7,
+            7,
+            7,
+            "x"
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            0
+          ],
+          "barre": {
+            "fret": 7,
+            "from": 2,
+            "to": 4
+          }
+        },
+        {
+          "frets": [
+            "x",
+            13,
+            12,
+            11,
+            10,
+            10
+          ],
+          "fingers": [
+            0,
+            4,
+            3,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 10,
+            "from": 4,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 11,
+      "quality": "MAJOR",
+      "seventhQuality": "MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            2,
+            4,
+            3,
+            4,
+            2
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            2,
+            4,
+            1
+          ],
+          "barre": {
+            "fret": 2,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            9,
+            9,
+            9,
+            11,
+            11,
+            11
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            2,
+            3,
+            4
+          ],
+          "barre": {
+            "fret": 9,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "frets": [
+            "x",
+            14,
+            16,
+            15,
+            16,
+            14
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            2,
+            4,
+            1
+          ],
+          "barre": {
+            "fret": 14,
+            "from": 1,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 11,
+      "quality": "MAJOR",
+      "seventhQuality": "DOMINANT_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            2,
+            4,
+            2,
+            4,
+            2
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 2,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            9,
+            9,
+            7,
+            8,
+            7,
+            7
+          ],
+          "fingers": [
+            3,
+            4,
+            1,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 7,
+            "from": 2,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            9,
+            9,
+            9,
+            11,
+            10,
+            11
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            3,
+            2,
+            4
+          ],
+          "barre": {
+            "fret": 9,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "frets": [
+            "x",
+            14,
+            16,
+            14,
+            16,
+            14
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 14,
+            "from": 1,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 11,
+      "quality": "MINOR",
+      "seventhQuality": "MINOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            2,
+            4,
+            2,
+            3,
+            2
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            1,
+            2,
+            1
+          ],
+          "barre": {
+            "fret": 2,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            9,
+            9,
+            7,
+            7,
+            7,
+            7
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 7,
+            "from": 2,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            9,
+            9,
+            9,
+            11,
+            10,
+            10
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            4,
+            2,
+            3
+          ],
+          "barre": {
+            "fret": 9,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "frets": [
+            "x",
+            14,
+            16,
+            14,
+            15,
+            14
+          ],
+          "fingers": [
+            0,
+            1,
+            3,
+            1,
+            2,
+            1
+          ],
+          "barre": {
+            "fret": 14,
+            "from": 1,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 11,
+      "quality": "MINOR",
+      "seventhQuality": "MINOR_MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            2,
+            4,
+            3,
+            3,
+            2
+          ],
+          "fingers": [
+            0,
+            1,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 2,
+            "from": 1,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            9,
+            9,
+            8,
+            7,
+            7,
+            7
+          ],
+          "fingers": [
+            3,
+            4,
+            2,
+            1,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 7,
+            "from": 3,
+            "to": 5
+          }
+        },
+        {
+          "frets": [
+            9,
+            9,
+            9,
+            11,
+            11,
+            10
+          ],
+          "fingers": [
+            1,
+            1,
+            1,
+            3,
+            4,
+            2
+          ],
+          "barre": {
+            "fret": 9,
+            "from": 0,
+            "to": 2
+          }
+        },
+        {
+          "frets": [
+            "x",
+            14,
+            16,
+            15,
+            15,
+            14
+          ],
+          "fingers": [
+            0,
+            1,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": {
+            "fret": 14,
+            "from": 1,
+            "to": 5
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 11,
+      "quality": "DIMINISHED",
+      "seventhQuality": "HALF_DIMINISHED",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            2,
+            3,
+            2,
+            3,
+            "x"
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            0
+          ],
+          "barre": {
+            "fret": 2,
+            "from": 1,
+            "to": 3
+          }
+        },
+        {
+          "frets": [
+            9,
+            8,
+            7,
+            7,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            3,
+            2,
+            1,
+            1,
+            0,
+            0
+          ],
+          "barre": {
+            "fret": 7,
+            "from": 2,
+            "to": 3
+          }
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            9,
+            10,
+            10,
+            10
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            14,
+            15,
+            14,
+            15,
+            "x"
+          ],
+          "fingers": [
+            0,
+            1,
+            2,
+            1,
+            3,
+            0
+          ],
+          "barre": {
+            "fret": 14,
+            "from": 1,
+            "to": 3
+          }
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 11,
+      "quality": "DIMINISHED",
+      "seventhQuality": "DIMINISHED_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            2,
+            3,
+            1,
+            3,
+            "x"
+          ],
+          "fingers": [
+            0,
+            2,
+            3,
+            1,
+            4,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            9,
+            8,
+            6,
+            7,
+            "x",
+            "x"
+          ],
+          "fingers": [
+            4,
+            3,
+            1,
+            2,
+            0,
+            0
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            "x",
+            "x",
+            9,
+            10,
+            9,
+            10
+          ],
+          "fingers": [
+            0,
+            0,
+            1,
+            2,
+            1,
+            3
+          ],
+          "barre": {
+            "fret": 9,
+            "from": 2,
+            "to": 4
+          }
+        },
+        {
+          "frets": [
+            "x",
+            14,
+            15,
+            13,
+            15,
+            "x"
+          ],
+          "fingers": [
+            0,
+            2,
+            3,
+            1,
+            4,
+            0
+          ],
+          "barre": null
+        }
+      ]
+    },
+    {
+      "rootPitchClass": 11,
+      "quality": "AUGMENTED",
+      "seventhQuality": "AUGMENTED_MAJOR_SEVENTH",
+      "voicings": [
+        {
+          "frets": [
+            "x",
+            "x",
+            9,
+            8,
+            8,
+            6
+          ],
+          "fingers": [
+            0,
+            0,
+            4,
+            2,
+            3,
+            1
+          ],
+          "barre": null
+        },
+        {
+          "frets": [
+            9,
+            10,
+            8,
+            8,
+            8,
+            "x"
+          ],
+          "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            0
+          ],
+          "barre": {
+            "fret": 8,
+            "from": 2,
+            "to": 4
+          }
+        },
+        {
+          "frets": [
+            "x",
+            14,
+            13,
+            12,
+            11,
+            11
+          ],
+          "fingers": [
+            0,
+            4,
+            3,
+            2,
+            1,
+            1
+          ],
+          "barre": {
+            "fret": 11,
+            "from": 4,
+            "to": 5
+          }
+        }
+      ]
+    }
+  ]
+}

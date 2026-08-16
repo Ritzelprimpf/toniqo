@@ -2,6 +2,7 @@ package de.ritzelprimpf.toniqo.chordfinder
 
 import androidx.lifecycle.SavedStateHandle
 import de.ritzelprimpf.toniqo.chordfinder.domain.model.ChordKey
+import de.ritzelprimpf.toniqo.chordfinder.domain.model.SeventhQuality
 import de.ritzelprimpf.toniqo.chordfinder.domain.repository.VoicingLookupResult
 import de.ritzelprimpf.toniqo.chordfinder.fakes.FakeVoicingRepository
 import de.ritzelprimpf.toniqo.chordfinder.fakes.stubVoicings
@@ -72,11 +73,12 @@ class ChordVoicingsViewModelTest {
         store: SelectedTuningStore = SelectedTuningStore(),
     ) = ChordVoicingsViewModel(
         savedStateHandle = SavedStateHandle(
-            mapOf(
-                Routes.ARG_ROOT_PC    to key.rootPitchClass,
-                Routes.ARG_QUALITY    to key.quality.name,
-                Routes.ARG_CHORD_NAME to chordName,
-            ),
+            buildMap {
+                put(Routes.ARG_ROOT_PC, key.rootPitchClass)
+                put(Routes.ARG_QUALITY, key.quality.name)
+                put(Routes.ARG_CHORD_NAME, chordName)
+                key.seventhQuality?.let { put(Routes.ARG_SEVENTH_QUALITY, it.name) }
+            },
         ),
         voicingRepository   = repo,
         selectedTuningStore = store,
@@ -175,6 +177,16 @@ class ChordVoicingsViewModelTest {
         val vm = makeViewModel()
         advanceUntilIdle()
         assertEquals(amName, vm.uiState.value.chordName)
+    }
+
+    // ── Seventh chords: seventhQuality nav arg ────────────────────────────────────
+
+    @Test
+    fun `noteNames include the seventh when seventhQuality nav arg is present`() = runTest {
+        val cMaj7Key = ChordKey(rootPitchClass = 0, quality = ChordQuality.MAJOR, seventhQuality = SeventhQuality.MAJOR_SEVENTH)
+        val vm = makeViewModel(key = cMaj7Key, chordName = "Cmaj7")
+        advanceUntilIdle()
+        assertEquals(listOf("C", "E", "G", "B"), vm.uiState.value.noteNames)
     }
 
     // ── Loading state ─────────────────────────────────────────────────────────────

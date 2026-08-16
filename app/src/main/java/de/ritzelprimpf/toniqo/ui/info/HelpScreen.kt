@@ -10,16 +10,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import de.ritzelprimpf.toniqo.R
+import de.ritzelprimpf.toniqo.ui.components.ScreenHeader
 import de.ritzelprimpf.toniqo.ui.components.ToniqoCard
 import de.ritzelprimpf.toniqo.ui.theme.Tq
 import de.ritzelprimpf.toniqo.ui.theme.ToniqoTheme
@@ -39,28 +36,29 @@ fun HelpScreen(
         modifier = modifier
             .fillMaxSize()
             .background(Tq.Color.BgBase)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = Tq.Sp.s5),
+            .verticalScroll(rememberScrollState()),
     ) {
         Spacer(modifier = Modifier.height(Tq.Sp.s2))
 
-        IconButton(onClick = onBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                contentDescription = stringResource(R.string.info_cd_back),
-                tint = Tq.Color.FgSecondary,
-            )
-        }
-
-        Text(
-            text = stringResource(R.string.help_title),
-            style = Tq.Type.H1,
-            color = Tq.Color.FgPrimary,
+        ScreenHeader(
+            title = stringResource(R.string.help_title),
+            kicker = {
+                Text(
+                    text = stringResource(R.string.help_kicker),
+                    style = Tq.Type.Kicker,
+                    color = Tq.Color.FgTertiary,
+                )
+            },
+            onBack = onBack,
+            modifier = Modifier.padding(start = Tq.Sp.s3, end = Tq.Sp.s5),
         )
 
         Spacer(modifier = Modifier.height(Tq.Sp.s5))
 
-        Column(verticalArrangement = Arrangement.spacedBy(Tq.Sp.s4)) {
+        Column(
+            modifier = Modifier.padding(horizontal = Tq.Sp.s5),
+            verticalArrangement = Arrangement.spacedBy(Tq.Sp.s4),
+        ) {
             HelpModuleCard(
                 heading = stringResource(R.string.help_section_tuner),
                 body = stringResource(R.string.help_placeholder_tuner),

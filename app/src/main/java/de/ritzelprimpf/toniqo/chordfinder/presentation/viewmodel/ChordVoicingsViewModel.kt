@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import de.ritzelprimpf.toniqo.chordfinder.domain.model.ChordKey
+import de.ritzelprimpf.toniqo.chordfinder.domain.model.SeventhQuality
 import de.ritzelprimpf.toniqo.chordfinder.domain.repository.VoicingLookupResult
 import de.ritzelprimpf.toniqo.chordfinder.domain.repository.VoicingRepository
 import de.ritzelprimpf.toniqo.common.di.IoDispatcher
@@ -25,7 +26,8 @@ import javax.inject.Inject
  * ViewModel for the Chord Voicings screen.
  *
  * Receives [ChordKey] identity via [SavedStateHandle] navigation arguments
- * ([Routes.ARG_ROOT_PC], [Routes.ARG_QUALITY], [Routes.ARG_CHORD_NAME]).
+ * ([Routes.ARG_ROOT_PC], [Routes.ARG_QUALITY], [Routes.ARG_CHORD_NAME],
+ * [Routes.ARG_SEVENTH_QUALITY] — the last is optional, absent for a plain triad).
  * Derives chord tone names internally from the key's intervals.
  *
  * Reacts to the active tuning from [SelectedTuningStore] and calls [VoicingRepository.lookup]
@@ -54,9 +56,12 @@ class ChordVoicingsViewModel @Inject constructor(
     private val chordName: String =
         checkNotNull(savedStateHandle[Routes.ARG_CHORD_NAME]) { "Missing nav arg: ${Routes.ARG_CHORD_NAME}" }
 
-    private val chordKey = ChordKey(rootPitchClass = rootPc, quality = quality)
+    private val seventhQuality: SeventhQuality? =
+        savedStateHandle.get<String>(Routes.ARG_SEVENTH_QUALITY)?.let { SeventhQuality.valueOf(it) }
 
-    private val noteNames: List<String> = deriveNoteNames(rootPc, quality)
+    private val chordKey = ChordKey(rootPitchClass = rootPc, quality = quality, seventhQuality = seventhQuality)
+
+    private val noteNames: List<String> = deriveNoteNames(rootPc, quality, seventhQuality)
 
     private val _uiState = MutableStateFlow(
         ChordVoicingsUiState(
@@ -124,10 +129,21 @@ class ChordVoicingsViewModel @Inject constructor(
             "C", "D♭", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B",
         )
 
-        /** Derives spelled chord-tone names (root → last interval) from [rootPitchClass] + [quality]. */
-        internal fun deriveNoteNames(rootPitchClass: Int, quality: ChordQuality): List<String> =
-            quality.intervalsFromRoot.map { interval ->
+        /**
+         * Derives spelled chord-tone names (root → last interval) from [rootPitchClass] +
+         * [quality], plus a trailing seventh entry when [seventhQuality] is non-null.
+         */
+        internal fun deriveNoteNames(
+            rootPitchClass: Int,
+            quality: ChordQuality,
+            seventhQuality: SeventhQuality? = null,
+        ): List<String> {
+            val triadNames = quality.intervalsFromRoot.map { interval ->
                 NOTE_NAMES[(rootPitchClass + interval) % 12]
             }
+            val seventhName = seventhQuality
+                ?.let { NOTE_NAMES[(rootPitchClass + it.semitonesFromRoot) % 12] }
+            return if (seventhName != null) triadNames + seventhName else triadNames
+        }
     }
 }

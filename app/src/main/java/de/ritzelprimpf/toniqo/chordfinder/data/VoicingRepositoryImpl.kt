@@ -40,14 +40,26 @@ class VoicingRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
 ) : VoicingRepository {
 
-    private data class TuningFamily(val reference: GuitarTuning, val assetPath: String)
+    private data class TuningFamily(
+        val reference: GuitarTuning,
+        val assetPath: String,
+        val seventhAssetPath: String,
+    )
 
     private companion object {
         const val MAX_VOICINGS = 5
 
         val FAMILIES = listOf(
-            TuningFamily(GuitarTuning.STANDARD_6, "chordfinder/voicings_standard_6.json"),
-            TuningFamily(GuitarTuning.DROP_D_6, "chordfinder/voicings_drop_d_6.json"),
+            TuningFamily(
+                GuitarTuning.STANDARD_6,
+                "chordfinder/voicings_standard_6.json",
+                "chordfinder/voicings_standard_6_seventh.json",
+            ),
+            TuningFamily(
+                GuitarTuning.DROP_D_6,
+                "chordfinder/voicings_drop_d_6.json",
+                "chordfinder/voicings_drop_d_6_seventh.json",
+            ),
         )
     }
 
@@ -83,17 +95,28 @@ class VoicingRepositoryImpl @Inject constructor(
     }
 
     /**
-     * Parses [family]'s asset, or returns an empty library if it hasn't been curated/shipped
-     * yet. A missing drop-tuning asset is an expected, non-error state during rollout (the
-     * generator tool's own docs require hand-curation before an asset ships) — not a bug — so
-     * lookups against it simply come back empty rather than crashing the Chord Voicings screen.
+     * Parses [family]'s triad and seventh-chord assets and merges them into one lookup map, or
+     * returns an empty library for either half that hasn't been curated/shipped yet. A missing
+     * asset is an expected, non-error state during rollout (the generator tool's own docs
+     * require hand-curation before an asset ships) — not a bug — so lookups against it simply
+     * come back empty rather than crashing the Chord Voicings screen.
+     *
+     * The two maps never collide: every triad [ChordKey] has `seventhQuality == null` and every
+     * seventh-chord key has it non-null, so a plain `+` union is exact — no key from one asset
+     * can ever overwrite a key from the other.
      */
     private fun loadFamily(family: TuningFamily): Map<ChordKey, List<Voicing>> {
+        val triads = loadAsset(family.assetPath, family.reference)
+        val sevenths = loadAsset(family.seventhAssetPath, family.reference)
+        return triads + sevenths
+    }
+
+    private fun loadAsset(assetPath: String, reference: GuitarTuning): Map<ChordKey, List<Voicing>> {
         val json = try {
-            context.assets.open(family.assetPath).bufferedReader().use { it.readText() }
+            context.assets.open(assetPath).bufferedReader().use { it.readText() }
         } catch (e: FileNotFoundException) {
             return emptyMap()
         }
-        return VoicingJsonParser.parse(json, family.reference)
+        return VoicingJsonParser.parse(json, reference)
     }
 }

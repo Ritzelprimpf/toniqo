@@ -309,6 +309,20 @@ Width formula: `posLabelWidth(20) + sidePad(10) + (stringCount−1)×stringSpaci
 - The component is entirely stateless and carries no animation. Tapping a diagram card navigates to an audio-playback future feature (FP-4); do not add tap handling now.
 - For Compose previews and tests, construct `Voicing` directly via its data-class constructor (bypassing `Voicing.validated`) to avoid chord-validation setup.
 
+### 6.10 Screen header
+
+Shared by all four top-level feature screens (Tuner, Metronome, Key Finder, Chord Finder) *and* every back-navigable sub-page (Chord Voicings; Help, Licenses, Bug Report, Feature Request in the Info section) via `ui/components/ScreenHeader.kt` — see DECISIONS.md 2026-08-15 (×2).
+
+- Structure: kicker line, `sp.2` (8dp) below it a row containing an optional back arrow (leading, inline) and the `H1` title. An optional trailing action (info/settings icon button) floats independently at the header's top-end corner — never inline in a row with the kicker — so its touch target can't inflate the kicker line and push the title down.
+- The kicker line's own content is screen-specific (a plain `Kicker`-styled label for Key Finder/Chord Finder/Chord Voicings/Info sub-pages; a leading dot + dynamic text for Metronome/Tuner) and the trailing action's icon/size is screen-specific too (e.g. Tuner's 40dp icon-round settings button vs. Key Finder/Chord Finder's default-sized info button) — only the *skeleton* (kicker-above-title spacing, independent top-end floating for any action) is shared, not a fixed visual style.
+- The back arrow, unlike the trailing action, **is** a fixed, standardized element (`Icons.AutoMirrored.Outlined.ArrowBack`, `fg.secondary` tint, shared `common_cd_back` content description) — every back button in the app looks identical, so this one is not a per-screen slot.
+- Sub-page kicker convention: `{PARENT SECTION} · {PAGE}`, e.g. `CHORD FINDER · VOICINGS`, `INFO · HELP`, `INFO · LICENSES`, `INFO · BUG REPORT`, `INFO · FEATURE REQUEST` — mirrors the existing top-level kickers' `SECTION · DETAIL` format (`CHORD FINDER · DIATONIC`, `TUNER · A4 = 440 HZ`).
+- Back-button sub-pages apply asymmetric horizontal padding to `ScreenHeader` (`start = sp.3`, `end = sp.5`, not the usual symmetric `sp.5`) so the back arrow's glyph — inset within its own touch target — lines up visually with the kicker text above it, rather than sitting noticeably further right.
+
+### 6.11 Info dialog
+
+Shared by every top-level feature screen (Key Finder, Chord Finder, Metronome — Tuner has no info dialog) via `ui/components/InfoDialog.kt` — see DECISIONS.md 2026-08-15. A standard `AlertDialog`: `H2` title, `body`-style explanatory text, single `signal.mint` "Got it" confirm button (shared `common_info_dialog_ok` text). Only the title and body are screen-specific; opened via the info icon button in that screen's `ScreenHeader` `trailingAction`.
+
 ---
 
 ## 7. Iconography
@@ -352,9 +366,7 @@ The set ships these names; ask before adding any new ones:
 - Already-tuned strings show a 9dp `check` glyph in `signal.mint` at the top-right corner of their pill.
 - The current string is outlined in the current semantic colour with a 3dp halo (see §6.3).
 
-**Preset chip row** (above the readout well):
-- A category chip on the left, e.g. "6-STRING · DROP" in `mono.micro` kicker style.
-- A right-aligned `MIC LIVE` indicator: mint dot plus uppercase mono label.
+**Preset chip row** (above the readout well): a category chip, e.g. "6-STRING · DROP" in `mono.micro` kicker style. (No `MIC LIVE` indicator here — removed 2026-08-15, see DECISIONS.md: it broke down to unreadable vertical text once the chip's own internal `weight` claimed the row's full width, starving the label's remaining space to near-zero.)
 
 **Reference pitch chip:** the screen header kicker line displays `TUNER · A4 = 440 HZ` (or `432 HZ`). The toggle to change it is in the **tuner settings sheet**, opened by tapping the `settings`-icon button in the top-right corner of the screen.
 
@@ -362,7 +374,6 @@ The set ships these names; ask before adding any new ones:
 - Needle sits at the centre (0 cents position) in `fg.quaternary`.
 - Detected-note hero shows a single `—` (em dash) in `fg.quaternary`, no octave subscript.
 - Status line reads `LISTENING` in `fg.quaternary`, no cents value.
-- `MIC LIVE` indicator shows the mint dot at full saturation; this is what tells the user the mic is working even when no sound is detected.
 
 **Hz readout pair** (inside the readout well, below the needle gauge): two columns side-by-side. Left column: kicker label `"DETECTED"` in `fg.tertiary` and the detected frequency value (e.g. `"108.86 Hz"`) in `Tq.Type.Body` / `fg.primary`. Right column: kicker label `"TARGET"` and the target frequency value (e.g. `"110.00 Hz"`). When the detected value is unavailable, render `"— Hz"` (em-dash) in place of the numeric value. Both labels are always shown even when values are null.
 

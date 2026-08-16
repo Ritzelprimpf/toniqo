@@ -4,6 +4,7 @@ import de.ritzelprimpf.toniqo.chordfinder.domain.model.Barre
 import de.ritzelprimpf.toniqo.chordfinder.domain.model.ChordKey
 import de.ritzelprimpf.toniqo.chordfinder.domain.model.ChordToneRole
 import de.ritzelprimpf.toniqo.chordfinder.domain.model.FretMark
+import de.ritzelprimpf.toniqo.chordfinder.domain.model.SeventhQuality
 import de.ritzelprimpf.toniqo.chordfinder.domain.model.Voicing
 import de.ritzelprimpf.toniqo.chordfinder.domain.model.classifyToneRole
 import de.ritzelprimpf.toniqo.common.model.ChordQuality
@@ -27,6 +28,11 @@ import org.json.JSONObject
  *   ] }
  * ```
  *
+ * `seventhQuality` is an optional field on each chord entry (omitted or JSON `null` for a plain
+ * triad). When present, it names a [SeventhQuality] and the entry's voicings are validated
+ * against the 4-tone chord (triad + seventh), keyed separately from the parent triad — see
+ * `voicings_standard_6_seventh.json` / `voicings_drop_d_6_seventh.json`.
+ *
  * `frets` values: `"x"` → Muted, `"o"` or `0` (integer zero) → Open, positive integer → Fretted.
  *
  * This is a pure stateless utility object — no I/O or Android context dependency.
@@ -36,6 +42,7 @@ internal object VoicingJsonParser {
     private const val KEY_CHORDS = "chords"
     private const val KEY_ROOT_PC = "rootPitchClass"
     private const val KEY_QUALITY = "quality"
+    private const val KEY_SEVENTH_QUALITY = "seventhQuality"
     private const val KEY_VOICINGS = "voicings"
     private const val KEY_FRETS = "frets"
     private const val KEY_FINGERS = "fingers"
@@ -71,7 +78,12 @@ internal object VoicingJsonParser {
             val chordObj = chordsArray.getJSONObject(chordIdx)
             val rootPc = chordObj.getInt(KEY_ROOT_PC)
             val quality = ChordQuality.valueOf(chordObj.getString(KEY_QUALITY))
-            val key = ChordKey(rootPc, quality)
+            val seventhQuality = if (chordObj.isNull(KEY_SEVENTH_QUALITY) || !chordObj.has(KEY_SEVENTH_QUALITY)) {
+                null
+            } else {
+                SeventhQuality.valueOf(chordObj.getString(KEY_SEVENTH_QUALITY))
+            }
+            val key = ChordKey(rootPc, quality, seventhQuality)
 
             val voicingsArray = chordObj.getJSONArray(KEY_VOICINGS)
             val voicingList = result.getOrPut(key) { mutableListOf() }
