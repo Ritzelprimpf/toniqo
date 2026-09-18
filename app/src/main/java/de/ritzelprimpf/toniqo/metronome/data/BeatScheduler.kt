@@ -114,4 +114,42 @@ internal class BeatScheduler(
 
     /** Returns the [de.ritzelprimpf.toniqo.metronome.domain.model.ClickKind] for the current click. */
     fun currentClickKind() = clickKindFor(clickIndexInBar, config.subdivision)
+
+    /**
+     * Silently skips past any clicks whose target time has already passed as of [nowNs].
+     *
+     * ## Why this exists
+     *
+     * The player's main loop calls [advance] and then sleeps until the next [targetNs]. If
+     * something stalls that loop for longer than one click interval — a GC pause, dispatcher
+     * contention, or (the observed real-world trigger) an `AudioTrack`/audio-HAL wake-up latency
+     * after the output stream has been idle during a long silence gap — the loop resumes having
+     * already missed one or more clicks. Without this method, the caller would discover
+     * `targetNs() < now` for every missed click in turn and, since it never enters its own
+     * "sleep" branch when already late, would write all of those missed clicks back-to-back with
+     * no gap between them: an audible burst, worse at low BPM where the silence gaps (and
+     * therefore the chance of a HAL standby stall) are longest.
+     *
+     * Calling this first lets the caller drop the missed clicks instead — silence where a click
+     * was due is far less jarring than several clicks firing on top of each other — and then
+     * play only the one click that is actually current.
+     *
+     * Note this deliberately does **not** trigger on the ordinary case where only the *current*
+     * click's target has passed — that is the normal state of affairs on every loop iteration
+     * (the click is due, so it gets played, right now). It only skips when the click *after* the
+     * current one is already due too, which is the actual signal that one or more clicks were
+     * missed entirely while the caller was stalled.
+     *
+     * @return The number of clicks skipped (0 if the scheduler was not behind). Callers may log
+     *   this for diagnostics; it does not affect further scheduling, which remains anchor-based.
+     */
+    fun catchUpIfBehind(nowNs: Long): Int {
+        val interval = intervalNanos(config.bpm, config.subdivision)
+        var skipped = 0
+        while (targetNs() + interval <= nowNs) {
+            advance()
+            skipped++
+        }
+        return skipped
+    }
 }

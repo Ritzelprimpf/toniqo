@@ -501,19 +501,32 @@ def generate_voicings(
     spread_min_spacing: int,
     max_sounded: Optional[int] = None,
     include_inversion: bool = True,
+    guarantee_string_sounds: Optional[int] = None,
 ) -> tuple[list[VoicingCandidate], int]:
     """
     Returns (voicings, skipped_count).
 
-    voicings is up to max_per_chord root-position shapes plus, appended at the end and only
-    when include_inversion is True, one inversion (bass = third or fifth) when the search finds
-    at least one -- see the "Inversion" section below. skipped_count > 0 means self_check_voicing
-    caught an invariant violation that passes_filters should have blocked — indicates a generator
-    bug.
+    voicings is up to max_per_chord root-position shapes, plus:
+      - one inversion (bass = third or fifth) appended at the end, when include_inversion is
+        True and the search finds at least one -- see the "Inversion" section below;
+      - one additional voicing that sounds string index guarantee_string_sounds, appended at
+        the very end, when that string isn't already sounded by anything selected above -- see
+        the "String guarantee" section below.
+    skipped_count > 0 means self_check_voicing caught an invariant violation that passes_filters
+    should have blocked — indicates a generator bug.
 
     @param chord_pcs The chord's own pitch classes (root already included), e.g. {0, 4, 7} for a
         C major triad or {7, 2} for a G power chord. Callers own their own quality → interval
         table; this function is agnostic to what "quality" even means.
+    @param guarantee_string_sounds Optional 0-based string index (low→high, matching open_pcs)
+        that the caller wants represented in the output whenever a playable shape allows it --
+        e.g. an extended-range instrument's lowest string, so the library doesn't quietly mute
+        it out of every voicing just because a higher string reaches the same tones with a
+        shorter stretch. This is a *soft* guarantee: every candidate is drawn from the same
+        fully-filtered, already-playable pools used everywhere else in this function (root
+        position first, then any valid bass/inversion shape), so nothing is relaxed to satisfy
+        it. If no playable candidate sounds this string at all, the output is returned unchanged
+        -- "if possible" is enforced by construction, not promised unconditionally.
     """
     # Build per-string candidate lists; order mirrors the low→high JSON frets array.
     per_string = [
@@ -528,34 +541,59 @@ def generate_voicings(
     )
     selected = select_voicings(root_position_raw, max_per_chord, spread_min_spacing)
 
-    if not include_inversion:
-        return selected, skipped_root
+    # The relaxed-bass (inversion-eligible) pool is needed both for the inversion pass below and
+    # for the string guarantee's fallback search -- compute it once, only when either wants it,
+    # so callers that need neither (e.g. the drop-tuning driver) pay no extra search cost.
+    all_bass_raw: list[VoicingCandidate] = []
+    skipped_inversion = 0
+    if include_inversion or guarantee_string_sounds is not None:
+        all_bass_raw, skipped_inversion = _search_candidates(
+            root_pc, chord_pcs, open_pcs, per_string,
+            min_sounded, max_span, allow_interior_mutes, require_root_bass=False, max_sounded=max_sounded,
+        )
 
-    # Inversion search: bass = third or fifth. A second, separate pass (rather than just
-    # relaxing the main search) keeps the two concerns independent -- the root-position
-    # count/spread above is unaffected by whether an inversion happens to exist, and exactly
-    # one inversion (not a variable number) is appended, per the product decision that every
-    # chord should surface exactly one alternate-bass option alongside its root-position shapes.
-    all_bass_raw, skipped_inversion = _search_candidates(
-        root_pc, chord_pcs, open_pcs, per_string,
-        min_sounded, max_span, allow_interior_mutes, require_root_bass=False, max_sounded=max_sounded,
-    )
-    inversions = sorted(
-        (c for c in all_bass_raw if bass_pc(c.frets, open_pcs) != root_pc),
-        key=_voicing_sort_key,
-    )
-    # Reject any inversion that is really just an already-selected root-position shape with one
-    # extra optional string un-muted -- e.g. x32010's low E left ringing becomes 032010, which
-    # flips the bass to an inversion but isn't a genuinely different shape, only the exact
-    # near-duplicate pattern (same grip, only whether a redundant string rings differs) this
-    # generator otherwise works hard to avoid. is_dominated(selected_shape, inversion_candidate)
-    # is true precisely in that case: the selected shape is a strict, sparser subset of it.
-    chosen_inversion = next(
-        (inv for inv in inversions if not any(is_dominated(sel, inv) for sel in selected)),
-        None,
-    )
-    if chosen_inversion is not None:
-        selected = selected + [chosen_inversion]
+    if include_inversion:
+        # Inversion search: bass = third or fifth. A second, separate pass (rather than just
+        # relaxing the main search) keeps the two concerns independent -- the root-position
+        # count/spread above is unaffected by whether an inversion happens to exist, and exactly
+        # one inversion (not a variable number) is appended, per the product decision that every
+        # chord should surface exactly one alternate-bass option alongside its root-position shapes.
+        inversions = sorted(
+            (c for c in all_bass_raw if bass_pc(c.frets, open_pcs) != root_pc),
+            key=_voicing_sort_key,
+        )
+        # Reject any inversion that is really just an already-selected root-position shape with
+        # one extra optional string un-muted -- e.g. x32010's low E left ringing becomes 032010,
+        # which flips the bass to an inversion but isn't a genuinely different shape, only the
+        # exact near-duplicate pattern (same grip, only whether a redundant string rings differs)
+        # this generator otherwise works hard to avoid. is_dominated(selected_shape,
+        # inversion_candidate) is true precisely in that case: the selected shape is a strict,
+        # sparser subset of it.
+        chosen_inversion = next(
+            (inv for inv in inversions if not any(is_dominated(sel, inv) for sel in selected)),
+            None,
+        )
+        if chosen_inversion is not None:
+            selected = selected + [chosen_inversion]
+
+    # String guarantee: if nothing selected so far sounds guarantee_string_sounds, look for the
+    # lowest-base-fret playable shape that does -- root-position shapes first (more idiomatic),
+    # falling back to the relaxed-bass pool -- and append it as one extra voicing beyond
+    # max_per_chord, mirroring how the inversion above is an appended extra rather than counted
+    # against the cap.
+    if guarantee_string_sounds is not None and not any(
+        v.frets[guarantee_string_sounds] != "x" for v in selected
+    ):
+        already_selected = {v.frets for v in selected}
+        root_frets_seen = {v.frets for v in root_position_raw}
+        pool = root_position_raw + [c for c in all_bass_raw if c.frets not in root_frets_seen]
+        eligible = sorted(
+            (c for c in pool
+             if c.frets[guarantee_string_sounds] != "x" and c.frets not in already_selected),
+            key=_voicing_sort_key,
+        )
+        if eligible:
+            selected = selected + [eligible[0]]
 
     return selected, skipped_root + skipped_inversion
 

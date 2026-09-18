@@ -3,6 +3,7 @@ package de.ritzelprimpf.toniqo.keyfinder.presentation.ui
 import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.StringRes
 import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -1016,18 +1017,59 @@ private fun ScaleDetailSheet(
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
- * Resolves a scale-type string-resource key at runtime using [android.content.res.Resources.getIdentifier].
+ * Resolves a scale-type string-resource key (as produced by [scaleLabelData]) to its localized,
+ * root-substituted text.
  *
- * Results are cached with [remember] so the reflection lookup only runs once per unique
- * (key, arg) pair. Falls back to "$arg $key" if the resource is not found.
+ * Deliberately does **not** use [android.content.res.Resources.getIdentifier] to look the
+ * resource up by name at runtime. That pattern is not reliably preserved by Android's
+ * release-build resource shrinker (`isShrinkResources = true` in `build.gradle.kts`) — the
+ * shrinker's safety net for `getIdentifier` calls is a best-effort heuristic, not a guarantee.
+ * This was the actual cause of a real-world bug: mode labels ("Major", "Dorian", etc.)
+ * intermittently missing in released builds. [scaleTypeStringRes] is an explicit,
+ * compiler-checked mapping instead — no reflection, no risk of a resource silently vanishing
+ * under shrinking.
  */
 @Composable
-private fun resolveScaleString(key: String, arg: String): String {
-    val context = LocalContext.current
-    return remember(key, arg) {
-        val resId = context.resources.getIdentifier(key, "string", context.packageName)
-        if (resId != 0) context.getString(resId, arg) else "$arg $key"
-    }
+private fun resolveScaleString(key: String, arg: String): String =
+    stringResource(scaleTypeStringRes(key), arg)
+
+/**
+ * Maps a scale-type string-resource key (see [ScaleType.primaryLabelKey] / `subtitleKey`) to its
+ * compile-time-resolved resource ID. Exhaustive over every key [scaleLabelData] can produce —
+ * adding a [ScaleType] without adding a branch here is a loud [IllegalStateException], not a
+ * silently missing label.
+ */
+@StringRes
+private fun scaleTypeStringRes(key: String): Int = when (key) {
+    "scale_type_label_major" -> R.string.scale_type_label_major
+    "scale_type_label_natural_minor" -> R.string.scale_type_label_natural_minor
+    "scale_type_label_dorian" -> R.string.scale_type_label_dorian
+    "scale_type_label_phrygian" -> R.string.scale_type_label_phrygian
+    "scale_type_label_lydian" -> R.string.scale_type_label_lydian
+    "scale_type_label_mixolydian" -> R.string.scale_type_label_mixolydian
+    "scale_type_label_locrian" -> R.string.scale_type_label_locrian
+    "scale_type_label_harmonic_minor" -> R.string.scale_type_label_harmonic_minor
+    "scale_type_label_phrygian_dominant" -> R.string.scale_type_label_phrygian_dominant
+    "scale_type_label_locrian_natural6" -> R.string.scale_type_label_locrian_natural6
+    "scale_type_label_melodic_minor" -> R.string.scale_type_label_melodic_minor
+    "scale_type_label_lydian_dominant" -> R.string.scale_type_label_lydian_dominant
+    "scale_type_label_altered" -> R.string.scale_type_label_altered
+    "scale_type_label_dorian_flat2" -> R.string.scale_type_label_dorian_flat2
+    "scale_type_subtitle_ionian" -> R.string.scale_type_subtitle_ionian
+    "scale_type_subtitle_aeolian" -> R.string.scale_type_subtitle_aeolian
+    "scale_type_subtitle_dorian" -> R.string.scale_type_subtitle_dorian
+    "scale_type_subtitle_phrygian" -> R.string.scale_type_subtitle_phrygian
+    "scale_type_subtitle_lydian" -> R.string.scale_type_subtitle_lydian
+    "scale_type_subtitle_mixolydian" -> R.string.scale_type_subtitle_mixolydian
+    "scale_type_subtitle_locrian" -> R.string.scale_type_subtitle_locrian
+    "scale_type_subtitle_harmonic_minor" -> R.string.scale_type_subtitle_harmonic_minor
+    "scale_type_subtitle_phrygian_dominant" -> R.string.scale_type_subtitle_phrygian_dominant
+    "scale_type_subtitle_locrian_natural6" -> R.string.scale_type_subtitle_locrian_natural6
+    "scale_type_subtitle_melodic_minor" -> R.string.scale_type_subtitle_melodic_minor
+    "scale_type_subtitle_lydian_dominant" -> R.string.scale_type_subtitle_lydian_dominant
+    "scale_type_subtitle_altered" -> R.string.scale_type_subtitle_altered
+    "scale_type_subtitle_dorian_flat2" -> R.string.scale_type_subtitle_dorian_flat2
+    else -> error("Unknown scale-type string-resource key: $key")
 }
 
 // ─── Previews ────────────────────────────────────────────────────────────────

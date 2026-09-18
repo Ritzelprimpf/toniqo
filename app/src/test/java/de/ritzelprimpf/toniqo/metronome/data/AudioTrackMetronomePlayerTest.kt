@@ -266,4 +266,78 @@ class AudioTrackMetronomePlayerTest {
 
         assertEquals(3, scheduler.config.timeSignatureNumerator)
     }
+
+    // ── catchUpIfBehind ───────────────────────────────────────────────────────
+
+    @Test
+    fun `catchUpIfBehind does nothing and returns 0 when on schedule`() {
+        val scheduler = BeatScheduler(clock, defaultConfig)
+
+        val skipped = scheduler.catchUpIfBehind(nowNs = 0L)
+
+        assertEquals(0, skipped)
+        assertEquals(0, scheduler.clickIndexInBar)
+        assertEquals(0L, scheduler.targetNs())
+    }
+
+    @Test
+    fun `catchUpIfBehind does nothing when the current click is still due in the future`() {
+        val scheduler = BeatScheduler(clock, defaultConfig)
+        val interval = intervalNanos(defaultConfig.bpm, defaultConfig.subdivision)
+
+        val skipped = scheduler.catchUpIfBehind(nowNs = interval - 1)
+
+        assertEquals(0, skipped)
+        assertEquals(0, scheduler.clickIndexInBar)
+    }
+
+    @Test
+    fun `catchUpIfBehind skips exactly the clicks whose target has already passed`() {
+        val scheduler = BeatScheduler(clock, defaultConfig) // 4 clicks per bar
+        val interval = intervalNanos(defaultConfig.bpm, defaultConfig.subdivision)
+
+        // Simulate a stall that lasted past 3 click targets (indices 0, 1, 2); index 3 is still due.
+        val skipped = scheduler.catchUpIfBehind(nowNs = interval * 3 + 1)
+
+        assertEquals(3, skipped)
+        assertEquals(3, scheduler.clickIndexInBar)
+    }
+
+    @Test
+    fun `catchUpIfBehind leaves the scheduler on the first click that is not yet late`() {
+        val scheduler = BeatScheduler(clock, defaultConfig)
+        val interval = intervalNanos(defaultConfig.bpm, defaultConfig.subdivision)
+
+        scheduler.catchUpIfBehind(nowNs = interval * 3 + 1)
+
+        // Click index 3 (STANDARD, third beat after the downbeat) is the first click for which
+        // the *next* click's target has not also already passed — i.e. the first one worth playing.
+        assertEquals(ClickKind.STANDARD, scheduler.currentClickKind())
+        assertEquals(3, scheduler.clickIndexInBar)
+    }
+
+    @Test
+    fun `catchUpIfBehind wraps clickIndexInBar across a bar boundary when skipping a full bar`() {
+        val scheduler = BeatScheduler(clock, defaultConfig) // 4 clicks per bar
+        val interval = intervalNanos(defaultConfig.bpm, defaultConfig.subdivision)
+
+        // Stall past 5 targets (indices 0..4) — more than one full bar (4 clicks).
+        val skipped = scheduler.catchUpIfBehind(nowNs = interval * 5 + 1)
+
+        assertEquals(5, skipped)
+        assertEquals(1, scheduler.clickIndexInBar) // wrapped: 5 % 4 == 1
+    }
+
+    @Test
+    fun `catchUpIfBehind does not affect targetNs beyond normal advance semantics`() {
+        val direct = BeatScheduler(clock, defaultConfig)
+        val viaCatchUp = BeatScheduler(clock, defaultConfig)
+        val interval = intervalNanos(defaultConfig.bpm, defaultConfig.subdivision)
+        repeat(3) { direct.advance() }
+
+        viaCatchUp.catchUpIfBehind(nowNs = interval * 3 + 1)
+
+        assertEquals(direct.targetNs(), viaCatchUp.targetNs())
+        assertEquals(direct.clickIndexInBar, viaCatchUp.clickIndexInBar)
+    }
 }

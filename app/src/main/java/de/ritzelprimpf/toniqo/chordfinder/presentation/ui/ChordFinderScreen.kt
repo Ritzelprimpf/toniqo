@@ -1,6 +1,7 @@
 package de.ritzelprimpf.toniqo.chordfinder.presentation.ui
 
 import android.content.Context
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -75,11 +76,53 @@ private val TOGGLE_CONTROL_WIDTH: Dp = 152.dp
 private val DropdownShape = RoundedCornerShape(Tq.Radius.Md)
 
 // Converts a ScaleType to its root-free mode label for the dropdown, e.g. "Major · Ionian".
-// Key pattern: cf_mode_label_{scaletype_name_lowercase} — matches all 14 entries in strings.xml.
-private fun ScaleType.modeLabel(context: Context): String {
-    val key = "cf_mode_label_${name.lowercase()}"
-    val resId = context.resources.getIdentifier(key, "string", context.packageName)
-    return if (resId != 0) context.getString(resId) else name
+//
+// Deliberately an exhaustive `when` over ScaleType rather than building "cf_mode_label_${name}"
+// and looking it up via Resources.getIdentifier(): a resource name assembled at runtime can never
+// be traced by Android's release-build resource shrinker (isShrinkResources = true in
+// build.gradle.kts), which only keeps resources it can prove are referenced. That mismatch was
+// the actual cause of a real-world bug — mode labels silently missing in released builds. Adding
+// a ScaleType entry without adding a branch here is now a compile error, not a silent runtime gap.
+@Composable
+private fun ScaleType.modeLabel(): String = stringResource(modeLabelStringRes())
+
+@StringRes
+private fun ScaleType.modeLabelStringRes(): Int = when (this) {
+    ScaleType.IONIAN -> R.string.cf_mode_label_ionian
+    ScaleType.AEOLIAN -> R.string.cf_mode_label_aeolian
+    ScaleType.DORIAN -> R.string.cf_mode_label_dorian
+    ScaleType.PHRYGIAN -> R.string.cf_mode_label_phrygian
+    ScaleType.LYDIAN -> R.string.cf_mode_label_lydian
+    ScaleType.MIXOLYDIAN -> R.string.cf_mode_label_mixolydian
+    ScaleType.LOCRIAN -> R.string.cf_mode_label_locrian
+    ScaleType.HARMONIC_MINOR -> R.string.cf_mode_label_harmonic_minor
+    ScaleType.PHRYGIAN_DOMINANT -> R.string.cf_mode_label_phrygian_dominant
+    ScaleType.LOCRIAN_NATURAL_6 -> R.string.cf_mode_label_locrian_natural_6
+    ScaleType.MELODIC_MINOR -> R.string.cf_mode_label_melodic_minor
+    ScaleType.LYDIAN_DOMINANT -> R.string.cf_mode_label_lydian_dominant
+    ScaleType.ALTERED -> R.string.cf_mode_label_altered
+    ScaleType.DORIAN_FLAT_2 -> R.string.cf_mode_label_dorian_flat_2
+}
+
+// Primary "%s <Scale Name>" label used for the screen title, e.g. "C Major". Reuses the same
+// scale_type_label_* resources as the Key Finder (see ScaleType.primaryLabelKey), resolved here
+// via the same exhaustive-`when` approach as modeLabelStringRes() above, for the same reason.
+@StringRes
+private fun ScaleType.primaryLabelStringRes(): Int = when (this) {
+    ScaleType.IONIAN -> R.string.scale_type_label_major
+    ScaleType.AEOLIAN -> R.string.scale_type_label_natural_minor
+    ScaleType.DORIAN -> R.string.scale_type_label_dorian
+    ScaleType.PHRYGIAN -> R.string.scale_type_label_phrygian
+    ScaleType.LYDIAN -> R.string.scale_type_label_lydian
+    ScaleType.MIXOLYDIAN -> R.string.scale_type_label_mixolydian
+    ScaleType.LOCRIAN -> R.string.scale_type_label_locrian
+    ScaleType.HARMONIC_MINOR -> R.string.scale_type_label_harmonic_minor
+    ScaleType.PHRYGIAN_DOMINANT -> R.string.scale_type_label_phrygian_dominant
+    ScaleType.LOCRIAN_NATURAL_6 -> R.string.scale_type_label_locrian_natural6
+    ScaleType.MELODIC_MINOR -> R.string.scale_type_label_melodic_minor
+    ScaleType.LYDIAN_DOMINANT -> R.string.scale_type_label_lydian_dominant
+    ScaleType.ALTERED -> R.string.scale_type_label_altered
+    ScaleType.DORIAN_FLAT_2 -> R.string.scale_type_label_dorian_flat2
 }
 
 // ─── Stateful entry point ─────────────────────────────────────────────────────
@@ -141,13 +184,7 @@ internal fun ChordFinderContent(
     val context = LocalContext.current
     var showInfoDialog by remember { mutableStateOf(false) }
 
-    val screenTitle = remember(state.spelledRoot, state.scaleType) {
-        val resId = context.resources.getIdentifier(
-            state.scaleType.primaryLabelKey, "string", context.packageName,
-        )
-        if (resId != 0) context.getString(resId, state.spelledRoot)
-        else "${state.spelledRoot} ${state.scaleType.name}"
-    }
+    val screenTitle = stringResource(state.scaleType.primaryLabelStringRes(), state.spelledRoot)
 
     LazyColumn(
         modifier = modifier
@@ -222,14 +259,14 @@ internal fun ChordFinderContent(
                 // Mode dropdown — flex 1.4 (§8.4)
                 ChordFinderDropdown(
                     kickerLabel = stringResource(R.string.cf_label_mode),
-                    currentLabel = state.scaleType.modeLabel(context),
+                    currentLabel = state.scaleType.modeLabel(),
                     modifier = Modifier.weight(1.4f),
                 ) { dismiss ->
                     ScaleType.entries.forEach { type ->
                         DropdownMenuItem(
                             text = {
                                 Text(
-                                    text = type.modeLabel(context),
+                                    text = type.modeLabel(),
                                     style = Tq.Type.Body,
                                     color = Tq.Color.FgPrimary,
                                 )

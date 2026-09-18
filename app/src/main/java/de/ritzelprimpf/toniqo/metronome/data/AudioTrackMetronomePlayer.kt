@@ -44,6 +44,10 @@ import kotlinx.coroutines.launch
  * (BPM, time signature, subdivision) are routed in via a conflated [Channel] so the scheduler
  * always sees the latest config without stale reads.
  *
+ * If the loop is ever stalled long enough to fall behind schedule, [BeatScheduler.catchUpIfBehind]
+ * drops the missed clicks silently rather than firing them back-to-back once control returns —
+ * see that method's doc for why this matters, particularly at low BPM.
+ *
  * ## Audio focus
  *
  * [AudioManager.AUDIOFOCUS_GAIN] is requested on start and abandoned on stop. Any focus-loss
@@ -97,6 +101,16 @@ class AudioTrackMetronomePlayer @Inject constructor(
             .setAudioFormat(audioFormat)
             .setBufferSizeInBytes(bufferSizeBytes)
             .setTransferMode(AudioTrack.MODE_STREAM)
+            // Explicitly opt out of the low-latency "fast" mixer path. That path uses a very
+            // small buffer with a narrow underrun margin; this player's write pattern (one short
+            // click, then silence for the rest of the beat interval — sometimes hundreds of ms at
+            // low BPM) reliably underruns it. The deep-buffer path selected by POWER_SAVING
+            // tolerates that gap pattern (pads with silence, no special recovery event) at the
+            // cost of higher but constant output latency, which this player already absorbs via
+            // the warm-up silence write below. Without this call the framework auto-selects a
+            // path per device/heuristics, which is what let this glitch reproduce on some
+            // devices (observed: Pixel 9 Pro) and not others (observed: Sony Xperia 10 IV).
+            .setPerformanceMode(AudioTrack.PERFORMANCE_MODE_POWER_SAVING)
             .build()
 
         if (audioTrack.state != AudioTrack.STATE_INITIALIZED) {
@@ -176,6 +190,14 @@ class AudioTrackMetronomePlayer @Inject constructor(
                     } else if (newConfig.bpm != oldConfig.bpm) {
                         scheduler.onBpmChanged(newConfig)
                     }
+                }
+
+                // If the loop fell behind schedule (e.g. GC pause, or the audio HAL waking from
+                // standby after a long silence gap at low BPM — see BeatScheduler.catchUpIfBehind),
+                // drop the missed clicks silently instead of firing them all back-to-back.
+                val skipped = scheduler.catchUpIfBehind(clock.nanoTime())
+                if (skipped > 0) {
+                    Log.w(TAG, "Metronome loop fell behind; skipped $skipped click(s) to resync instead of bursting them")
                 }
 
                 // Write the current click to the AudioTrack buffer.
