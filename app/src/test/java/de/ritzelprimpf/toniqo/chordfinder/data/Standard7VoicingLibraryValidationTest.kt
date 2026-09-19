@@ -2,7 +2,6 @@ package de.ritzelprimpf.toniqo.chordfinder.data
 
 import de.ritzelprimpf.toniqo.chordfinder.domain.model.ChordKey
 import de.ritzelprimpf.toniqo.chordfinder.domain.model.ChordToneRole
-import de.ritzelprimpf.toniqo.chordfinder.domain.model.FretMark
 import de.ritzelprimpf.toniqo.common.model.ChordQuality
 import de.ritzelprimpf.toniqo.common.model.GuitarTuning
 import org.junit.Assert.assertEquals
@@ -32,10 +31,6 @@ class Standard7VoicingLibraryValidationTest {
 
     private val tuning = GuitarTuning.STANDARD_7
     private val stringCount = 7
-
-    // 0-based index of the low B string -- the whole reason a 7-string library exists instead of
-    // just reusing the standard-6 one. See generate_voicings_7.py's "Low-string guarantee".
-    private val lowStringIndex = 0
 
     private fun loadResource(name: String) =
         javaClass.classLoader!!.getResourceAsStream(name)
@@ -120,26 +115,6 @@ class Standard7VoicingLibraryValidationTest {
     }
 
     // ── 7-string-specific assertions ──────────────────────────────────────────────
-
-    @Test
-    fun `every triad chord has at least one voicing sounding the low B string`() {
-        // Verifies the library actually delivers on the low-string guarantee
-        // generate_voicings_7.py's guarantee_string_sounds mechanism was built for -- not just
-        // that the mechanism ran once during generation, but that curation didn't strip every
-        // low-B voicing back out.
-        val triadQualities = listOf(
-            ChordQuality.MAJOR, ChordQuality.MINOR, ChordQuality.DIMINISHED, ChordQuality.AUGMENTED,
-        )
-        for (root in 0..11) {
-            for (quality in triadQualities) {
-                val voicings = library[ChordKey(root, quality)].orEmpty()
-                assertTrue(
-                    "root=$root $quality has no voicing sounding the low B string (index $lowStringIndex)",
-                    voicings.any { it.marks[lowStringIndex] != FretMark.Muted },
-                )
-            }
-        }
-    }
 
     @Test
     fun `library includes both root-position voicings and at least one non-root bass degree`() {

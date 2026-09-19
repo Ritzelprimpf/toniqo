@@ -2342,6 +2342,40 @@ app is now both satisfied by the shipped data and covered by a test that would h
 
 ---
 
+## 2026-09-19 — 7-string low-B-string coverage assertion removed after final curation
+
+**Decision.** Deleted `Standard7VoicingLibraryValidationTest`'s
+`every triad chord has at least one voicing sounding the low B string` test (and its
+now-unused `lowStringIndex` constant / `FretMark` import), after final hand-curation of
+`voicings_standard_7.json` left `root=0 MINOR` (C minor) with no voicing that sounds the low B
+string. Per the user: the low-string guarantee is a goal for curation to aim for, not a hard
+requirement every chord must satisfy — some shapes genuinely can't include the low B without
+becoming unplayable or losing a chord tone, so a strict per-chord assertion was testing the wrong
+thing.
+
+**Alternatives considered** (offered to the user, who picked outright removal):
+- *Soft check that logs gaps without failing.* Would keep visibility into which chords lack
+  low-B coverage without blocking the build.
+- *Threshold-based (e.g. ≥90% of the 48 root/quality combos).* Would catch a curation
+  regression that strips out most low-B voicings while tolerating a few unreachable ones.
+- *Whitelist known exceptions by name (root=0 MINOR).* Would keep the strict check for every
+  other combo, catching future regressions elsewhere.
+
+**Rationale.** User judgment: reachability of the low-B guarantee varies per chord shape and
+isn't knowable in advance without re-deriving the guitar-idiomatic constraints the generator
+script already tried to encode — encoding a threshold or whitelist into the test would just be
+guessing at that same problem from the test side. Simpler to drop the invariant than encode a
+guess about which exceptions are "expected."
+
+**Consequences.** `Standard7VoicingLibraryValidationTest` no longer verifies low-B-string
+coverage at all; that property is now reviewed only during hand-curation, not enforced by
+`./gradlew test`. The other four curation-safety checks in that file (marks/fingers size,
+fret-span bounds, baseFret ordering, positive labelKey) are unaffected and still cover the
+failure mode this test class exists for (§"7-string hand-curation crash" above). Full
+`testDebugUnitTest` suite verified green (822 tests) after the change.
+
+---
+
 ## (Template for future entries)
 
 ## YYYY-MM-DD — Short title of decision
