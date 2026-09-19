@@ -63,11 +63,14 @@ MAX_FRET: int = 15
 # Maximum spread across the fretted region: max_fretted_fret − min_fretted_fret.
 # Open strings (fret 0) are excluded from the span calculation.
 # Must match Voicing.kt's MAX_FRET_SPAN (app/.../chordfinder/domain/model/Voicing.kt) exactly --
-# that's the value actually enforced at validation time. Flat (not position-scaled) even though a
-# 6-fret stretch is physically easier higher up the neck than down at fret 1 -- deliberately kept
-# simple; revisit with a position-scaled limit if flat 6 still proves too strict up high or too
-# loose down low.
-MAX_SPAN: int = 5
+# and that value is in turn dictated by the fixed 5-row rendering window (FretboardRenderModel's
+# FRET_WINDOW_SIZE), not chosen independently: a shape that can't anchor to the nut renders its
+# highest fretted note at row `span + 1`, so span must be ≤ 4 for that to fit in 5 rows. A span of
+# 5 (visually: touching 6 distinct frets) silently overflows the diagram -- this was shipped
+# briefly at 5 before being caught; see DECISIONS.md. Flat (not position-scaled) even though a
+# 4-fret stretch is physically easier higher up the neck than down at fret 1 -- deliberately kept
+# simple; revisit with a position-scaled limit only if the render window itself ever changes.
+MAX_SPAN: int = 4
 
 # A voicing must have at least this many sounding strings.
 # 4 guarantees all three triad tones are covered with at least one doubling.

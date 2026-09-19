@@ -21,6 +21,17 @@ import. A bug fix there (e.g. the barre-adjacency fix) fixes every library at on
 owns only what's actually tuning/quality-specific (open pitch classes, the quality→interval
 table, and the search-window constants).
 
+**Max fret span is 4, not a free tuning knob.** Every driver's `MAX_SPAN` must be ≤4 and must
+match `Voicing.kt`'s `MAX_FRET_SPAN` exactly. This isn't a playability preference — it's forced
+by the fretboard diagram's fixed 5-row rendering window: a shape that can't anchor at the nut
+(any barre, or a shape reaching past fret 5) draws its highest fretted note at row `span + 1`,
+so a span of 5 needs a 6th row that doesn't exist and silently overflows the Canvas. This was
+shipped briefly at 5 (`voicings_standard_6_seventh.json` had 9 real, live-overflowing chords as a
+result) before being caught and fixed — see `DECISIONS.md`'s entry correcting it. If you ever
+touch a driver's `MAX_SPAN`, don't raise it without first changing `FRET_WINDOW_SIZE` in
+`FretboardRenderModel.kt` and re-auditing every curated asset — see that decision entry for the
+exact row-mapping math.
+
 Every other 6-string drop tuning (Drop C#, Drop C, Drop B, Drop Bb, Drop A, …) is a uniform
 semitone offset of Drop D, so the app reaches `voicings_drop_d_6.json` for all of them via the
 same fret-shifting tier that already serves Eb/D/C#/C standard from `voicings_standard_6.json`
@@ -29,13 +40,25 @@ same fret-shifting tier that already serves Eb/D/C#/C standard from `voicings_st
 `voicings_standard_7.json`, if that's ever wanted; it doesn't exist yet, only the standard-7
 tuning does.
 
-**7-string is dev-tool-only for now**, exactly like Drop D was when it first landed: `GuitarTuning`
-in `common/model/GuitarTuning.kt` has no `STANDARD_7` entry yet, `VoicingRepositoryImpl`'s
-`FAMILIES` list doesn't know about a 7-string family, and the Chord Finder UI has no
-string-count/tuning picker at all — it's implicitly 6-string throughout. Generating and curating
-`voicings_standard_7.json` is useful and safe to do independently of that wiring (this is the
-same incremental order Drop D followed), but actually *seeing* 7-string chords in the app needs
-that separate, larger follow-up.
+**Update:** the app-side wiring described in the previous paragraph (when this note was first
+written) has since landed — `GuitarTuning.STANDARD_7` and its `VoicingRepositoryImpl.FAMILIES`
+entry both exist now. And a claim this note originally made turned out to be wrong: there's no
+separate "Chord Finder tuning picker" to build. `ChordVoicingsViewModel` already reads the active
+tuning generically from `SelectedTuningStore` (`common/state/SelectedTuningStore.kt`), which the
+*Tuner* publishes to on every preset change — and the Tuner already ships a 7-string "B Standard"
+preset (`B1 E2 A2 D3 G3 B3 E4`, identical to `GuitarTuning.STANDARD_7`). So the picker already
+exists: it's the Tuner's own preset picker. Select "B Standard" there, open a chord in Chord
+Finder, and the voicings screen resolves it as tier-1 standard-7 automatically — no new UI code
+needed for this specific, already-cataloged tuning. (The *actually* open question in
+`FUTURE_PLANS.md` FP-3 is about **arbitrary, uncataloged** tunings needing a live runtime
+generator — unrelated to this named-preset case.)
+
+**The one remaining gate is curation.** `voicings_standard_7.json` / `voicings_standard_7_seventh.json`
+don't exist under `app/src/main/assets/chordfinder/` yet — only the uncurated drafts in this
+directory do. Until a curated copy is placed there, `VoicingRepositoryImpl` correctly matches the
+"B Standard" tuning to this family (tier 1) but returns an empty voicing list, exactly like Drop D
+behaves today. Curate the draft (see "Curate and commit" below), copy both files to
+`assets/chordfinder/`, and 7-string chords appear in the app with no further code changes.
 
 ## Low-string guarantee (7-string only)
 
@@ -74,10 +97,10 @@ sounding ones — more candidates, more curation needed). `generate_voicings_7.p
 accepts `--no-guarantee-low-string` (see "Low-string guarantee" above).
 
 The drop-D driver deliberately searches a tighter window than the standard one (fret span ≤3
-vs ≤5, capped at 3-4 sounding strings for triads / 2-3 for power chords) — these are meant to
+vs ≤4, capped at 3-4 sounding strings for triads / 2-3 for power chords) — these are meant to
 be compact, movable riffing shapes, not the standard library's fuller open-position voicings.
 It also skips the inversion pass (see its docstring for why). The 7-string driver otherwise uses
-the same search window as the 6-string standard driver (fret span ≤5, 4+ sounding strings,
+the same search window as the 6-string standard driver (fret span ≤4, 4+ sounding strings,
 inversion pass included) — adding a string doesn't change how far a hand can stretch, only how
 many strings there are to choose from.
 
@@ -134,17 +157,14 @@ asset ships. The same applies independently to each `_seventh.json` asset: a cho
 seventh-chord asset is missing or has no entry for that key just shows no seventh-chord
 voicings, without affecting its plain-triad lookup.
 
-**7-string is further behind than Drop D on the wiring side, but less than it might look**: even
-once `voicings_standard_7.json` / `voicings_standard_7_seventh.json` are curated, there's
-currently nowhere in the app for them to go — no `GuitarTuning.STANDARD_7`, no `FAMILIES` entry
-in `VoicingRepositoryImpl`, and no way for the Chord Finder UI to select a 7-string instrument at
-all. The good news: both `Voicing.kt` (domain model — `marks`/`fingers` length is derived from
-`openNotes.size`, not hardcoded to 6, by design, per its kdoc) and
-`ui/components/FretboardDiagram.kt` (the Canvas that draws the diagram — every measurement is
-already `model.stringCount`-relative, not a fixed 6) are already string-count-agnostic. The
-remaining wiring is narrower than a full rewrite: add the `GuitarTuning` constant, register the
-family in `VoicingRepositoryImpl`, give the Chord Finder screen a way to pick a 7-string tuning,
-and write a `VoicingLibraryValidationTest` analog for it (the existing one hardcodes
-`GuitarTuning.STANDARD_6` and asserts `marks.size == 6` specifically, so it validates the
-standard-6 asset only — a 7-string version needs its own copy with `stringCount == 7`, same
-structure). That's still a separate task from curating this library and is not done here.
+**7-string app-side wiring is done** (see the "Update" note near the top of this README):
+`GuitarTuning.STANDARD_7` exists, its `VoicingRepositoryImpl.FAMILIES` entry exists, and no
+Chord Finder UI work was needed since tuning selection already flows generically from the Tuner
+via `SelectedTuningStore`. `Voicing.kt` (domain model) and `ui/components/FretboardDiagram.kt`
+(the Canvas that draws the diagram) were both already string-count-agnostic by design, needing no
+changes either. The only things standing between this and 7-string chords actually appearing in
+the app are: curating `voicings_standard_7.json` / `voicings_standard_7_seventh.json` (this
+section) and writing a `VoicingLibraryValidationTest` analog for it once curated content exists
+to validate (the existing one hardcodes `GuitarTuning.STANDARD_6` and asserts `marks.size == 6`
+specifically, so it validates the standard-6 asset only — a 7-string version needs its own copy
+asserting `marks.size == 7`, same structure, once there's a curated resource file to point it at).

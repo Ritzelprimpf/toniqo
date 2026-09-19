@@ -17,7 +17,7 @@ Why this library looks different from the standard one:
   - Quality set adds POWER (root + fifth, no third -- see ChordQuality.kt). Power chords are
     the default drop-tuning riff shape; a triad's third is often deliberately omitted low on
     the neck because it makes the chord sound muddy through distortion.
-  - MAX_SPAN is tighter (3, not the standard library's 5) and MIN/MAX_SOUNDED cap voicings at
+  - MAX_SPAN is tighter (3, not the standard library's 4) and MIN/MAX_SOUNDED cap voicings at
     3-4 strings for triads / 2-3 for power chords: these are meant to be compact, movable grips
     playable low on a drop-tuned neck, not the standard library's fuller open-position shapes.
   - No inversion pass: a "power chord inversion" (fifth in the bass) is a niche shape the

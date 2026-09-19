@@ -1,7 +1,5 @@
 package de.ritzelprimpf.toniqo.chordfinder.domain.model
 
-import de.ritzelprimpf.toniqo.common.model.ChordQuality
-
 /**
  * A single guitar voicing for a chord — everything the fretboard diagram needs to render.
  *
@@ -68,7 +66,24 @@ data class Voicing(
 
     companion object {
 
-        private const val MAX_FRET_SPAN = 6
+        /**
+         * Maximum allowed fret span (highest fretted mark − lowest fretted mark).
+         *
+         * Derived from, and must never exceed, the fixed rendering window: `FRET_WINDOW_SIZE = 5`
+         * rows in [de.ritzelprimpf.toniqo.chordfinder.presentation.ui.FretboardRenderModel], and
+         * `Voicing.toRenderModel()` maps an absolute fret to row `fret - base + 1`. Whenever a
+         * shape can't anchor to the nut (any barre, or a non-barre shape reaching past row 5),
+         * `base` is pinned to the shape's own lowest fretted fret, so the highest fretted note
+         * lands at row `span + 1`. For that to fit in the 5-row window, `span` must be ≤ 4 — a
+         * span of 5 needs row 6, which silently draws past the bottom of the fixed-size Canvas.
+         *
+         * This value was previously 6 (raised from an original 4 to match the generator's own
+         * `MAX_SPAN`, which was itself out of sync with `FRET_WINDOW_SIZE`) — see
+         * `DECISIONS.md`'s entry correcting this. 4 is the actual, correct ceiling; it is not
+         * an independent product choice and must not be changed without also changing
+         * `FRET_WINDOW_SIZE` (and verifying every rendering path still fits).
+         */
+        private const val MAX_FRET_SPAN = 4
 
         /** Highest playable fret a curated voicing may use; internal so the data layer can
          * reuse it instead of redeclaring its own copy. */

@@ -57,8 +57,10 @@ DEFAULT_OUT: str = "voicings_standard_7_seventh.json"
 MAX_FRET: int = 15
 
 # Must match generate_voicings_7.py's own MAX_SPAN exactly — a seventh derived from a triad shape
-# must never be allowed a wider stretch than the triad library itself permits.
-MAX_SPAN: int = 5
+# must never be allowed a wider stretch than the triad library itself permits. Also see that
+# constant's own comment: this isn't an independent choice, it's dictated by the fixed 5-row
+# rendering window.
+MAX_SPAN: int = 4
 
 # Standard 7-string open pitch classes, low B → high e. Must match generate_voicings_7.py's own
 # STANDARD_7_OPEN_PCS — this is the same reference tuning the triad library was authored for.

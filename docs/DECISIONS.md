@@ -2152,6 +2152,194 @@ This is a second, independent layer alongside `catchUpIfBehind` (above): `catchU
 
 **Known gap.** Verified via `compileDebugKotlin`, `testDebugUnitTest` (full suite, unaffected), and — going beyond the usual verification level for this project — an actual `assembleRelease` build with `aapt2 dump resources` inspection proving both the bug (old code) and the fix (new code) directly, rather than relying on code-inspection alone. No changes needed to `proguard-rules.pro`.
 
+## 2026-09-18 (later still) — Chord Finder: standard-7-string tuning registered, gated on curation
+
+**Decision.** Added `GuitarTuning.STANDARD_7` (B1 E2 A2 D3 G3 B3 E4 — identical notes to the
+Tuner's existing `seven_string_standard_b` "B Standard" preset) to `common/model/GuitarTuning.kt`,
+and registered a matching `TuningFamily` entry in `VoicingRepositoryImpl.FAMILIES` pointing at
+`chordfinder/voicings_standard_7.json` / `chordfinder/voicings_standard_7_seventh.json`. Neither
+asset has been placed under `assets/chordfinder/` yet — only the uncurated drafts produced by
+`tools/voicing-generator/generate_voicings_7.py` (see that phase's own README) exist. Until a
+curated copy ships, this family behaves exactly like `GuitarTuning.DROP_D_6` did before its own
+asset shipped: the tuning matches correctly (tier 1, no fret-shift), but the voicing list is
+empty rather than crashing — see `VoicingRepositoryImpl.loadFamily`'s existing fallback.
+
+**Correction to prior scoping (same session, two turns earlier).** When the generator scripts
+were built, the assistant claimed "the Chord Finder UI has no string-count/tuning picker at all"
+and listed "give the Chord Finder screen a way to pick a 7-string tuning" as required follow-up
+work. That was wrong. `ChordVoicingsViewModel` already reads the active tuning generically from
+`common/state/SelectedTuningStore`, which `TunerViewModel` publishes to on every preset
+change (`TunerViewModel.kt` lines ~143, ~195, via `TuningPresetMapper.map()`) — this wiring
+predates this session and already generalizes over any `GuitarTuning`, any string count. Since
+the Tuner already ships a "B Standard" 7-string preset with the exact notes `STANDARD_7` above
+uses, selecting it in the Tuner and then opening a chord in Chord Finder already resolves through
+the standard-7 family with zero new UI code. The actual open question logged in
+`FUTURE_PLANS.md` FP-3 ("where does the user pick a tuning") is about *arbitrary, uncataloged*
+tunings needing a live runtime generator — a different, harder problem this change does not
+touch. This correction is recorded so a future session doesn't repeat the same over-scoping.
+
+**Alternatives considered.**
+- *Copy the uncurated draft JSON into `assets/chordfinder/` now, so 7-string chords are visible
+  immediately.* Rejected — this is the same human-curation gate every other library in this
+  project goes through (see `tools/voicing-generator/README.md`'s "Curate and commit" section);
+  skipping it would ship potentially-awkward or unplayable fingerings as if they were reviewed,
+  undermining the entire point of the curation step. `GuitarTuning.DROP_D_6` sat registered
+  exactly this way, asset-less, for the same reason, before this session started.
+- *Write a `VoicingLibraryValidationTest` analog now, against the draft.* Rejected for the same
+  reason — that test's whole purpose is to assert curated, human-approved content is
+  self-consistent; pointing it at not-yet-reviewed content would test the wrong thing. Deferred
+  until curated content exists (same state Drop D's own equivalent test is in).
+
+**Rationale.** Registering the `GuitarTuning` constant and the repository family is
+unambiguous, low-risk plumbing that exactly mirrors the already-established Drop-D pattern and
+required no product decision. Everything else genuinely gated on human curation is left alone
+rather than worked around.
+
+**Consequences.** `common/model/GuitarTuning.kt` (+`STANDARD_7`), `VoicingRepositoryImpl.kt`
+(+`FAMILIES` entry, updated class kdoc), `tools/voicing-generator/README.md` (corrected). No
+Kotlin test changes — `compileDebugKotlin` and the full `testDebugUnitTest` suite are unaffected
+(verified).
+
+**Supersession trigger.** Once `voicings_standard_7.json` / `_seventh.json` are curated and
+placed under `assets/chordfinder/`, add the `VoicingLibraryValidationTest` analog (asserting
+`marks.size == 7`, `GuitarTuning.STANDARD_7`) in the same change.
+
+## 2026-09-18 (even later) — MAX_FRET_SPAN corrected to 4, superseding the 2026-08-09 "4→6" change
+
+**Decision.** `Voicing.kt`'s `MAX_FRET_SPAN` changes from 6 to **4**. This is not a new product
+choice — it's the correct value the diagram's own fixed rendering window has dictated the whole
+time, and the 2026-08-09 entry that raised it from 4 to 6 is hereby **superseded**: that change
+was based on a real inconsistency (generator vs. Kotlin), but neither of those two numbers had
+ever actually been checked against what the fretboard diagram can render, and "raise Kotlin to
+meet the generator" happened to pick the wrong side of that mismatch.
+
+**The math, precisely (reported by the user as "chords that span 6 frets, but we can only model 5
+frets").** `FretboardRenderModel.FRET_WINDOW_SIZE = 5` — the diagram Canvas always draws exactly
+5 fret rows, a fixed size, never resized per voicing. `Voicing.toRenderModel()` maps an absolute
+fret to a window row via `fretWithinWindow = fret - base + 1`. Two windowing modes:
+- **Nut-anchored** (`base = 1`): only chosen for non-barre shapes whose highest fretted note is
+  already ≤ 5 — i.e. this mode can only ever be selected when it's guaranteed to fit, regardless
+  of span.
+- **Position-shifted** (`base = baseFret`, the shape's own lowest fretted fret): used for every
+  barre voicing unconditionally, and for any non-barre voicing reaching past fret 5. Here the
+  highest fretted note lands at row `span + 1`.
+
+For the position-shifted case to fit in 5 rows, `span + 1 ≤ 5`, i.e. **`span ≤ 4`**. A span of 5
+(the user's "spans 6 frets" — touching 6 distinct fret numbers, e.g. frets 3 through 8) needs row
+6 and silently draws past the bottom edge of the fixed-size Canvas. This is universal: any
+generated/curated voicing that ends up needing position-shifted windowing (which a curator can't
+reliably predict in advance — it depends on the *other* voicings' relative positions and whether
+the shape is a barre) must assume the worst case.
+
+**Empirically confirmed against real shipped data**, not just derived on paper: wrote a script
+replicating `toRenderModel()`'s exact windowing logic and ran it against every asset under
+`app/src/main/assets/chordfinder/`. Result: **the already-shipped `voicings_standard_6_seventh.json`
+had 9 voicings genuinely overflowing the window** (dominant/diminished/augmented seventh chords —
+e.g. C7's `[x,3,2,0,1,6]`) — a live, real bug users could already have hit, not a hypothetical.
+The (not yet shipped) 7-string drafts had 64 and 109 respectively. `voicings_standard_6.json`
+(triads) and both Drop-D assets already had max span ≤4 and were unaffected.
+
+**Fix applied, end to end:**
+- `Voicing.kt`: `MAX_FRET_SPAN` 6→4, with a new kdoc comment deriving the value from
+  `FRET_WINDOW_SIZE` explicitly (see above) so it can't drift out of sync silently again.
+- `VoicingLibraryValidationTest.kt`: span assertion tightened `≤6`→`≤4` to match.
+- `VoicingTest.kt`: the two boundary tests ("succeeds at exactly the max", "throws when
+  exceeding it") rewritten for a max of 4 with fresh hand-verified fret/pitch-class arithmetic.
+- `tools/voicing-generator/generate_voicings.py`, `generate_voicings_7.py`,
+  `generate_seventh_voicings.py`, `generate_seventh_voicings_7.py`: `MAX_SPAN` 5→4, with comments
+  now explaining this is dictated by `FRET_WINDOW_SIZE`, not an independent tuning knob. The two
+  Drop-D drivers (`MAX_SPAN` already 3) needed no change.
+- **Regenerated and reshipped** `app/src/main/assets/chordfinder/voicings_standard_6_seventh.json`
+  (the live bug) from the already-curated, unaffected `voicings_standard_6.json` triads: 84 chord
+  entries preserved, 0 left with zero voicings, 372→365 total voicings (the 9 overflowing shapes
+  either dropped or replaced by an alternate in-bounds mutation), verified max span now 4.
+- Regenerated the not-yet-shipped 7-string drafts (`voicings_standard_7.draft.json`,
+  `voicings_standard_7_seventh.json`) the same way — still pending human curation before they
+  ship, per the existing process; this just means the draft the user will eventually curate is no
+  longer seeded with unrenderable shapes.
+
+**Alternatives considered.**
+- *Widen `FRET_WINDOW_SIZE` to 7 instead of shrinking `MAX_FRET_SPAN`.* Explicitly rejected by the
+  user in this conversation ("because it breaks the UI we should stick to 5 bars") — resizing the
+  diagram is a real design-system change (dimensions, `DESIGN.md` §whatever the fretboard spec
+  section is) with layout ripple effects, whereas tightening the search/validation ceiling to
+  match an already-fixed, intentional UI constraint is not a design change at all, just a
+  correctness fix.
+- *Leave `voicings_standard_6_seventh.json` as-is and only fix it going forward.* Rejected — the
+  9 offending voicings are a live rendering bug for real users today; there's no reason to leave
+  a known, already-diagnosed, already-generatable fix un-shipped.
+
+**Rationale.** `MAX_FRET_SPAN` was never actually a product/playability choice in this codebase —
+every account of it in prior decisions (both the original 4 and the "raised to 6" correction)
+reasoned about hand-stretch playability without checking the one thing that actually bounds it:
+the diagram can only ever draw 5 rows. Deriving it explicitly from `FRET_WINDOW_SIZE` in the new
+kdoc is meant to stop this from drifting a third time.
+
+**Consequences.** Any future change to `FRET_WINDOW_SIZE` must re-derive `MAX_FRET_SPAN` (and
+re-audit every curated asset) rather than being treated as a purely visual tweak.
+
+**Supersession trigger.** If `FRET_WINDOW_SIZE` itself is ever deliberately changed (a real
+design-system decision, not a bug fix), `MAX_FRET_SPAN` must be recomputed from the formula above
+as part of that same change, not left at 4.
+
+## 2026-09-18 (yet later) — 7-string hand-curation crash: 12 leftover span-5 voicings, missing test coverage
+
+**Decision.** After the user hand-curated `voicings_standard_7.json` / `voicings_standard_7_seventh.json`
+and placed them in `app/src/main/assets/chordfinder/`, the Chord Finder app crashed loading any
+chord. Root cause: 12 voicings in the seventh-chord file still had a fret span of 5 (a movable
+dominant-7/minor-7 barre shape with the low B reaching 5 frets above the barre — e.g. F7:
+`[6,1,3,1,2,1,1]` with `barre={fret:1,from:1,to:6}` — genuinely idiomatic, but mechanically
+impossible to render given `MAX_FRET_SPAN=4`). `Voicing.validated()` throws on the first
+out-of-bounds entry it hits, and `VoicingRepositoryImpl` parses an entire family's JSON eagerly
+on first access — so one bad entry anywhere in the file crashed the load for *every* chord in
+the standard-7 family, not just the 12 affected ones.
+
+**Fix.** Removed the 12 offending voicings (verified: 0 chord entries left with zero voicings
+afterward — every affected chord still has at least one other valid shape). There's no small
+fret adjustment that preserves this specific shape's chord tones within span 4 (checked: shifting
+the low string down 1 fret lands on a non-chord-tone; shifting the barre up changes which chord
+the shape represents), so this wasn't a salvageable curation tweak, just a shape that can't exist
+in this render model.
+
+**More importantly — closed the actual gap that let this ship undetected.** Neither
+`VoicingLibraryValidationTest` (standard-6) nor anything else validated seventh-chord assets at
+all before this; it only ever loaded the plain-triad file. The exact same gap let the
+`voicings_standard_6_seventh.json` span-5 bug (see the "MAX_FRET_SPAN corrected to 4" entry above)
+ship previously with zero test coverage catching it. Fixed both instances of the gap:
+- `VoicingLibraryValidationTest.kt` now loads and merges `voicings_standard_6.json` **and**
+  `voicings_standard_6_seventh.json`, exactly mirroring `VoicingRepositoryImpl.loadFamily()`'s
+  own merge, so every invariant check now covers both assets.
+- New `Standard7VoicingLibraryValidationTest.kt`, same structure, for `GuitarTuning.STANDARD_7`
+  (`marks`/`fingers` size 7, not 6) — plus one 7-string-specific assertion: every triad chord has
+  at least one voicing that actually sounds the low B string, directly testing whether curation
+  preserved the low-string-guarantee feature `generate_voicings_7.py` was built for.
+- Added test-resource copies of all three previously-untested files under
+  `src/test/resources/chordfinder/`.
+
+**Alternatives considered.**
+- *Adjust the 12 shapes to fit span 4 instead of removing them.* Rejected after checking — no
+  in-bounds variant preserves the correct chord tones for this specific shape (see above).
+- *Only fix the 12 entries, skip adding test coverage.* Rejected — this is the second time the
+  identical failure mode (a hand-edit violates `MAX_FRET_SPAN` in a seventh-chord asset, ships
+  undetected, crashes on device) has happened in the same session. Fixing the instance without
+  fixing the detection gap just schedules a third occurrence.
+
+**Rationale.** `Voicing.validated()` throwing is working exactly as designed — it's supposed to
+be impossible to ship a malformed voicing. The actual failure was process: nothing exercised that
+validation against the seventh-chord assets before a device did. Test coverage should match what
+`VoicingRepositoryImpl` actually loads, not just the file that happened to be tested first.
+
+**Consequences.** Any future hand-edit to any of these four JSON assets that violates a
+`Voicing.validated()` invariant now fails `./gradlew test` immediately instead of crashing the
+running app. `tools/voicing-generator/voicings_standard_7.draft.json` and
+`voicings_standard_7_seventh.json` (the tools-dir reference copies) were resynced to match the
+now-fixed, user-curated shipped assets.
+
+**Known gap.** Verified via `compileDebugKotlin` and the full `testDebugUnitTest` suite (all
+green, including both new/expanded validation tests). Not verified on-device — no Android
+environment available to this agent; verification is that the exact invariant which crashed the
+app is now both satisfied by the shipped data and covered by a test that would have caught it.
+
 ---
 
 ## (Template for future entries)

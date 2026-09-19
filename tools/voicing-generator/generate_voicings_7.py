@@ -63,8 +63,10 @@ MAX_FRET: int = 15
 
 # Maximum spread across the fretted region: max_fretted_fret − min_fretted_fret. Open strings
 # (fret 0) are excluded. Same value as the standard 6-string driver -- adding a 7th string
-# doesn't change how far a hand can stretch across the strings it does fret.
-MAX_SPAN: int = 5
+# doesn't change how far a hand can stretch across the strings it does fret, and this ceiling
+# isn't a hand-stretch choice anyway: it's dictated by the fixed 5-row rendering window (see
+# generate_voicings.py's own comment on this constant for the row-mapping math).
+MAX_SPAN: int = 4
 
 # A voicing must have at least this many sounding strings, out of 7. Same floor as the 6-string
 # driver's MIN_SOUNDED=4 (all 3 triad tones plus at least one doubling) -- unchanged by the extra

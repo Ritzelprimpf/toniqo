@@ -20,11 +20,16 @@ import kotlin.math.abs
  * an in-memory cache. Thread safety is ensured by a [Mutex] so no asset is loaded more than once
  * even under concurrent suspension.
  *
- * Two independent tuning families are curated: standard tuning ([GuitarTuning.STANDARD_6]) and
- * drop-D tuning ([GuitarTuning.DROP_D_6]). Neither is a uniform offset of the other — only the
- * lowest string moves for a drop tuning — so each needs its own hand-curated library. A
- * requested tuning is matched against each family's reference tuning in turn (see [FAMILIES]);
- * the first family it's a uniform offset of wins.
+ * Three independent tuning families are registered: standard 6-string tuning
+ * ([GuitarTuning.STANDARD_6]), drop-D tuning ([GuitarTuning.DROP_D_6]), and standard 7-string
+ * tuning ([GuitarTuning.STANDARD_7]). None is a uniform offset of another — only the lowest
+ * string moves for a drop tuning, and a 7-string instrument has an extra string entirely — so
+ * each needs its own hand-curated library. A requested tuning is matched against each family's
+ * reference tuning in turn (see [FAMILIES]); the first family it's a uniform offset of wins.
+ * [GuitarTuning.STANDARD_7]'s library ([loadFamily]'s asset paths) has not been curated/shipped
+ * yet — see `tools/voicing-generator/README.md` — so it currently behaves exactly like
+ * [GuitarTuning.DROP_D_6] did before its own asset shipped: registered, matched correctly, empty
+ * result.
  *
  * Tier classification (relative to whichever family matched):
  * - **Tier 1** (`offset == 0`, i.e. exactly the family's reference tuning) → [VoicingLookupResult.Standard].
@@ -59,6 +64,11 @@ class VoicingRepositoryImpl @Inject constructor(
                 GuitarTuning.DROP_D_6,
                 "chordfinder/voicings_drop_d_6.json",
                 "chordfinder/voicings_drop_d_6_seventh.json",
+            ),
+            TuningFamily(
+                GuitarTuning.STANDARD_7,
+                "chordfinder/voicings_standard_7.json",
+                "chordfinder/voicings_standard_7_seventh.json",
             ),
         )
     }

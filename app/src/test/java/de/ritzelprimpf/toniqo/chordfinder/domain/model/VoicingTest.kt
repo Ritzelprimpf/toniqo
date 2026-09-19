@@ -32,12 +32,6 @@ class VoicingTest {
     )
     private val emKey = ChordKey(4, ChordQuality.MINOR)
 
-    // Barre-only [5,7,7,6,5,5]
-    private val aMajBarreMarks = listOf(
-        FretMark.Fretted(5), FretMark.Fretted(7), FretMark.Fretted(7),
-        FretMark.Fretted(6), FretMark.Fretted(5), FretMark.Fretted(5),
-    )
-    private val aMajBarreBarre = Barre(5, 0, 5)
     private val aMajKey = ChordKey(9, ChordQuality.MAJOR)
 
     // ── category derivation ───────────────────────────────────────────────────────
@@ -162,22 +156,23 @@ class VoicingTest {
     }
 
     @Test
-    fun `validated succeeds when fret span is exactly the new maximum of 6`() {
-        // String0 fret8 = C (root, pc 0) and string4 fret8 = G (fifth, pc 7); string2 fret2 = E
-        // (third, pc 2+2=4). min fret 2, max fret 8 -> span exactly 6. All three chord tones
-        // present, lowest sounded string (0) carries the root.
-        val sixSpanMarks = listOf(
-            FretMark.Fretted(8), FretMark.Muted, FretMark.Fretted(2),
-            FretMark.Muted, FretMark.Fretted(8), FretMark.Muted,
+    fun `validated succeeds when fret span is exactly the new maximum of 4`() {
+        // String0 fret8 = C (root, pc 4+8=12 -> 0); string3 open = G (fifth, pc 7, doesn't count
+        // toward span); string5 fret12 = E (third, pc 4+12=16 -> 4). Fretted-only span: min
+        // fret 8, max fret 12 -> span exactly 4. All three chord tones present, lowest sounded
+        // string (0) carries the root.
+        val fourSpanMarks = listOf(
+            FretMark.Fretted(8), FretMark.Muted, FretMark.Muted,
+            FretMark.Open, FretMark.Muted, FretMark.Fretted(12),
         )
         val v = Voicing.validated(
-            1, sixSpanMarks, listOf(4, 0, 1, 0, 3, 0), null, setOf(0), ChordToneRole.ROOT, cMajKey, openPcs,
+            1, fourSpanMarks, listOf(1, 0, 0, 0, 0, 2), null, setOf(0), ChordToneRole.ROOT, cMajKey, openPcs,
         )
-        assertEquals(2, v.baseFret)
+        assertEquals(8, v.baseFret)
     }
 
     @Test
-    fun `validated throws when fret span exceeds the new maximum of 6`() {
+    fun `validated throws when fret span exceeds the new maximum of 4`() {
         val bigSpanMarks = listOf(
             FretMark.Fretted(1), FretMark.Fretted(8), FretMark.Fretted(4),
             FretMark.Fretted(5), FretMark.Fretted(3), FretMark.Fretted(1),

@@ -10,25 +10,37 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Loads a test-resource copy of `assets/chordfinder/voicings_standard_6.json` and asserts that
- * every entry satisfies all five voicing invariants, that every chord key (12 roots × 4
- * qualities) is present, and that C MAJOR specifically includes both a near-nut open voicing and
- * a barre voicing.
+ * Loads test-resource copies of `assets/chordfinder/voicings_standard_6.json` **and**
+ * `voicings_standard_6_seventh.json`, merged exactly the way [VoicingRepositoryImpl.loadFamily]
+ * merges them at runtime, and asserts that every entry in the combined library satisfies all
+ * five voicing invariants, that every triad chord key (12 roots × 4 qualities) is present, and
+ * that C MAJOR specifically includes both a near-nut open voicing and a barre voicing.
  *
- * The copy lives at `src/test/resources/chordfinder/voicings_standard_6.json` — Gradle puts
- * `src/test/resources` on the unit-test classpath automatically, no build.gradle.kts wiring
- * needed. Keep it in sync with `src/main/assets/chordfinder/voicings_standard_6.json` if that
- * file changes.
+ * Merging both files here (not just the triad one) matters: a hand-edit that violates an
+ * invariant in the *seventh*-chord asset only — e.g. a fret span too wide for
+ * [de.ritzelprimpf.toniqo.chordfinder.domain.model.Voicing.MAX_FRET_SPAN] — throws inside
+ * [Voicing.validated] the moment [VoicingRepositoryImpl] eagerly parses the whole family on
+ * first access, crashing the Chord Voicings screen for *any* chord in this tuning family, not
+ * just the malformed one. Before this test covered the seventh-chord file too, exactly that
+ * shipped once (see `DECISIONS.md`'s MAX_FRET_SPAN entries) — this test's whole job is to catch
+ * it here, at `./gradlew test` time, instead of on a device.
+ *
+ * The copies live at `src/test/resources/chordfinder/` — Gradle puts `src/test/resources` on
+ * the unit-test classpath automatically, no build.gradle.kts wiring needed. Keep them in sync
+ * with `src/main/assets/chordfinder/` if those files change.
  */
 class VoicingLibraryValidationTest {
 
     private val tuning = GuitarTuning.STANDARD_6
 
+    private fun loadResource(name: String) =
+        javaClass.classLoader!!.getResourceAsStream(name)
+            ?.bufferedReader()?.readText()
+            ?: error("Test resource not found: $name — expected at src/test/resources/chordfinder/")
+
     private val library by lazy {
-        val stream = javaClass.classLoader!!.getResourceAsStream("chordfinder/voicings_standard_6.json")
-            ?: error("Test resource not found: chordfinder/voicings_standard_6.json — expected at src/test/resources/chordfinder/")
-        val json = stream.bufferedReader().readText()
-        VoicingJsonParser.parse(json, tuning)
+        VoicingJsonParser.parse(loadResource("chordfinder/voicings_standard_6.json"), tuning) +
+            VoicingJsonParser.parse(loadResource("chordfinder/voicings_standard_6_seventh.json"), tuning)
     }
 
     // ── Full coverage check ───────────────────────────────────────────────────────
@@ -94,11 +106,14 @@ class VoicingLibraryValidationTest {
 
     @Test
     fun `every voicing fret span is within bounds`() {
+        // 4, not 6 or 5: FretboardRenderModel's fixed 5-row window maps a fretted mark to row
+        // `fret - base + 1`, so a span of 5 already needs a 6th row and silently overflows the
+        // diagram. See Voicing.MAX_FRET_SPAN's kdoc and the DECISIONS.md entry correcting this.
         library.forEach { (key, voicings) ->
             voicings.forEach { v ->
                 val range = v.fretRange
                 if (range != 0..0) {
-                    assertTrue("fret span ≤ 6 for $key: ${range.last - range.first}", range.last - range.first <= 6)
+                    assertTrue("fret span ≤ 4 for $key: ${range.last - range.first}", range.last - range.first <= 4)
                     assertTrue("baseFret ≥ 0 for $key", range.first >= 0)
                     assertTrue("maxFret ≤ 24 for $key", range.last <= 24)
                 }

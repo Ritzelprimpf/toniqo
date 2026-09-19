@@ -83,6 +83,36 @@ data class GuitarTuning(
                 Note(NoteName.E, octave = 4),
             ),
         )
+
+        /**
+         * Standard 7-string guitar tuning: B1 E2 A2 D3 G3 B3 E4 — [STANDARD_6] with a low B added
+         * a perfect fourth below the low E.
+         *
+         * The reference tuning for the (not yet shipped) 7-string voicing library —
+         * `voicings_standard_7.json` / `voicings_standard_7_seventh.json`, produced by
+         * `tools/voicing-generator/generate_voicings_7.py`. Registered here and in
+         * [de.ritzelprimpf.toniqo.chordfinder.data.VoicingRepositoryImpl]'s `FAMILIES` ahead of
+         * that asset existing, exactly as [DROP_D_6] was — an unregistered family falls back to
+         * an empty voicing list rather than crashing (see `VoicingRepositoryImpl.loadFamily`)
+         * until the curated JSON is placed under `assets/chordfinder/`.
+         *
+         * No Chord Finder UI currently lets a user select this tuning — that's an open product
+         * question tracked in `FUTURE_PLANS.md` (FP-3: does 7-string selection live in a
+         * Chord-Finder-local picker, or inherit from the Tuner's tuning?), deliberately left
+         * unresolved here rather than pre-empted.
+         */
+        val STANDARD_7: GuitarTuning = GuitarTuning(
+            id = "standard_7",
+            openNotes = listOf(
+                Note(NoteName.B, octave = 1),
+                Note(NoteName.E, octave = 2),
+                Note(NoteName.A, octave = 2),
+                Note(NoteName.D, octave = 3),
+                Note(NoteName.G, octave = 3),
+                Note(NoteName.B, octave = 3),
+                Note(NoteName.E, octave = 4),
+            ),
+        )
     }
 }
 
