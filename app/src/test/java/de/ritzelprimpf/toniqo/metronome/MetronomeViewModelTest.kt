@@ -273,10 +273,62 @@ class MetronomeViewModelTest {
         advanceUntilIdle()
 
         val before = viewModel.uiState.value.config
-        viewModel.onTimeSignatureChanged(numerator = 5, denominator = 8) // not in SUPPORTED_SIGNATURES
+        viewModel.onTimeSignatureChanged(numerator = 4, denominator = 3) // denominator 3 is not a power of two / never valid
 
         assertEquals(before.timeSignatureNumerator, viewModel.uiState.value.config.timeSignatureNumerator)
         assertEquals(before.timeSignatureDenominator, viewModel.uiState.value.config.timeSignatureDenominator)
+    }
+
+    @Test
+    fun `onTimeSignatureChanged resets a custom accent pattern to the default`() = runTest {
+        advanceUntilIdle()
+        viewModel.onBeatAccentToggled(beatIndex = 2) // now accentedBeats = {0, 2}
+
+        viewModel.onTimeSignatureChanged(numerator = 3, denominator = 4)
+
+        assertEquals(MetronomeConfig.DEFAULT_ACCENTED_BEATS, viewModel.uiState.value.config.accentedBeats)
+    }
+
+    @Test
+    fun `onTimeSignatureChanged with unsupported signature leaves accentedBeats unchanged`() = runTest {
+        advanceUntilIdle()
+        viewModel.onBeatAccentToggled(beatIndex = 2)
+        val before = viewModel.uiState.value.config.accentedBeats
+
+        viewModel.onTimeSignatureChanged(numerator = 4, denominator = 3) // denominator 3 is not a power of two / never valid
+
+        assertEquals(before, viewModel.uiState.value.config.accentedBeats)
+    }
+
+    // ─── Beat accent customization ───────────────────────────────────────────
+
+    @Test
+    fun `onBeatAccentToggled adds a beat not already accented`() = runTest {
+        advanceUntilIdle()
+
+        viewModel.onBeatAccentToggled(beatIndex = 2)
+
+        assertEquals(setOf(0, 2), viewModel.uiState.value.config.accentedBeats)
+    }
+
+    @Test
+    fun `onBeatAccentToggled removes a beat that is already accented`() = runTest {
+        advanceUntilIdle()
+
+        viewModel.onBeatAccentToggled(beatIndex = 0) // beat 0 is accented by default
+
+        assertEquals(emptySet<Int>(), viewModel.uiState.value.config.accentedBeats)
+    }
+
+    @Test
+    fun `onBeatAccentToggled twice on the same beat returns to the original state`() = runTest {
+        advanceUntilIdle()
+        val before = viewModel.uiState.value.config.accentedBeats
+
+        viewModel.onBeatAccentToggled(beatIndex = 3)
+        viewModel.onBeatAccentToggled(beatIndex = 3)
+
+        assertEquals(before, viewModel.uiState.value.config.accentedBeats)
     }
 
     // ─── BPM persistence debounce ────────────────────────────────────────────

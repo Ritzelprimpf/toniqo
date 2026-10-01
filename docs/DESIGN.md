@@ -12,7 +12,6 @@
 >
 > **Items the agent must stop and ask about** (not yet decided in this doc):
 > - Tuner idle/empty state layout (§8.1 "Idle state")
-> - The 432 Hz toggle's UI placement (§14, Q1)
 > - Info section screen designs (§8.5)
 > - Permission-denied state for the microphone (§14, Q2)
 
@@ -368,7 +367,7 @@ The set ships these names; ask before adding any new ones:
 
 **Preset chip row** (above the readout well): a category chip, e.g. "6-STRING · DROP" in `mono.micro` kicker style. (No `MIC LIVE` indicator here — removed 2026-08-15, see DECISIONS.md: it broke down to unreadable vertical text once the chip's own internal `weight` claimed the row's full width, starving the label's remaining space to near-zero.)
 
-**Reference pitch chip:** the screen header kicker line displays `TUNER · A4 = 440 HZ` (or `432 HZ`). The toggle to change it is in the **tuner settings sheet**, opened by tapping the `settings`-icon button in the top-right corner of the screen.
+**Reference pitch chip:** the screen header kicker line displays `TUNER · A4 = <value> HZ` for the current whole-Hz reference pitch (430–450). The control to change it is in the **tuner settings sheet**, opened by tapping the `settings`-icon button in the top-right corner of the screen.
 
 **Idle state** (the user has opened the tuner but no audio is detected yet):
 - Needle sits at the centre (0 cents position) in `fg.quaternary`.
@@ -378,7 +377,7 @@ The set ships these names; ask before adding any new ones:
 **Hz readout pair** (inside the readout well, below the needle gauge): two columns side-by-side. Left column: kicker label `"DETECTED"` in `fg.tertiary` and the detected frequency value (e.g. `"108.86 Hz"`) in `Tq.Type.Body` / `fg.primary`. Right column: kicker label `"TARGET"` and the target frequency value (e.g. `"110.00 Hz"`). When the detected value is unavailable, render `"— Hz"` (em-dash) in place of the numeric value. Both labels are always shown even when values are null.
 
 **Settings sheet** (opened via the `settings`-icon button at top-right): a `ModalBottomSheet` approximately 280dp tall containing:
-- **Reference pitch** row: a `Tq.Type.Body` label on the left, the current value (`A4 = 440 Hz` or `A4 = 432 Hz`) on the right, and a segmented control (`[ 440 | 432 ]`) below the row.
+- **Reference pitch** row: a `Tq.Type.Body` label on the left, the current value (e.g. `A4 = 440 Hz`) plus a "Reset" text button on the right, and below the row a slider (430–450, whole-Hz steps, defaulting to 440) flanked by `−`/`+` 36dp icon buttons — same slider + ± pattern as the metronome's BPM control (`TempoCard.kt`). "Reset" restores 440. See `docs/DECISIONS.md`, 2026-10-02 "tuner reference pitch becomes a 430-450Hz slider" entry.
 - **Auto-advance strings** row: a Material 3 `Switch` on the right, `Tq.Type.Body` description below (`"Advance automatically when a string is in tune."`).
 
 **Permission-denied state** (shown when `RECORD_AUDIO` is not granted, replacing the readout well): a `ToniqoCard` (`bg.elev1`, `r.lg`, `sp.4` padding) centred in the well's vertical position. Contents: a 28dp `mic` icon with a diagonal slash overlay (until a dedicated icon exists), an `H2` heading (`"Microphone access needed"`), a `body` description centred (max 3 lines), and a `btn.primary` 40dp variant with the label `"Grant access"`.
@@ -404,13 +403,15 @@ The set ships these names; ask before adding any new ones:
 - Right: `QUARTER NOTES` for /4 signatures; `EIGHTH NOTES` for /8 signatures.
 
 **Beat indicator segments.** A row of N segments (one per beat of the signature), each 44dp tall.
-- Beat 1 lit: `signal.mint` fill + 12dp concentric glow behind the segment.
-- Beats 2..N lit: mint at 35% composited over `bg.elev2`.
+- Accented beat(s) lit: `signal.mint` fill + 12dp concentric glow behind the segment.
+- Other lit beats: mint at 35% composited over `bg.elev2`.
 - Unlit: `bg.elev1` fill, `line.faint` 1dp border.
-- Beat-1 marker: 4dp mint dot centred inside the unlit beat-1 cell.
+- Accented-beat marker: 4dp mint dot centred inside each unlit accented cell.
 - Colour transition: 80ms `LinearEasing`. **Intentionally overrides reduced-motion** — this is the primary temporal indicator; disabling it would break usability.
+- Long-press any segment to toggle that beat's accent on/off (standard system `LongPress` haptic confirms the toggle). Defaults to beat 1 only; resets to that default on a time-signature change. See `docs/DECISIONS.md`, 2026-10-01 "per-beat accent customization" entry — this generalizes what was originally a fixed "beat 1" rule to whichever beat(s) the user has accented; the visual treatment itself is unchanged.
 
-- Time signature and subdivision are pill-style 44dp dropdowns, side-by-side at 1fr each, with a `mono.micro` kicker label above each: "SIGNATURE" and "SUBDIVIDE" (verb form).
+- Time signature and subdivision are pill-style 44dp dropdowns, side-by-side at 1fr each, with a `mono.micro` kicker label above each: "SIGNATURE" and "SUBDIVIDE" (verb form). The signature dropdown's 8 presets are followed by a trailing "Custom…" item that opens a two-field number-pad dialog (same `AlertDialog` + `OutlinedTextField` pattern as the BPM input dialog) for any numerator 1–32 / denominator 1/2/4/8/16/32.
+- Beat indicator segments stay fixed at 44dp and the row becomes horizontally scrollable instead of shrinking below the accessible tap-target minimum once more segments are needed than fit the screen width at that size (see `docs/DECISIONS.md`, 2026-10-01 "beat indicator adapts to large bar lengths" entry). Every existing preset (up to 12/8) still fills the row exactly as before; only larger custom signatures scroll.
 - Tap-tempo button: 60dp circle, `bg.elev2`, with `tap` icon plus uppercase "TAP" in `mono.micro`.
 - **Start/Stop: pill button, 60dp tall, flex: 1. Icon + text label (revised Item 18).**
   - Stopped: ▶ play icon + "Start" text. Mint primary background with the §6.1 24dp glow.
@@ -588,7 +589,7 @@ Minimum 44×44dp on every interactive element, regardless of visual size. Alread
 
 These need answers before the relevant module is built. The agent must stop and ask rather than improvise.
 
-1. **A4 = 432 Hz UI placement.** ~~Where does the user tap to change the reference pitch?~~ **Resolved (2026-05-20):** A `settings`-icon button in the top-right corner of the Tuner screen opens the tuner settings sheet, which contains the 432 Hz toggle alongside the auto-advance toggle.
+1. **Reference pitch UI placement.** ~~Where does the user tap to change the reference pitch?~~ **Resolved (2026-05-20):** A `settings`-icon button in the top-right corner of the Tuner screen opens the tuner settings sheet, which contains the reference-pitch control alongside the auto-advance toggle. ~~Originally a 440/432Hz toggle.~~ **Updated (2026-10-02):** now a 430–450Hz slider — see `docs/DECISIONS.md`.
 2. **Permission-denied state for the microphone.** ~~What does the Tuner screen look like when the user has denied `RECORD_AUDIO`?~~ **Resolved (2026-05-20):** A single `ToniqoCard` with a 28dp mic icon (slash-overlaid), an explanatory heading and body, and a primary "Grant access" button. The button requests permission on first tap; after permanent denial, opens system app settings.
 3. **Key Finder mockup.** §8.3 is specified in prose but not shown. Confirm interpretation or add a screenshot before Phase 5+.
 4. **Info section content.** ~~§8.5 describes the layout but not the specific cards on the Info home screen. Confirm the list (Help, Privacy Policy, Licenses, Rate the App, Share the App, plus any others) before building.~~ **Resolved (2026-07-19):** Initial menu is Help, Open Source Licenses, Support the Project (GitHub Sponsors link). Privacy Policy and Rate/Share deferred — see `DECISIONS.md`.

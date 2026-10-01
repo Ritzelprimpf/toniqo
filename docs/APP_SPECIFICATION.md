@@ -155,7 +155,7 @@ The tuner operates in one of two modes within a session.
 
 ### Reference Pitch & Tolerance
 
-- **Reference pitch:** A4 = **440 Hz** by default. The user can optionally select A4 = 432 Hz from the tuner settings sheet (opened via the sun-icon button in the top-right of the screen; see `DESIGN.md` §14 Q1 — resolved).
+- **Reference pitch:** A4 = **440 Hz** by default. Adjustable via a slider (whole-Hz steps, 430–450) with ±1 Hz buttons and a "Reset" button, in the tuner settings sheet (opened via the settings-icon button in the top-right of the screen; see `DESIGN.md` §14 Q1 — resolved, and `docs/DECISIONS.md`, 2026-10-02 "tuner reference pitch becomes a 430-450Hz slider" entry).
 - **In-tune tolerance:** **±5 cents**. To advance to the next string in sequential mode, the pitch must remain within tolerance for **at least 500 ms** of continuous detection (to avoid spurious advances from transients).
 - **Frequency-to-cents conversion** is the standard formula: `cents = 1200 × log2(f_detected / f_target)`. Cents are used (not raw Hz) because the human perception of "in tune" is scale-invariant: ±5 cents feels equally tight at E2 (~82 Hz) and at E4 (~330 Hz), where the corresponding Hz tolerances are very different.
 
@@ -185,10 +185,17 @@ Provides an audible click track at a user-defined tempo and time signature.
 | Parameter | Range / Options | Default |
 |---|---|---|
 | BPM | 1 – 300 | 120 |
-| Time Signature | 2/4, 3/4, 4/4, 5/4, 6/8, 7/8, 9/8, 12/8 *(expandable)* | 4/4 |
-| Subdivision | None (quarter), Eighth notes, Sixteenth notes, Eighth triplets | None |
+| Time Signature | 2/4, 3/4, 4/4, 5/4, 6/8, 7/8, 9/8, 12/8 presets, or any custom numerator 1–32 with denominator 1/2/4/8/16/32 via "Custom…" | 4/4 |
+| Subdivision | None, Double (×2), Quadruple (×4), Triplet (×3) | None |
 
-**Terminology clarification.** "Time signature" defines the bar (e.g., 4/4 = four quarter-note beats per measure). "Subdivision" defines how each beat is internally divided for additional clicks — these are *quieter* clicks layered between the main beats, not a replacement for them. The first beat of each measure still gets the accented click regardless of subdivision.
+**Terminology clarification.** "Time signature" defines the bar (e.g., 4/4 = four quarter-note beats per measure). "Subdivision" defines how each beat is internally divided for additional clicks — these are *quieter* clicks layered between the main beats, not a replacement for them. Accented beats (beat 1 by default — see "Accent customization" below) still get the accented click regardless of subdivision; subdivision ticks are never accented.
+
+### Accent customization
+
+- By default, beat 1 of every measure is accented; all other main beats are standard.
+- Long-pressing a beat-indicator segment toggles that beat between accented and standard. Any combination is allowed, including no accented beat at all.
+- Changing the time signature resets the accent pattern back to the default (beat 1 only) — a pattern sized for one bar length doesn't carry over to a different one. Changing only the subdivision does not reset it.
+- The accent pattern persists across app launches, same as BPM/signature/subdivision.
 
 ### Controls
 
@@ -213,18 +220,36 @@ The boundaries are fixed; the user cannot change them.
 
 ### Beat unit terminology
 
-The time-signature denominator determines how beats are named in the UI:
-- Denominator **4** → beats are *quarter notes* (2/4, 3/4, 4/4, 5/4)
-- Denominator **8** → beats are *eighth notes* (6/8, 7/8, 9/8, 12/8)
+The time-signature denominator determines how beats are named in the UI, and also how fast they
+click: BPM is always a quarter-note pulse, so the denominator scales the actual click interval by
+4/denominator. Supported denominators are 1, 2, 4, 8, 16, and 32 (whole through 32nd notes):
+- Denominator **4** → *quarter notes*; click rate = BPM, unscaled.
+- Denominator **8** → *eighth notes*; click rate = **2× BPM** (6/8, 7/8, 9/8, 12/8 presets use
+  this), e.g. 12/8 at 120 BPM clicks twice as fast as 4/4 at 120 BPM.
+- Denominator **1, 2, 16, 32** → whole/half/16th/32nd notes respectively; click rate scales the
+  same way (half, quarter, 4×, 8× BPM). Only reachable via a custom signature — no preset uses them.
 
-The subdivision value multiplies the main beat. Enabling "Eighth notes" subdivision in a /4 signature adds one click between each quarter-note beat. Enabling "Eighth notes" in a /8 signature has no practical effect (the main beat is already the eighth note) — the app accepts the setting without error.
+The numerator always determines the number of clicks per bar and the accent pattern, independent
+of the denominator's speed scaling — a 12/8 bar still accents once every 12 clicks, just at double
+time.
 
-| Subdivision        | Multiplier |
-|--------------------|------------|
-| None               | ×1         |
-| Eighth notes       | ×2         |
-| Sixteenth notes    | ×4         |
-| Eighth triplets    | ×3         |
+### Custom time signatures
+
+- The signature dropdown's 8 presets are quick picks, not the full range. A trailing "Custom…"
+  option opens a dialog with two number fields (beats per bar, note value) for any numerator from
+  1 to 32 and any denominator from the supported set above.
+- Beyond a certain numerator, the beat-indicator segments no longer all fit on screen at the
+  44×44dp minimum tap-target size; the row becomes horizontally scrollable instead of shrinking
+  the segments. Every segment remains individually visible and accent-toggleable regardless of bar length.
+
+The subdivision value is a flat multiplier on the main beat's click rate, applied the same way regardless of time signature — it is deliberately **not** phrased as an absolute note value (the labels used to be "Eighth notes"/"Sixteenth notes"/"Eighth triplets", which is only actually correct when the bar's beat unit is a quarter note; for any other denominator it names the wrong note, e.g. "Double" on a 12/16 bar produces 32nd-note-rate clicks, not eighth notes — this became visible once custom signatures allowed denominators other than 4 and 8, and was fixed by relabeling to the multiplier itself). "Double" on a /4 signature adds one click between each main beat.
+
+| Subdivision   | Multiplier |
+|---------------|------------|
+| None          | ×1         |
+| Double        | ×2         |
+| Quadruple     | ×4         |
+| Triplet       | ×3         |
 
 ### Tap tempo behaviour
 
@@ -241,14 +266,15 @@ While the metronome is playing, the screen is kept awake (`FLAG_KEEP_SCREEN_ON`)
 ### Visual Feedback
 
 - A row of N beat-segment tiles (one per beat of the measure) provides the primary visual indication of beat position.
-- Beat 1 lit: mint-coloured fill plus a soft glow.
-- Beats 2–N lit: mint at reduced opacity.
-- All segments unlit when stopped; beat 1 shows a small mint accent dot to mark its position.
+- Accented beat(s) lit: mint-coloured fill plus a soft glow.
+- Other lit beats: mint at reduced opacity.
+- All segments unlit when stopped; each accented beat shows a small mint accent dot to mark its position.
 - The beat indicator animation (80 ms colour flash) is intentionally **not** suppressed by the system reduced-motion setting — it is the primary temporal indicator and must fire regardless.
+- Long-pressing a segment toggles that beat's accent (see "Accent customization" above); a system haptic pulse confirms the toggle.
 
 ### Audio
 
-- The first beat of each measure uses an **accented click** (higher pitch or louder).
+- Accented beats (beat 1 by default, user-customizable — see above) use an **accented click** (higher pitch or louder).
 - Remaining main beats use a **standard click**.
 - Subdivision clicks (if enabled) are quieter and at a different pitch from the main click.
 - Audio must be low-latency. Use `AudioTrack` in streaming mode (see `IMPLEMENTATION_NOTES.md`).

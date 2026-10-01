@@ -8,7 +8,6 @@ import android.media.AudioManager
 import android.media.AudioTrack
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
-import de.ritzelprimpf.toniqo.common.util.Clock
 import de.ritzelprimpf.toniqo.metronome.domain.model.ClickKind
 import de.ritzelprimpf.toniqo.metronome.data.audio.ClickSynthesizer
 import de.ritzelprimpf.toniqo.metronome.data.audio.MetronomeAudioFormat
@@ -37,16 +36,25 @@ import kotlinx.coroutines.launch
  * and audio-focus abandonment run unconditionally, even if the collector cancels or an exception
  * is thrown.
  *
- * ## Scheduling
+ * ## Scheduling — continuous stream, not gap-based writes
  *
- * An anchor-based drift-corrected loop (see [BeatScheduler]) computes each click's target time
- * from a fixed start anchor in nanoseconds. Drift is impossible by construction. Config updates
- * (BPM, time signature, subdivision) are routed in via a conflated [Channel] so the scheduler
- * always sees the latest config without stale reads.
+ * **This is the second generation of this player.** The first wrote one click buffer per beat and
+ * wrote nothing in between, sleeping via wall-clock `delay()` until the next click was due. That
+ * let the `AudioTrack` output path go idle during the (long, at low BPM) silence gaps; field
+ * testing on multiple Pixel devices (not reproducible on a Sony Xperia 10 IV) confirmed the
+ * output path doesn't resume cleanly from that idle gap — clicks 2–3 of a 4/4 bar would go
+ * missing and then fire back-to-back right before the next downbeat, with the app's own clock
+ * never falling behind (ruling out a GC/dispatcher stall as the cause; see `docs/DECISIONS.md`,
+ * 2026-10-01 entry, for the full diagnostic trail).
  *
- * If the loop is ever stalled long enough to fall behind schedule, [BeatScheduler.catchUpIfBehind]
- * drops the missed clicks silently rather than firing them back-to-back once control returns —
- * see that method's doc for why this matters, particularly at low BPM.
+ * This version never writes "nothing." [ClickStreamRenderer] mixes a continuous PCM stream —
+ * explicit zero-valued silence samples and click samples, chunk by chunk — and the scheduler
+ * loop below does nothing but keep calling it and writing the result. The output path is always
+ * receiving real audio, so it has no idle gap to stall on. [BeatScheduler] tracks *which* click
+ * plays next and *where* (as a sample position in that stream) rather than *when* (a wall-clock
+ * instant) — see its class doc for why that distinction is what makes the fix work. Config
+ * updates (BPM, time signature, subdivision) are routed in via a conflated [Channel] and applied
+ * between chunks, re-anchoring the scheduler at the renderer's current stream position.
  *
  * ## Audio focus
  *
@@ -61,7 +69,6 @@ import kotlinx.coroutines.launch
 class AudioTrackMetronomePlayer @Inject constructor(
     @ApplicationContext private val context: Context,
     private val clickSynthesizer: ClickSynthesizer,
-    private val clock: Clock,
 ) : MetronomePlayer {
 
     override fun run(
@@ -69,7 +76,7 @@ class AudioTrackMetronomePlayer @Inject constructor(
         configFlow: Flow<MetronomeConfig>,
     ): Flow<PlayerEvent> = callbackFlow {
         // 1. Pre-generate one click buffer per kind. Done once at player init;
-        //    the per-beat hot path is allocation-free.
+        //    the per-chunk hot path is allocation-free.
         val clickBuffers: Map<ClickKind, ShortArray> = mapOf(
             ClickKind.ACCENTED to clickSynthesizer.generate(ClickKind.ACCENTED),
             ClickKind.STANDARD to clickSynthesizer.generate(ClickKind.STANDARD),
@@ -93,23 +100,18 @@ class AudioTrackMetronomePlayer @Inject constructor(
             MetronomeAudioFormat.CHANNEL_CONFIG,
             MetronomeAudioFormat.ENCODING,
         )
-        val clickSizeBytes = (clickBuffers[ClickKind.ACCENTED]!!.size) * MetronomeAudioFormat.BYTES_PER_SAMPLE
-        val bufferSizeBytes = maxOf(minBufferBytes, clickSizeBytes)
+        val chunkBytes = CHUNK_SAMPLES * MetronomeAudioFormat.BYTES_PER_SAMPLE
+        val bufferSizeBytes = maxOf(minBufferBytes, chunkBytes * BUFFER_DEPTH_CHUNKS)
 
         val audioTrack = AudioTrack.Builder()
             .setAudioAttributes(audioAttributes)
             .setAudioFormat(audioFormat)
             .setBufferSizeInBytes(bufferSizeBytes)
             .setTransferMode(AudioTrack.MODE_STREAM)
-            // Explicitly opt out of the low-latency "fast" mixer path. That path uses a very
-            // small buffer with a narrow underrun margin; this player's write pattern (one short
-            // click, then silence for the rest of the beat interval — sometimes hundreds of ms at
-            // low BPM) reliably underruns it. The deep-buffer path selected by POWER_SAVING
-            // tolerates that gap pattern (pads with silence, no special recovery event) at the
-            // cost of higher but constant output latency, which this player already absorbs via
-            // the warm-up silence write below. Without this call the framework auto-selects a
-            // path per device/heuristics, which is what let this glitch reproduce on some
-            // devices (observed: Pixel 9 Pro) and not others (observed: Sony Xperia 10 IV).
+            // Deep-buffer path: tolerates this player's steady throughput at the cost of higher
+            // but constant latency. Kept from the previous generation as defense in depth — this
+            // rewrite's continuous feed is the fix for the idle-gap glitch itself, but there's no
+            // reason to also opt back into the fast mixer's much smaller underrun margin.
             .setPerformanceMode(AudioTrack.PERFORMANCE_MODE_POWER_SAVING)
             .build()
 
@@ -153,17 +155,13 @@ class AudioTrackMetronomePlayer @Inject constructor(
             "${initialConfig.timeSignatureNumerator}/${initialConfig.timeSignatureDenominator} " +
             "sub=${initialConfig.subdivision}")
 
-        // 4b. Prime the audio HAL with silence before the scheduler anchors.
-        //
-        // A freshly-played AudioTrack's *first* buffer write incurs extra cold-start latency
-        // (the mixer thread and HAL output path have to spin up) well beyond the steady-state
-        // output latency accepted in Phase6-Metronome-Decisions.md Item 55. If the scheduler's
-        // anchor were stamped before this warm-up completed, the first audible click would lag
-        // its target time by the cold-start delta while every later click stays on time. Writing
-        // silence here absorbs that one-time delay so the first real click gets the same
-        // steady-state latency as all the others.
-        val warmupSamples = MetronomeAudioFormat.SAMPLE_RATE_HZ * WARMUP_SILENCE_MS / MILLIS_PER_SECOND
-        audioTrack.write(ShortArray(warmupSamples), 0, warmupSamples, AudioTrack.WRITE_BLOCKING)
+        // No warmup-silence write here (the previous generation had one). That existed to absorb
+        // AudioTrack's cold-start latency before the wall-clock anchor was set, so the first click
+        // wouldn't land early relative to the steady-state latency every later click experienced.
+        // With a continuous stream, sample 0 of the stream (silence or click) is generated and
+        // written exactly like every later sample — cold-start latency shifts the whole stream's
+        // audible onset by one constant amount, not just the first click relative to the rest —
+        // so there's no first-click-vs-later-clicks differential left to absorb.
 
         // 5. Route config updates from configFlow into a conflated channel so the scheduler
         //    always sees the latest config without blocking on config delivery.
@@ -172,12 +170,15 @@ class AudioTrackMetronomePlayer @Inject constructor(
             configFlow.collect { configChannel.trySend(it) }
         }
 
-        // 6. Anchor-based scheduler loop. Runs on IO because AudioTrack.write is blocking.
+        // 6. Continuous-stream generation loop. Runs on IO because AudioTrack.write is blocking;
+        //    those blocking writes are this loop's only pacing mechanism — there is no delay().
         val schedulerJob = launch {
-            val scheduler = BeatScheduler(clock, initialConfig)
+            val scheduler = BeatScheduler(MetronomeAudioFormat.SAMPLE_RATE_HZ, initialConfig)
+            val renderer = ClickStreamRenderer(scheduler, clickBuffers)
+            val chunk = ShortArray(CHUNK_SAMPLES)
 
             while (isActive) {
-                // Apply any pending config update before playing the current click.
+                // Apply any pending config update before rendering the next chunk.
                 val newConfig = configChannel.tryReceive().getOrNull()
                 if (newConfig != null) {
                     val oldConfig = scheduler.config
@@ -185,36 +186,27 @@ class AudioTrackMetronomePlayer @Inject constructor(
                         newConfig.timeSignatureNumerator != oldConfig.timeSignatureNumerator ||
                         newConfig.timeSignatureDenominator != oldConfig.timeSignatureDenominator ||
                         newConfig.subdivision != oldConfig.subdivision
-                    if (signatureOrSubdivisionChanged) {
-                        scheduler.onSignatureOrSubdivisionChanged(newConfig)
-                    } else if (newConfig.bpm != oldConfig.bpm) {
-                        scheduler.onBpmChanged(newConfig)
+                    when {
+                        signatureOrSubdivisionChanged ->
+                            scheduler.onSignatureOrSubdivisionChanged(newConfig, renderer.position)
+                        newConfig.bpm != oldConfig.bpm ->
+                            scheduler.onBpmChanged(newConfig, renderer.position)
+                        // Covers every other config change (currently only accentedBeats) — applied
+                        // immediately, in place, with no re-anchor: it doesn't affect click timing.
+                        else -> scheduler.updateConfig(newConfig)
                     }
                 }
 
-                // If the loop fell behind schedule (e.g. GC pause, or the audio HAL waking from
-                // standby after a long silence gap at low BPM — see BeatScheduler.catchUpIfBehind),
-                // drop the missed clicks silently instead of firing them all back-to-back.
-                val skipped = scheduler.catchUpIfBehind(clock.nanoTime())
-                if (skipped > 0) {
-                    Log.w(TAG, "Metronome loop fell behind; skipped $skipped click(s) to resync instead of bursting them")
-                }
+                // Mix the next chunk of silence/click samples and write it. This write is the
+                // loop's entire pacing mechanism: it blocks until AudioTrack has room, which
+                // happens at the real output rate once its buffer is full.
+                val ticks = renderer.renderChunk(chunk)
+                audioTrack.write(chunk, 0, chunk.size, AudioTrack.WRITE_BLOCKING)
 
-                // Write the current click to the AudioTrack buffer.
-                val kind = scheduler.currentClickKind()
-                val buffer = clickBuffers.getValue(kind)
-                audioTrack.write(buffer, 0, buffer.size, AudioTrack.WRITE_BLOCKING)
-
-                // Emit a BeatTick for every main beat (subdivisions are heard but not surfaced).
-                if (scheduler.isMainBeat()) {
-                    trySend(PlayerEvent.BeatTick(scheduler.mainBeatIndex()))
-                }
-
-                // Advance past this click and sleep until the next target time.
-                scheduler.advance()
-                val sleepNs = scheduler.targetNs() - clock.nanoTime()
-                if (sleepNs > 0) {
-                    kotlinx.coroutines.delay(sleepNs / NANOS_PER_MS)
+                // Emit a BeatTick for every main beat that started in this chunk (subdivisions
+                // are heard but not surfaced).
+                for (beatIndex in ticks) {
+                    trySend(PlayerEvent.BeatTick(beatIndex))
                 }
             }
         }
@@ -238,13 +230,20 @@ class AudioTrackMetronomePlayer @Inject constructor(
         const val TAG = "MetronomePlayer"
 
         /**
-         * Duration of the silent priming buffer written immediately after [AudioTrack.play].
-         * Chosen to comfortably exceed typical AudioTrack cold-start latency across devices; see
-         * the warm-up note at the call site.
+         * Size, in samples, of each chunk generated and written per loop iteration. 480 samples
+         * at 48 kHz = 10 ms — fine enough that BPM/signature/subdivision changes feel instant,
+         * coarse enough to keep write() overhead (and therefore CPU wakeups) low. Click placement
+         * itself is sample-accurate regardless of this value; it only affects write granularity
+         * and how quickly a config change takes effect (see [ClickStreamRenderer]).
          */
-        const val WARMUP_SILENCE_MS = 150
+        const val CHUNK_SAMPLES = 480
 
-        /** Milliseconds per second. Used to convert [WARMUP_SILENCE_MS] to a sample count. */
-        const val MILLIS_PER_SECOND = 1_000
+        /**
+         * How many chunks' worth of buffer depth to request beyond the platform minimum, giving
+         * the generation loop a little slack against its own scheduling jitter (GC, dispatcher
+         * contention) without needing any wall-clock catch-up logic — the same role a deep output
+         * buffer plays for any continuous audio-generation loop.
+         */
+        const val BUFFER_DEPTH_CHUNKS = 4
     }
 }

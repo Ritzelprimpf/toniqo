@@ -25,8 +25,8 @@
     <string name="tuner_description">Chromatic and preset-driven guitar tuner using your device microphone</string>
 
     <!-- Tuner screen — header kicker (uppercase required: Kicker type has no textAllCaps) -->
-    <string name="tuner_kicker_440">TUNER · A4 = 440 HZ</string>
-    <string name="tuner_kicker_432">TUNER · A4 = 432 HZ</string>
+    <!-- %1$d = current reference pitch in Hz, e.g. "TUNER · A4 = 445 HZ" -->
+    <string name="tuner_kicker_format">TUNER · A4 = %1$d HZ</string>
     <string name="tuner_cd_settings">Tuner settings</string>
 
     <!-- Tuner screen — status line (uppercase required) -->
@@ -69,8 +69,9 @@
     <string name="tuner_settings_ref_pitch_label">Reference pitch</string>
     <!-- %1$d is the reference pitch in Hz as an integer, e.g. 440 → "A4 = 440 Hz" -->
     <string name="tuner_settings_ref_pitch_current">A4 = %1$d Hz</string>
-    <string name="tuner_settings_440">440</string>
-    <string name="tuner_settings_432">432</string>
+    <string name="tuner_settings_ref_pitch_reset">Reset</string>
+    <string name="tuner_cd_ref_pitch_decrement">Decrease reference pitch</string>
+    <string name="tuner_cd_ref_pitch_increment">Increase reference pitch</string>
     <string name="tuner_settings_auto_advance_label">Auto-advance strings</string>
     <string name="tuner_settings_auto_advance_desc">Advance automatically when a string is in tune.</string>
 
@@ -98,8 +99,12 @@
     <!-- %1$d = 1-indexed current beat, %2$d = numerator, e.g. "Beat · 3 / 4" -->
     <string name="metronome_beat_header_format">Beat · %1$d / %2$d</string>
     <!-- Beat unit labels (uppercased by composable) -->
+    <string name="metronome_beat_unit_whole_notes">Whole notes</string>
+    <string name="metronome_beat_unit_half_notes">Half notes</string>
     <string name="metronome_beat_unit_quarter_notes">Quarter notes</string>
     <string name="metronome_beat_unit_eighth_notes">Eighth notes</string>
+    <string name="metronome_beat_unit_sixteenth_notes">16th notes</string>
+    <string name="metronome_beat_unit_thirty_second_notes">32nd notes</string>
 
     <!-- Metronome screen — play/stop and tap controls -->
     <string name="metronome_start">Start</string>
@@ -111,10 +116,18 @@
     <!-- Metronome screen — BPM input dialog -->
     <string name="metronome_bpm_dialog_title">Set BPM</string>
 
+    <!-- Metronome screen — custom time signature dialog -->
+    <string name="metronome_signature_custom_option">Custom…</string>
+    <string name="metronome_signature_dialog_title">Set time signature</string>
+    <string name="metronome_signature_dialog_numerator_label">Beats per bar</string>
+    <string name="metronome_signature_dialog_denominator_label">Note value</string>
+    <!-- Shown under the note-value field when the entered number isn't 1, 2, 4, 8, 16, or 32 -->
+    <string name="metronome_signature_dialog_denominator_error">Must be 1, 2, 4, 8, 16, or 32</string>
+
     <!-- Metronome screen — info dialog -->
     <string name="metronome_cd_info">Metronome info</string>
     <string name="metronome_info_dialog_title">About Metronome</string>
-    <string name="metronome_info_dialog_body">Set a tempo from 1 to 300 BPM by typing a number, dragging the slider, or using the ± buttons — or tap the TAP button a few times in rhythm to set it automatically. Choose a time signature and an optional subdivision to add quieter clicks between the main beats; the first beat of every bar is always accented so you can hear the downbeat.</string>
+    <string name="metronome_info_dialog_body">Set a tempo from 1 to 300 BPM by typing a number, dragging the slider, or using the ± buttons — or tap the TAP button a few times in rhythm to set it automatically. Choose a time signature from the presets or enter a custom one, and an optional subdivision to add quieter clicks between the main beats. Beat 1 is accented by default — long-press any beat in the indicator to add, remove, or change which beats are accented. Changing the time signature resets the accent pattern back to beat 1 only.</string>
 
     <!-- Tempo descriptor labels (uppercased by composable) -->
     <string name="tempo_adagio">Adagio</string>
@@ -123,11 +136,17 @@
     <string name="tempo_allegro">Allegro</string>
     <string name="tempo_presto">Presto</string>
 
-    <!-- Subdivision labels -->
+    <!-- Subdivision labels. Phrased as a multiplier on the beat rate, not an absolute note value
+         (e.g. "Double" not "Eighth notes") — subdivision is deliberately orthogonal to time
+         signature (see Phase6-Metronome-Decisions.md Item 8), so an absolute note name is only
+         ever correct when the bar's beat unit happens to be a quarter note; it's actively wrong
+         for any other denominator (e.g. a 12/16 bar's "eighth notes" subdivision doesn't produce
+         eighth-note-rate clicks at all). See docs/DECISIONS.md, 2026-10-01 "subdivision labels
+         now describe a multiplier, not a note value" entry. -->
     <string name="subdivision_none">None</string>
-    <string name="subdivision_eighths">Eighth notes</string>
-    <string name="subdivision_sixteenths">Sixteenth notes</string>
-    <string name="subdivision_triplets">Eighth triplets</string>
+    <string name="subdivision_eighths">Double (×2)</string>
+    <string name="subdivision_sixteenths">Quadruple (×4)</string>
+    <string name="subdivision_triplets">Triplet (×3)</string>
 
     <!-- Generic dialog actions -->
     <string name="action_ok">OK</string>
@@ -321,7 +340,7 @@
     <string name="help_section_tuner">Guitar Tuner</string>
     <string name="help_placeholder_tuner">Play a string and the needle shows how far off it is — tilted left means flat, right means sharp, centered and lit up means in tune. Pick a tuning from the preset picker (6, 7, or 8 string, standard, dropped, or open) and the tuner steps through your strings from lowest to highest automatically. Tap any string pill to jump to it directly. Once every string is in tune, the tuner switches to chromatic mode so you can fine-tune any string in any order. Needs microphone access to listen to your guitar.</string>
     <string name="help_section_metronome">Metronome</string>
-    <string name="help_placeholder_metronome">Set a tempo from 1 to 300 BPM by typing a number, dragging the slider, or using the +/- buttons — or tap the tempo button a few times in rhythm and let the app work out your BPM. Choose a time signature and an optional subdivision to add quieter clicks between the main beats. The first beat of every bar is accented so you always know where the downbeat is, and the beat tiles light up in time. Start and stop anytime; your settings are remembered for next time.</string>
+    <string name="help_placeholder_metronome">Set a tempo from 1 to 300 BPM by typing a number, dragging the slider, or using the +/- buttons — or tap the tempo button a few times in rhythm and let the app work out your BPM. Choose a time signature from the presets, or enter a custom one for any numerator from 1 to 32. Add an optional subdivision to click faster between the main beats. Beat 1 is accented by default, but you can long-press any beat tile to add, remove, or change which beats get the accented click — this resets to beat 1 only whenever you change the time signature. The beat tiles light up in time, scrolling to keep up on bars too long to fit the screen. Start and stop anytime; your settings are remembered for next time.</string>
     <string name="help_section_keyfinder">Key Finder</string>
     <string name="help_placeholder_keyfinder">Add the notes you are playing or hearing — from a riff, a chord, or a whole progression — and Key Finder ranks the scales and modes that fit best. If you know the tonic, the note that feels like home, mark it and matches built on that root are ranked first. Full matches, where every note fits, are flagged so the best candidates stand out.</string>
     <string name="help_section_chordfinder">Chord Finder</string>

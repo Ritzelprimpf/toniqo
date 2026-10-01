@@ -2,43 +2,58 @@ package de.ritzelprimpf.toniqo.tuner.presentation.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Remove
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import de.ritzelprimpf.toniqo.R
-import de.ritzelprimpf.toniqo.ui.components.SegmentedControl
+import de.ritzelprimpf.toniqo.tuner.data.TunerPreferences.Companion.REFERENCE_PITCH_HZ_DEFAULT
+import de.ritzelprimpf.toniqo.tuner.data.TunerPreferences.Companion.REFERENCE_PITCH_HZ_MAX
+import de.ritzelprimpf.toniqo.tuner.data.TunerPreferences.Companion.REFERENCE_PITCH_HZ_MIN
 import de.ritzelprimpf.toniqo.ui.theme.Tq
+import kotlin.math.roundToInt
 
 /**
  * Settings sheet for the tuner — reference pitch and auto-advance preferences.
  *
  * Specification (DESIGN.md §8.1 "Settings sheet"):
  * - `ModalBottomSheet`, approximately 280dp tall.
- * - Reference pitch row: label left, current value right (`A4 = 440/432 Hz`),
- *   segmented control [`440` | `432`] below.
+ * - Reference pitch row: label left, current value + "Reset" text button right (`A4 = 440 Hz`),
+ *   a slider with ±1 Hz icon buttons on either side below, ranging over
+ *   [REFERENCE_PITCH_HZ_MIN]..[REFERENCE_PITCH_HZ_MAX] (430–450) in whole-Hz steps — same slider
+ *   + ± button pattern as the metronome's BPM control (`TempoCard.kt`). "Reset" restores
+ *   [REFERENCE_PITCH_HZ_DEFAULT] (440).
  * - Auto-advance row: label + `Switch`, description below.
- * - Both controls write through to the ViewModel immediately.
+ * - All controls write through to the ViewModel immediately; clamping to the valid range happens
+ *   in `TunerViewModel.onReferencePitchChanged`, not here — see that function's doc.
  *
- * @param referencePitchHz Current reference pitch (440.0 or 432.0).
+ * @param referencePitchHz Current reference pitch, in [REFERENCE_PITCH_HZ_MIN]..[REFERENCE_PITCH_HZ_MAX].
  * @param autoAdvanceEnabled Current auto-advance state.
- * @param onReferencePitchChanged Called with the new reference pitch (440.0 or 432.0).
+ * @param onReferencePitchChanged Called with the requested new reference pitch (not pre-clamped).
  * @param onAutoAdvanceChanged Called with the new auto-advance value.
  * @param onDismiss Called when the sheet should close.
  */
@@ -99,23 +114,28 @@ fun TunerSettingsSheet(
                     style = Tq.Type.Body,
                     color = Tq.Color.FgPrimary,
                 )
-                Text(
-                    text = stringResource(R.string.tuner_settings_ref_pitch_current, referencePitchHz.toInt()),
-                    style = Tq.Type.Body,
-                    color = Tq.Color.FgSecondary,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = stringResource(R.string.tuner_settings_ref_pitch_current, referencePitchHz.roundToInt()),
+                        style = Tq.Type.Body,
+                        color = Tq.Color.FgSecondary,
+                    )
+                    TextButton(
+                        onClick = { onReferencePitchChanged(REFERENCE_PITCH_HZ_DEFAULT) },
+                        contentPadding = PaddingValues(horizontal = Tq.Sp.s2),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.tuner_settings_ref_pitch_reset),
+                            style = Tq.Type.Body,
+                            color = Tq.Color.FgTertiary,
+                        )
+                    }
+                }
             }
             Spacer(Modifier.height(Tq.Sp.s2))
-            SegmentedControl(
-                options = listOf(
-                    stringResource(R.string.tuner_settings_440),
-                    stringResource(R.string.tuner_settings_432),
-                ),
-                selectedIndex = if (referencePitchHz == 440.0) 0 else 1,
-                onSelect = { index ->
-                    onReferencePitchChanged(if (index == 0) 440.0 else 432.0)
-                },
-                modifier = Modifier.fillMaxWidth(),
+            ReferencePitchSliderRow(
+                referencePitchHz = referencePitchHz,
+                onReferencePitchChanged = onReferencePitchChanged,
             )
 
             Spacer(Modifier.height(Tq.Sp.s4))
@@ -147,6 +167,60 @@ fun TunerSettingsSheet(
             )
 
             Spacer(Modifier.height(Tq.Sp.s5))
+        }
+    }
+}
+
+/**
+ * ±1 Hz icon buttons flanking a slider over [REFERENCE_PITCH_HZ_MIN]..[REFERENCE_PITCH_HZ_MAX] —
+ * same structure as the metronome's `TempoCard.BpmSliderRow`. The slider's `onValueChange` floors
+ * to whole Hz (matching that function's `.toInt()` truncation) since the control only ever deals
+ * in whole-Hz steps; clamping for the ± buttons happens in the ViewModel, not here.
+ */
+@Composable
+private fun ReferencePitchSliderRow(
+    referencePitchHz: Double,
+    onReferencePitchChanged: (Double) -> Unit,
+) {
+    val decrementCd = stringResource(R.string.tuner_cd_ref_pitch_decrement)
+    val incrementCd = stringResource(R.string.tuner_cd_ref_pitch_increment)
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Tq.Sp.s2),
+    ) {
+        IconButton(
+            onClick = { onReferencePitchChanged(referencePitchHz - 1.0) },
+            modifier = Modifier.size(36.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Remove,
+                contentDescription = decrementCd,
+                tint = Tq.Color.FgSecondary,
+            )
+        }
+        Slider(
+            value = referencePitchHz.toFloat(),
+            onValueChange = { onReferencePitchChanged(it.toInt().toDouble()) },
+            valueRange = REFERENCE_PITCH_HZ_MIN.toFloat()..REFERENCE_PITCH_HZ_MAX.toFloat(),
+            steps = (REFERENCE_PITCH_HZ_MAX - REFERENCE_PITCH_HZ_MIN).toInt() - 1,
+            modifier = Modifier.weight(1f),
+            colors = SliderDefaults.colors(
+                thumbColor = Tq.Color.FgPrimary,
+                activeTrackColor = Tq.Color.SignalMint,
+                inactiveTrackColor = Tq.Color.LineFaint,
+            ),
+        )
+        IconButton(
+            onClick = { onReferencePitchChanged(referencePitchHz + 1.0) },
+            modifier = Modifier.size(36.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Add,
+                contentDescription = incrementCd,
+                tint = Tq.Color.FgSecondary,
+            )
         }
     }
 }

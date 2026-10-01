@@ -17,8 +17,8 @@ android {
         applicationId = "de.ritzelprimpf.toniqo"
         minSdk = 31
         targetSdk = 36
-        versionCode = 5
-        versionName = "1.5"
+        versionCode = 6
+        versionName = "1.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

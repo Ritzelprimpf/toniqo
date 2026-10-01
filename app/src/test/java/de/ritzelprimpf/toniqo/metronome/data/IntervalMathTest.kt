@@ -7,72 +7,105 @@ import org.junit.Test
 class IntervalMathTest {
 
     @Test
-    fun `NANOS_PER_MINUTE equals 60 billion`() {
-        assertEquals(60_000_000_000L, NANOS_PER_MINUTE)
+    fun `samplesPerClick at 120 bpm 4 denominator with no subdivision returns half the sample rate`() {
+        assertEquals(24_000.0, samplesPerClick(120, Subdivision.NONE, denominator = 4, sampleRateHz = 48_000), 0.0)
     }
 
     @Test
-    fun `NANOS_PER_MS equals one million`() {
-        assertEquals(1_000_000L, NANOS_PER_MS)
+    fun `samplesPerClick at 120 bpm 4 denominator with eighths returns a quarter of the sample rate`() {
+        assertEquals(12_000.0, samplesPerClick(120, Subdivision.EIGHTHS, denominator = 4, sampleRateHz = 48_000), 0.0)
     }
 
     @Test
-    fun `intervalNanos at 120 bpm with no subdivision returns 500ms`() {
-        assertEquals(500_000_000L, intervalNanos(120, Subdivision.NONE))
+    fun `samplesPerClick at 120 bpm 4 denominator with sixteenths returns an eighth of the sample rate`() {
+        assertEquals(6_000.0, samplesPerClick(120, Subdivision.SIXTEENTHS, denominator = 4, sampleRateHz = 48_000), 0.0)
     }
 
     @Test
-    fun `intervalNanos at 120 bpm with eighths returns 250ms`() {
-        assertEquals(250_000_000L, intervalNanos(120, Subdivision.EIGHTHS))
+    fun `samplesPerClick at 120 bpm 4 denominator with triplets divides the sample rate by six`() {
+        assertEquals(8_000.0, samplesPerClick(120, Subdivision.TRIPLETS, denominator = 4, sampleRateHz = 48_000), 0.0)
     }
 
     @Test
-    fun `intervalNanos at 120 bpm with sixteenths returns 125ms`() {
-        assertEquals(125_000_000L, intervalNanos(120, Subdivision.SIXTEENTHS))
+    fun `samplesPerClick at 60 bpm 4 denominator with no subdivision equals the full sample rate`() {
+        assertEquals(48_000.0, samplesPerClick(60, Subdivision.NONE, denominator = 4, sampleRateHz = 48_000), 0.0)
     }
 
     @Test
-    fun `intervalNanos at 120 bpm with triplets returns one sixth of a second`() {
-        // 60_000_000_000 / 120 / 3 = 166_666_666 (integer division)
-        assertEquals(166_666_666L, intervalNanos(120, Subdivision.TRIPLETS))
+    fun `samplesPerClick at 1 bpm 4 denominator with no subdivision equals sixty times the sample rate`() {
+        assertEquals(2_880_000.0, samplesPerClick(1, Subdivision.NONE, denominator = 4, sampleRateHz = 48_000), 0.0)
     }
 
     @Test
-    fun `intervalNanos at 60 bpm with no subdivision returns 1 second`() {
-        assertEquals(1_000_000_000L, intervalNanos(60, Subdivision.NONE))
+    fun `samplesPerClick at 300 bpm 4 denominator with no subdivision returns a fifth of the sample rate`() {
+        assertEquals(9_600.0, samplesPerClick(300, Subdivision.NONE, denominator = 4, sampleRateHz = 48_000), 0.0)
     }
 
     @Test
-    fun `intervalNanos at 60 bpm with triplets returns one third of a second`() {
-        // 60_000_000_000 / 60 / 3 = 333_333_333 (integer division)
-        assertEquals(333_333_333L, intervalNanos(60, Subdivision.TRIPLETS))
+    fun `samplesPerClick decreases as bpm increases`() {
+        val slow = samplesPerClick(60, Subdivision.NONE, denominator = 4, sampleRateHz = 48_000)
+        val fast = samplesPerClick(120, Subdivision.NONE, denominator = 4, sampleRateHz = 48_000)
+
+        assert(fast < slow)
     }
 
     @Test
-    fun `intervalNanos at 300 bpm with no subdivision returns 200ms`() {
-        assertEquals(200_000_000L, intervalNanos(300, Subdivision.NONE))
+    fun `samplesPerClick decreases as subdivision multiplier increases`() {
+        val noSub = samplesPerClick(120, Subdivision.NONE, denominator = 4, sampleRateHz = 48_000)
+        val eighths = samplesPerClick(120, Subdivision.EIGHTHS, denominator = 4, sampleRateHz = 48_000)
+        val sixteenths = samplesPerClick(120, Subdivision.SIXTEENTHS, denominator = 4, sampleRateHz = 48_000)
+
+        assert(eighths < noSub)
+        assert(sixteenths < eighths)
     }
 
     @Test
-    fun `intervalNanos at 1 bpm with no subdivision returns 60 seconds`() {
-        assertEquals(60_000_000_000L, intervalNanos(1, Subdivision.NONE))
+    fun `samplesPerClick scales linearly with sample rate`() {
+        val at48k = samplesPerClick(120, Subdivision.NONE, denominator = 4, sampleRateHz = 48_000)
+        val at96k = samplesPerClick(120, Subdivision.NONE, denominator = 4, sampleRateHz = 96_000)
+
+        assertEquals(at48k * 2, at96k, 0.0)
     }
 
     @Test
-    fun `intervalNanos decreases as bpm increases`() {
-        val slow = intervalNanos(60, Subdivision.NONE)
-        val fast = intervalNanos(120, Subdivision.NONE)
+    fun `samplesPerClick at an odd bpm is fractional, not truncated`() {
+        // 48000 * 60 / 117 = 24615.384... — must NOT be silently floored by the helper itself;
+        // BeatScheduler relies on this fractional precision to avoid cumulative drift.
+        val result = samplesPerClick(117, Subdivision.NONE, denominator = 4, sampleRateHz = 48_000)
 
-        assert(slow > fast) { "Interval at 60 bpm ($slow) should be longer than at 120 bpm ($fast)" }
+        assertEquals(24_615.384615, result, 0.001)
+    }
+
+    // ── Denominator scaling ─────────────────────────────────────────────────────
+
+    @Test
+    fun `denominator 4 is a no-op reference — same result as the old denominator-less formula`() {
+        assertEquals(24_000.0, samplesPerClick(120, Subdivision.NONE, denominator = 4, sampleRateHz = 48_000), 0.0)
     }
 
     @Test
-    fun `intervalNanos decreases as subdivision multiplier increases`() {
-        val noSub = intervalNanos(120, Subdivision.NONE)
-        val eighths = intervalNanos(120, Subdivision.EIGHTHS)
-        val sixteenths = intervalNanos(120, Subdivision.SIXTEENTHS)
+    fun `denominator 8 clicks exactly twice as fast as denominator 4 at the same bpm`() {
+        val quarterTime = samplesPerClick(120, Subdivision.NONE, denominator = 4, sampleRateHz = 48_000)
+        val eighthTime = samplesPerClick(120, Subdivision.NONE, denominator = 8, sampleRateHz = 48_000)
 
-        assert(noSub > eighths) { "NONE interval should be longer than EIGHTHS" }
-        assert(eighths > sixteenths) { "EIGHTHS interval should be longer than SIXTEENTHS" }
+        assertEquals(quarterTime / 2, eighthTime, 0.0)
+    }
+
+    @Test
+    fun `denominator 2 clicks exactly half as fast as denominator 4 at the same bpm`() {
+        val quarterTime = samplesPerClick(120, Subdivision.NONE, denominator = 4, sampleRateHz = 48_000)
+        val halfTime = samplesPerClick(120, Subdivision.NONE, denominator = 2, sampleRateHz = 48_000)
+
+        assertEquals(quarterTime * 2, halfTime, 0.0)
+    }
+
+    @Test
+    fun `denominator scaling and subdivision multiplier compose`() {
+        // 12/8 with EIGHTHS subdivision: denominator doubles the beat rate, subdivision doubles
+        // it again — four times as fast as a plain 4/4 at the same BPM.
+        val plain4over4 = samplesPerClick(120, Subdivision.NONE, denominator = 4, sampleRateHz = 48_000)
+        val eighthsIn12over8 = samplesPerClick(120, Subdivision.EIGHTHS, denominator = 8, sampleRateHz = 48_000)
+
+        assertEquals(plain4over4 / 4, eighthsIn12over8, 0.0)
     }
 }

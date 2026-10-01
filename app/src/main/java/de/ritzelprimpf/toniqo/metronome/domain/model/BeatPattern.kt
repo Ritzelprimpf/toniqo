@@ -16,25 +16,34 @@ internal fun clicksPerBar(numerator: Int, subdivision: Subdivision): Int =
 
 /**
  * Returns the [ClickKind] that should play at [clickIndexInBar] within the current bar, given the
- * active [subdivision].
+ * active [subdivision] and which main beats are accented ([accentedBeats]).
  *
- * Rules (in priority order, per `Phase6-Metronome-Decisions.md` Item 8):
- * 1. Index 0 (the bar's downbeat) → [ClickKind.ACCENTED].
- * 2. Non-zero index that is a multiple of [Subdivision.multiplier] (a main beat other than beat
- *    1) → [ClickKind.STANDARD].
- * 3. All other indices (between-beat subdivision ticks) → [ClickKind.SUBDIVISION].
+ * Rules (in priority order; accent customization added per `docs/DECISIONS.md` 2026-10-01
+ * "per-beat accent customization" entry, superseding the beat-1-only hardcoding in
+ * `Phase6-Metronome-Decisions.md` Item 8/11):
+ * 1. An index that is **not** a multiple of [Subdivision.multiplier] (a between-beat subdivision
+ *    tick) → [ClickKind.SUBDIVISION], always, regardless of [accentedBeats].
+ * 2. A main beat (index that is a multiple of the multiplier) whose main-beat index
+ *    (`clickIndexInBar / subdivision.multiplier`) is in [accentedBeats] → [ClickKind.ACCENTED].
+ * 3. Any other main beat → [ClickKind.STANDARD].
  *
- * Main beats always "win" at collision points — subdivision clicks only fill gaps. This means the
- * downbeat is always ACCENTED and all other main beats are always STANDARD, regardless of the
- * subdivision setting.
+ * Main beats always "win" at collision points — subdivision clicks only fill gaps, and
+ * [accentedBeats] only ever retargets which *main* beats are accented, never a subdivision tick.
  *
  * @param clickIndexInBar Zero-based position within the bar. Valid range:
  *   `[0, clicksPerBar(numerator, subdivision))`.
  * @param subdivision Active subdivision; its [Subdivision.multiplier] determines the main-beat
  *   stride.
+ * @param accentedBeats Zero-based main-beat indices that should be accented. Defaults to
+ *   [MetronomeConfig.DEFAULT_ACCENTED_BEATS] (beat 1 only) — the behavior before accent
+ *   customization existed.
  */
-internal fun clickKindFor(clickIndexInBar: Int, subdivision: Subdivision): ClickKind = when {
-    clickIndexInBar == 0 -> ClickKind.ACCENTED
-    clickIndexInBar % subdivision.multiplier == 0 -> ClickKind.STANDARD
-    else -> ClickKind.SUBDIVISION
+internal fun clickKindFor(
+    clickIndexInBar: Int,
+    subdivision: Subdivision,
+    accentedBeats: Set<Int> = MetronomeConfig.DEFAULT_ACCENTED_BEATS,
+): ClickKind {
+    if (clickIndexInBar % subdivision.multiplier != 0) return ClickKind.SUBDIVISION
+    val mainBeatIndex = clickIndexInBar / subdivision.multiplier
+    return if (mainBeatIndex in accentedBeats) ClickKind.ACCENTED else ClickKind.STANDARD
 }

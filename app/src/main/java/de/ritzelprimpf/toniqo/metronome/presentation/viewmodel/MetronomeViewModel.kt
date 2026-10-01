@@ -8,7 +8,6 @@ import de.ritzelprimpf.toniqo.metronome.data.TapTempoCalculator
 import de.ritzelprimpf.toniqo.metronome.domain.model.MetronomeConfig
 import de.ritzelprimpf.toniqo.metronome.domain.model.MetronomeConfig.Companion.BPM_MAX
 import de.ritzelprimpf.toniqo.metronome.domain.model.MetronomeConfig.Companion.BPM_MIN
-import de.ritzelprimpf.toniqo.metronome.domain.model.MetronomeConfig.Companion.SUPPORTED_SIGNATURES
 import de.ritzelprimpf.toniqo.metronome.domain.model.PlayerEvent
 import de.ritzelprimpf.toniqo.metronome.domain.model.Subdivision
 import de.ritzelprimpf.toniqo.metronome.domain.model.tempoDescriptorFor
@@ -84,12 +83,37 @@ class MetronomeViewModel @Inject constructor(
     fun onBpmDecrement() = onBpmChanged(_uiState.value.config.bpm - 1)
 
     fun onTimeSignatureChanged(numerator: Int, denominator: Int) {
-        if ((numerator to denominator) !in SUPPORTED_SIGNATURES) return
-        updateConfig { it.copy(timeSignatureNumerator = numerator, timeSignatureDenominator = denominator) }
+        if (!MetronomeConfig.isSupportedTimeSignature(numerator, denominator)) return
+        // A custom accent pattern is sized for the previous bar length and doesn't carry over
+        // cleanly to a new one, so it resets to the default (beat 1 only) on every signature
+        // change — per the user's own call when this feature was scoped.
+        updateConfig {
+            it.copy(
+                timeSignatureNumerator = numerator,
+                timeSignatureDenominator = denominator,
+                accentedBeats = MetronomeConfig.DEFAULT_ACCENTED_BEATS,
+            )
+        }
     }
 
     fun onSubdivisionChanged(subdivision: Subdivision) {
         updateConfig { it.copy(subdivision = subdivision) }
+    }
+
+    /**
+     * Toggles whether [beatIndex] (a zero-based main-beat index) is accented. Applies immediately
+     * to the running player, same as any other config change (takes effect on that beat's next
+     * occurrence).
+     */
+    fun onBeatAccentToggled(beatIndex: Int) {
+        updateConfig { config ->
+            val updated = if (beatIndex in config.accentedBeats) {
+                config.accentedBeats - beatIndex
+            } else {
+                config.accentedBeats + beatIndex
+            }
+            config.copy(accentedBeats = updated)
+        }
     }
 
     fun onTapTempo() {

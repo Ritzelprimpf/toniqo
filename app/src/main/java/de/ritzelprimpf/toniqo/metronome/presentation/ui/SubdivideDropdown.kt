@@ -32,7 +32,10 @@ import java.util.Locale
  * Pill-style 44dp dropdown for selecting beat subdivision.
  *
  * The kicker label reads "SUBDIVIDE" (verb form, per Phase6-Metronome-Decisions.md Item 23c).
- * Values are displayed in noun form: "None", "Eighth notes", "Sixteenth notes", "Eighth triplets".
+ * Values are phrased as a multiplier on the beat rate, not an absolute note value: "None",
+ * "Double (×2)", "Quadruple (×4)", "Triplet (×3)" — see `docs/DECISIONS.md`, 2026-10-01
+ * "subdivision labels now describe a multiplier, not a note value" entry for why an absolute
+ * note name (the labels used before this change) is only correct for a quarter-note beat unit.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

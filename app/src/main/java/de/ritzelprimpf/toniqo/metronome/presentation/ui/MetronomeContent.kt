@@ -61,6 +61,7 @@ internal fun MetronomeContent(
     onTimeSignatureChanged: (Int, Int) -> Unit,
     onSubdivisionChanged: (Subdivision) -> Unit,
     onTapTempo: () -> Unit,
+    onBeatAccentToggled: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showBpmDialog by remember { mutableStateOf(false) }
@@ -133,6 +134,8 @@ internal fun MetronomeContent(
             numerator = state.config.timeSignatureNumerator,
             currentBeat = state.currentBeat,
             isPlaying = state.isPlaying,
+            accentedBeats = state.config.accentedBeats,
+            onBeatLongPressed = onBeatAccentToggled,
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(Tq.Sp.s5))
@@ -177,7 +180,7 @@ private fun MetronomeContentPreviewStopped() {
         MetronomeContent(
             state = MetronomeUiState(isPlaying = false),
             onPlayToggled = {}, onBpmChanged = {}, onBpmIncrement = {}, onBpmDecrement = {},
-            onTimeSignatureChanged = { _, _ -> }, onSubdivisionChanged = {}, onTapTempo = {},
+            onTimeSignatureChanged = { _, _ -> }, onSubdivisionChanged = {}, onTapTempo = {}, onBeatAccentToggled = {},
         )
     }
 }
@@ -193,7 +196,7 @@ private fun MetronomeContentPreviewPlaying() {
                 config = MetronomeConfig(bpm = 120, timeSignatureNumerator = 4, timeSignatureDenominator = 4, subdivision = Subdivision.NONE),
             ),
             onPlayToggled = {}, onBpmChanged = {}, onBpmIncrement = {}, onBpmDecrement = {},
-            onTimeSignatureChanged = { _, _ -> }, onSubdivisionChanged = {}, onTapTempo = {},
+            onTimeSignatureChanged = { _, _ -> }, onSubdivisionChanged = {}, onTapTempo = {}, onBeatAccentToggled = {},
         )
     }
 }
@@ -208,7 +211,7 @@ private fun MetronomeContentPreviewStopped78() {
                 config = MetronomeConfig(bpm = 92, timeSignatureNumerator = 7, timeSignatureDenominator = 8, subdivision = Subdivision.NONE),
             ),
             onPlayToggled = {}, onBpmChanged = {}, onBpmIncrement = {}, onBpmDecrement = {},
-            onTimeSignatureChanged = { _, _ -> }, onSubdivisionChanged = {}, onTapTempo = {},
+            onTimeSignatureChanged = { _, _ -> }, onSubdivisionChanged = {}, onTapTempo = {}, onBeatAccentToggled = {},
         )
     }
 }

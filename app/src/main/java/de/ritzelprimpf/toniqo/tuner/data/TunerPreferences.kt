@@ -24,8 +24,11 @@ interface TunerPreferences {
     val autoAdvanceEnabled: Flow<Boolean>
 
     /**
-     * The reference frequency of A4 in Hz. Defaults to `440.0`. Only `440.0` and `432.0` are
-     * supported values; other values may be stored but are not produced by the UI.
+     * The reference frequency of A4 in Hz. Defaults to `440.0`. The UI constrains this to whole-Hz
+     * values in [[REFERENCE_PITCH_HZ_MIN], [REFERENCE_PITCH_HZ_MAX]] (430–450) via a slider —
+     * see `docs/DECISIONS.md`, 2026-10-02 "tuner reference pitch becomes a 430-450Hz slider" entry.
+     * [de.ritzelprimpf.toniqo.tuner.presentation.viewmodel.TunerViewModel.onReferencePitchChanged]
+     * clamps to this range regardless of caller, so persisted/emitted values are always in range.
      */
     val referencePitchHz: Flow<Double>
 
@@ -50,4 +53,15 @@ interface TunerPreferences {
      * Call this from the `RequestPermission` launcher's `onResult` callback.
      */
     suspend fun setHasRequestedAudioPermission(value: Boolean)
+
+    companion object {
+        /** Minimum reference pitch (A4, Hz) the settings UI allows. */
+        const val REFERENCE_PITCH_HZ_MIN: Double = 430.0
+
+        /** Maximum reference pitch (A4, Hz) the settings UI allows. */
+        const val REFERENCE_PITCH_HZ_MAX: Double = 450.0
+
+        /** Default reference pitch (A4, Hz) — also what the settings sheet's "Reset" button restores. */
+        const val REFERENCE_PITCH_HZ_DEFAULT: Double = 440.0
+    }
 }

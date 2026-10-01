@@ -126,16 +126,20 @@ class BeatPatternTest {
     }
 
     // =========================================================================
-    // EIGHTHS-in-/8 no-op identity (6/8 with EIGHTHS)
+    // EIGHTHS in a /8 signature (6/8 with EIGHTHS) — NOT actually a no-op
     // =========================================================================
 
     @Test
-    fun `clickKindFor 6-8 with EIGHTHS produces expected pattern including no-op identity`() {
-        // Spec (Phase6-Metronome-Decisions.md Item 8): selecting EIGHTHS when the time-signature
-        // denominator is /8 is mathematically a no-op — the beat unit is already an eighth, so
-        // "eighth subdivision" adds no new information. The function still produces a well-defined
-        // output: index 0 is ACCENTED; even non-zero indices are STANDARD (multiples of 2);
-        // odd indices are SUBDIVISION. This is the function's actual behavior, not a special case.
+    fun `clickKindFor 6-8 with EIGHTHS doubles the click count, it does not no-op`() {
+        // `Phase6-Metronome-Decisions.md` Item 8 originally (and incorrectly) claimed selecting
+        // EIGHTHS when the denominator is /8 is "mathematically a no-op... produces the same
+        // output as NONE." That was never true: EIGHTHS always applies its ×2 multiplier
+        // regardless of denominator (subdivision is deliberately orthogonal to time signature —
+        // that part of Item 8 was and is correct), so 6/8+EIGHTHS produces 12 real clicks, not 6.
+        // In actual musical terms this means the resulting clicks land at the *sixteenth*-note
+        // rate, not the eighth-note rate the old "EIGHTHS"/"Eighth notes" label implied — this
+        // mislabeling (not a behavior bug) is what `docs/DECISIONS.md`'s 2026-10-02 "subdivision
+        // labels now describe a multiplier, not a note value" entry corrects.
         //
         // clicksPerBar(6, EIGHTHS) = 12 — so indices 0..11 cover the bar.
         assertEquals(12, clicksPerBar(6, Subdivision.EIGHTHS))
@@ -155,5 +159,56 @@ class BeatPatternTest {
         assertEquals(ClickKind.SUBDIVISION, clickKindFor(7, Subdivision.EIGHTHS))
         assertEquals(ClickKind.SUBDIVISION, clickKindFor(9, Subdivision.EIGHTHS))
         assertEquals(ClickKind.SUBDIVISION, clickKindFor(11, Subdivision.EIGHTHS))
+    }
+
+    // =========================================================================
+    // clickKindFor — custom accentedBeats (per-beat accent customization)
+    // =========================================================================
+
+    @Test
+    fun `default accentedBeats parameter matches the original beat-1-only behavior`() {
+        // No explicit accentedBeats argument — exercises the default parameter value.
+        assertEquals(ClickKind.ACCENTED, clickKindFor(0, Subdivision.NONE))
+        assertEquals(ClickKind.STANDARD, clickKindFor(1, Subdivision.NONE))
+    }
+
+    @Test
+    fun `beat 1 is STANDARD when accentedBeats does not include index 0`() {
+        assertEquals(ClickKind.STANDARD, clickKindFor(0, Subdivision.NONE, accentedBeats = setOf(2)))
+    }
+
+    @Test
+    fun `a non-zero main beat is ACCENTED when its index is in accentedBeats`() {
+        assertEquals(ClickKind.ACCENTED, clickKindFor(2, Subdivision.NONE, accentedBeats = setOf(2)))
+    }
+
+    @Test
+    fun `multiple accented beats are all ACCENTED, others are STANDARD`() {
+        val accented = setOf(0, 2)
+        assertEquals(ClickKind.ACCENTED, clickKindFor(0, Subdivision.NONE, accented))
+        assertEquals(ClickKind.STANDARD, clickKindFor(1, Subdivision.NONE, accented))
+        assertEquals(ClickKind.ACCENTED, clickKindFor(2, Subdivision.NONE, accented))
+        assertEquals(ClickKind.STANDARD, clickKindFor(3, Subdivision.NONE, accented))
+    }
+
+    @Test
+    fun `empty accentedBeats means no main beat is ever ACCENTED`() {
+        repeat(4) { index -> assertEquals(ClickKind.STANDARD, clickKindFor(index, Subdivision.NONE, accentedBeats = emptySet())) }
+    }
+
+    @Test
+    fun `accentedBeats never promotes a subdivision tick to ACCENTED`() {
+        // Index 1 in EIGHTHS is a between-beat subdivision tick (odd index); its main-beat index
+        // would be 0 if computed naively, but it must stay SUBDIVISION regardless of accentedBeats.
+        assertEquals(ClickKind.SUBDIVISION, clickKindFor(1, Subdivision.EIGHTHS, accentedBeats = setOf(0, 1)))
+    }
+
+    @Test
+    fun `accentedBeats indexes main beats, not raw click indices, under subdivision`() {
+        // 4/4 EIGHTHS: main beat 1 (the second beat) is at clickIndexInBar 2. Accenting
+        // mainBeatIndex 1 must accent click index 2, not click index 1 (which is a subdivision tick).
+        val accented = setOf(1)
+        assertEquals(ClickKind.SUBDIVISION, clickKindFor(1, Subdivision.EIGHTHS, accented))
+        assertEquals(ClickKind.ACCENTED, clickKindFor(2, Subdivision.EIGHTHS, accented))
     }
 }

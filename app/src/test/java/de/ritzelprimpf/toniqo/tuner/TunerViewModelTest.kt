@@ -1,6 +1,7 @@
 package de.ritzelprimpf.toniqo.tuner
 
 import de.ritzelprimpf.toniqo.audio.CaptureEvent
+import de.ritzelprimpf.toniqo.tuner.data.TunerPreferences
 import de.ritzelprimpf.toniqo.tuner.domain.model.TunerMode
 import de.ritzelprimpf.toniqo.tuner.domain.model.TuningStatus
 import de.ritzelprimpf.toniqo.tuner.domain.usecase.DetectTunedStringUseCase
@@ -593,6 +594,44 @@ class TunerViewModelTest {
         assertEquals(432.0, vm.uiState.value.referencePitchHz, 0.001)
         assertEquals(expected432Hz, vm.uiState.value.targetFrequencyHz!!, 0.1)
         assertEquals(432.0, preferences.storedReferencePitchHz, 0.001)
+    }
+
+    @Test
+    fun `onReferencePitchChanged clamps a value above the max to REFERENCE_PITCH_HZ_MAX`() = runTest {
+        val preferences = FakeTunerPreferences(initialReferencePitchHz = 440.0)
+        val vm = makeViewModel(preferences = preferences)
+        advanceUntilIdle()
+
+        vm.onReferencePitchChanged(999.0)
+        advanceUntilIdle()
+
+        assertEquals(TunerPreferences.REFERENCE_PITCH_HZ_MAX, vm.uiState.value.referencePitchHz, 0.001)
+        assertEquals(TunerPreferences.REFERENCE_PITCH_HZ_MAX, preferences.storedReferencePitchHz, 0.001)
+    }
+
+    @Test
+    fun `onReferencePitchChanged clamps a value below the min to REFERENCE_PITCH_HZ_MIN`() = runTest {
+        val preferences = FakeTunerPreferences(initialReferencePitchHz = 440.0)
+        val vm = makeViewModel(preferences = preferences)
+        advanceUntilIdle()
+
+        vm.onReferencePitchChanged(1.0)
+        advanceUntilIdle()
+
+        assertEquals(TunerPreferences.REFERENCE_PITCH_HZ_MIN, vm.uiState.value.referencePitchHz, 0.001)
+        assertEquals(TunerPreferences.REFERENCE_PITCH_HZ_MIN, preferences.storedReferencePitchHz, 0.001)
+    }
+
+    @Test
+    fun `onReferencePitchChanged accepts a value already within range unmodified`() = runTest {
+        val preferences = FakeTunerPreferences(initialReferencePitchHz = 440.0)
+        val vm = makeViewModel(preferences = preferences)
+        advanceUntilIdle()
+
+        vm.onReferencePitchChanged(445.0)
+        advanceUntilIdle()
+
+        assertEquals(445.0, vm.uiState.value.referencePitchHz, 0.001)
     }
 
     // ── Initial prefs loading ─────────────────────────────────────────────────────

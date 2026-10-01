@@ -302,17 +302,23 @@ class TunerViewModel @Inject constructor(
     }
 
     /**
-     * Persists the reference pitch [hz] and immediately re-emits the current tuner input so
-     * target frequencies update live without waiting for the next detection cycle.
+     * Clamps [hz] to [TunerPreferences.REFERENCE_PITCH_HZ_MIN]..[TunerPreferences.REFERENCE_PITCH_HZ_MAX],
+     * persists it, and immediately re-emits the current tuner input so target frequencies update
+     * live without waiting for the next detection cycle.
+     *
+     * Clamping here (rather than relying on the slider's own range) makes every caller safe —
+     * the ±1 buttons and the "Reset" button both just call this with an unclamped arithmetic
+     * result, same as the slider.
      */
     override fun onReferencePitchChanged(hz: Double) {
-        viewModelScope.launch { preferences.setReferencePitchHz(hz) }
+        val clampedHz = hz.coerceIn(TunerPreferences.REFERENCE_PITCH_HZ_MIN, TunerPreferences.REFERENCE_PITCH_HZ_MAX)
+        viewModelScope.launch { preferences.setReferencePitchHz(clampedHz) }
         val current = _state.value
         val preset = current.selectedPreset
         if (preset != null && current.mode == TunerMode.PRESET) {
             val targetNote = preset.notes[current.currentStringIndex]
-            _state.update { it.copy(targetFrequencyHz = targetNote.frequencyHz(hz)) }
-            tunerInput.value = buildInput(TunerMode.PRESET, targetNote, hz)
+            _state.update { it.copy(targetFrequencyHz = targetNote.frequencyHz(clampedHz)) }
+            tunerInput.value = buildInput(TunerMode.PRESET, targetNote, clampedHz)
         }
     }
 

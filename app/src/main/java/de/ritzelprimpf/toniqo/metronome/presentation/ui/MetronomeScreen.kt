@@ -62,6 +62,7 @@ internal fun MetronomeScreen(
             onTimeSignatureChanged = viewModel::onTimeSignatureChanged,
             onSubdivisionChanged = viewModel::onSubdivisionChanged,
             onTapTempo = viewModel::onTapTempo,
+            onBeatAccentToggled = viewModel::onBeatAccentToggled,
             modifier = Modifier.padding(innerPadding),
         )
     }

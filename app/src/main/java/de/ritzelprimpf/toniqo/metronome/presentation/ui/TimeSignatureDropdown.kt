@@ -29,10 +29,13 @@ import de.ritzelprimpf.toniqo.ui.theme.Tq
 import java.util.Locale
 
 /**
- * Pill-style 44dp dropdown for selecting the time signature from the 8 supported options.
+ * Pill-style 44dp dropdown for selecting the time signature from the 8 curated presets, or a
+ * trailing "Custom…" option that opens [TimeSignatureInputDialog] for any signature satisfying
+ * [MetronomeConfig.isSupportedTimeSignature].
  *
- * Shows the current value as "N/D" (e.g., "4/4"). The SIGNATURE kicker label sits above the
- * trigger. Options are sorted with /4 signatures first, then /8, both in ascending numerator order.
+ * Shows the current value as "N/D" (e.g., "4/4"), whether it's a preset or a custom signature.
+ * The SIGNATURE kicker label sits above the trigger. Presets are sorted with /4 signatures first,
+ * then /8, both in ascending numerator order.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,10 +46,23 @@ internal fun TimeSignatureDropdown(
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    var showCustomDialog by remember { mutableStateOf(false) }
 
     val sortedSignatures = remember {
         MetronomeConfig.SUPPORTED_SIGNATURES
             .sortedWith(compareBy({ it.second }, { it.first }))
+    }
+
+    if (showCustomDialog) {
+        TimeSignatureInputDialog(
+            initialNumerator = numerator,
+            initialDenominator = denominator,
+            onConfirm = { n, d ->
+                onSelectionChanged(n, d)
+                showCustomDialog = false
+            },
+            onDismiss = { showCustomDialog = false },
+        )
     }
 
     Column(modifier = modifier) {
@@ -95,6 +111,20 @@ internal fun TimeSignatureDropdown(
                         contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
                     )
                 }
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = stringResource(R.string.metronome_signature_custom_option),
+                            style = Tq.Type.NumericM,
+                            color = Tq.Color.FgSecondary,
+                        )
+                    },
+                    onClick = {
+                        expanded = false
+                        showCustomDialog = true
+                    },
+                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                )
             }
         }
     }

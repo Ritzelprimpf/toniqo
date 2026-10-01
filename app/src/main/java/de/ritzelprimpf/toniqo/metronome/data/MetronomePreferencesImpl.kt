@@ -17,7 +17,7 @@ private val Context.metronomeDataStore by preferencesDataStore(name = "metronome
 /**
  * DataStore-backed implementation of [MetronomePreferences].
  *
- * Stores BPM, time-signature numerator and denominator, and subdivision name in a dedicated
+ * Stores BPM, time-signature numerator and denominator, subdivision name, and the accent pattern in a dedicated
  * `metronome_preferences` DataStore file — separate from the tuner's (per
  * `Phase6-Metronome-Decisions.md` Item 4).
  *
@@ -43,6 +43,7 @@ class MetronomePreferencesImpl @Inject constructor(
     private val keyNumerator = intPreferencesKey("time_sig_numerator")
     private val keyDenominator = intPreferencesKey("time_sig_denominator")
     private val keySubdivision = stringPreferencesKey("subdivision")
+    private val keyAccentedBeats = stringPreferencesKey("accented_beats")
 
     override val config: Flow<MetronomeConfig> = context.metronomeDataStore.data
         .map { prefs ->
@@ -51,6 +52,7 @@ class MetronomePreferencesImpl @Inject constructor(
                 numerator = prefs[keyNumerator],
                 denominator = prefs[keyDenominator],
                 subdivisionName = prefs[keySubdivision],
+                accentedBeats = prefs[keyAccentedBeats],
             )
             val validated = validateOrDefault(raw)
             // Self-healing write-back: only if the persisted form differs from the validated form.
@@ -71,5 +73,6 @@ class MetronomePreferencesImpl @Inject constructor(
         prefs[keyNumerator] = config.timeSignatureNumerator
         prefs[keyDenominator] = config.timeSignatureDenominator
         prefs[keySubdivision] = config.subdivision.name
+        prefs[keyAccentedBeats] = encodeAccentedBeats(config.accentedBeats)
     }
 }

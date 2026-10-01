@@ -2376,6 +2376,392 @@ failure mode this test class exists for (§"7-string hand-curation crash" above)
 
 ---
 
+## 2026-10-01 — Metronome: continuous-buffer rewrite replaces gap-based `AudioTrack` writes
+
+**Decision.** `AudioTrackMetronomePlayer` no longer writes one click buffer per beat and writes
+nothing in between. It now continuously writes a mixed silence+click PCM stream, chunk by chunk
+(480-sample/10ms chunks), via a new `ClickStreamRenderer`. `BeatScheduler` is rewritten to operate
+on **output-sample position** rather than wall-clock nanoseconds, and drops its `Clock` dependency
+entirely — it no longer needs one, since every sample is generated deterministically regardless of
+real elapsed time. `catchUpIfBehind` is removed along with the nanosecond-anchored scheduler it
+belonged to; see its own class doc in the new `BeatScheduler.kt` for why it has no equivalent in
+the new design. The previous warmup-silence write is also removed (no longer needed — see
+`AudioTrackMetronomePlayer`'s class doc). This is "Strategy C" from `Phase6-Metronome-Decisions.md`
+Item 2, which was explicitly deferred at the time for complexity; this entry supersedes that
+deferral based on field evidence (below) that the lighter fixes shipped 2026-09-18 did not fully
+resolve the symptom.
+
+**Problem.** The project owner reproduced, on a physically-present Pixel 6 (and previously reported
+on a Pixel 9 Pro by a beta tester), that below ~115 BPM in 4/4 with no subdivision, the metronome
+beep is audibly broken: beat 1 plays correctly, beats 2 and 3 are silent, and beats 2–4 all fire in
+rapid succession right before the next downbeat. The two fixes shipped 2026-09-18
+(`catchUpIfBehind`'s skip-and-log guard, and `PERFORMANCE_MODE_POWER_SAVING`) did not resolve it.
+
+**Diagnosis.** Live `adb logcat -s MetronomePlayer` captured on the reproducing Pixel 6 while the
+bug was audibly occurring showed **zero** "fell behind; skipped N clicks" warnings over multiple
+reproductions. This conclusively rules out an app-level stall as the cause — `catchUpIfBehind`
+never triggered because the app's own wall-clock scheduler never fell behind; every click was
+written via `AudioTrack.write()` at exactly its correct scheduled time. The burst described by the
+user (clicks 2–4 firing together near the end of the bar, with click 1 always correct) is
+consistent with the output path buffering those on-time writes without draining them promptly —
+most likely the deep-buffer/output-codec path going idle or standby during the long silence gap
+(no write at all, not a zero-samples write) and needing to catch up once a new write arrives, a
+behavior the app-level clock has no visibility into and the previous fixes could not address
+because they only guard against the app's *own* thread falling behind.
+
+**Alternatives considered.**
+- *Try other `AudioTrack` tuning knobs first (buffer size, `PERFORMANCE_MODE_NONE`, headphones vs.
+  speaker) before committing to the rewrite.* Offered to the user as an option; declined in favor
+  of going straight to the rewrite given how specific and reproducible the existing evidence
+  already was.
+- *Periodic silence "keep-alive" writes without full sample-accurate click placement* (insert
+  small silence buffers into the gaps on the existing wall-clock-anchored scheduler, without
+  redesigning it around sample position). Offered to the user as a lighter middle ground; declined
+  in favor of the full rewrite.
+- *Do nothing further / ship the two 2026-09-18 fixes as final.* Ruled out — directly contradicted
+  by the live-device reproduction.
+
+**Rationale.** Only a continuous, gapless output stream removes the underlying idle-gap condition
+by construction, rather than papering over its symptoms from the app side (which the 2026-09-18
+fixes already tried and which the logcat evidence shows cannot see this failure mode at all).
+Sample-position scheduling is the natural fit once every sample is explicitly generated: "when" a
+click plays is which sample index it starts at, not a wall-clock instant, so the generating
+coroutine's own timing jitter (GC, dispatcher contention) stops mattering — `AudioTrack.write(...,
+WRITE_BLOCKING)` paces the loop by blocking until there's real buffer room, exactly like any other
+continuous audio-generation loop.
+
+**Consequences.**
+- New `ClickStreamRenderer.kt` (pure, JVM-testable sample mixer) and a rewritten `BeatScheduler.kt`
+  (sample-position state machine, no `Clock`). `AudioTrackMetronomePlayer.kt` rewritten: constructor
+  no longer takes `Clock` (no remaining use for it), main loop replaced with the chunked
+  continuous-write loop, warmup-silence write removed, buffer sizing based on chunk depth instead
+  of click-buffer size (incidentally removing a pre-existing `!!` on `clickBuffers[ACCENTED]`).
+- Test suite restructured to match: `AudioTrackMetronomePlayerTest.kt` (the `BeatScheduler` test
+  file) rewritten for the sample-domain API with no `FakeClock`, `catchUpIfBehind` tests removed;
+  new `ClickStreamRendererTest.kt` (8 tests) covering silence/click placement, cross-chunk
+  carryover, subdivision tick suppression, full-bar sequencing, and mid-stream re-anchoring;
+  `IntervalMathTest.kt` updated for the new sample-based `samplesPerClick` signature. Full
+  `metronome` package suite green after the change (49 tests across the three changed files; no
+  regressions in the ~160 other metronome tests).
+- **Verified against the real failure**, not just by code inspection: built and installed on the
+  reproducing Pixel 6 via `adb`, confirmed broken on the pre-fix build via live logcat + the user's
+  own ears, then confirmed fixed on the same device immediately after this rewrite — the strongest
+  verification standard used on this bug so far.
+
+---
+
+## 2026-10-01 (later) — Metronome: time-signature denominator now scales click speed
+
+**Decision.** The time-signature denominator now scales the physical click interval, not just its
+label. `samplesPerClick` gains a `denominator` parameter; the interval formula becomes
+`sampleRateHz * 60 * BPM_REFERENCE_DENOMINATOR / (bpm * subdivision.multiplier * denominator)`
+where `BPM_REFERENCE_DENOMINATOR = 4`. BPM is now always interpreted as a quarter-note pulse: an
+/8 signature (6/8, 7/8, 9/8, 12/8) clicks exactly **twice as fast** as a /4 signature at the same
+BPM number, because an eighth note is half a quarter note's duration. At denominator 4 the new
+term is 1 — a no-op — so every existing /4 signature's behavior and every test using the default
+(4/4) config is numerically unchanged. The numerator's role (clicks per bar, accent on beat 1) is
+completely unchanged — a 12/8 bar still accents once every 12 clicks, just twice as fast overall.
+
+**This supersedes the "BPM interpretation" clause of `Phase6-Metronome-Decisions.md` Item 7**
+("BPM math is uniform regardless of denominator... in /8 signatures BPM = eighth notes per
+minute" — which in the actual implementation meant /8 and /4 signatures clicked at the identical
+physical rate for the same BPM number). The rest of Item 7 (treating all signatures as simple
+meters, numerator → bar length/accent pattern, rejecting the compound-meter alternative) is
+unchanged and still stands.
+
+**Problem.** User report: setting 12/8 expected it to be noticeably faster than 4/4 at the same
+BPM; instead every signature clicked at the identical rate, which felt wrong. Confirmed by
+inspection: the pre-existing `samplesPerClick(bpm, subdivision, sampleRateHz)` formula never
+referenced the denominator at all.
+
+**Alternatives considered (discussed with the user before implementing).**
+- **Compound-meter feel** (6/8, 9/8, 12/8 as 2/3/4 dotted-quarter beats per bar, each with 3
+  audible eighth-note subdivisions). This is exactly `Phase6-Metronome-Decisions.md` Item 7's
+  "Approach A," already rejected there for tangling with the subdivision parameter and for 7/8 not
+  fitting the model. Not reopened.
+- **Keep the literal click-rate behavior, only fix UI labeling/expectations.** Rejected by the
+  user — the physical speed itself was the complaint, not just a documentation gap.
+- **Denominator scales click speed directly** (chosen) — confirmed with the user via a concrete
+  worked example (12/8 at a given BPM = double-time, with the existing one-accent-per-12-clicks
+  bar structure preserved) before implementing.
+
+**Rationale.** Matches conventional metronome/BPM semantics (BPM as a fixed note-value pulse that
+the time signature's denominator names) with a minimal, surgical formula change — no change to how
+bar length, accents, or subdivisions work, and zero effect on any existing /4 signature.
+
+**Consequences.** `IntervalMath.kt`: `samplesPerClick` signature gains `denominator`, new
+`BPM_REFERENCE_DENOMINATOR` constant. `BeatScheduler.targetSample()` passes
+`config.timeSignatureDenominator` through. Test updates: `IntervalMathTest.kt` (4 new
+denominator-scaling tests), `AudioTrackMetronomePlayerTest.kt`/`BeatScheduler` tests (2 new tests:
+12/8-clicks-twice-as-fast, 12/8-still-accents-once-per-bar), `ClickStreamRendererTest.kt` (1 new
+end-to-end test rendering a full 4/4 bar alongside a full 12/8 bar in the same sample window).
+Full metronome suite green. `docs/APP_SPECIFICATION.md`'s "Beat unit terminology" section should
+be updated to document the speed relationship, not just the naming — flagged as a follow-up doc
+edit alongside this entry.
+
+---
+
+## 2026-10-01 (yet later) — Metronome: per-beat accent customization
+
+**Decision.** Users can long-press any beat-indicator segment to toggle that beat between
+accented and standard. `MetronomeConfig` gains `accentedBeats: Set<Int>` (zero-based main-beat
+indices; default `{0}`, i.e. beat 1 only — unchanged from today's fixed behavior). `clickKindFor`
+now takes an `accentedBeats` parameter (default `MetronomeConfig.DEFAULT_ACCENTED_BEATS`, so every
+existing call site and test is unaffected) and accents whichever main beats are in that set,
+instead of hardcoding index 0; subdivision-only ticks are never affected regardless of the
+pattern. `BeatIndicator`'s segment visuals (mint glow + 35%-tint + accent dot) generalize from
+"beat 1" to "whichever beats are accented" — same visual language, now driven by the pattern
+instead of a hardcoded index. **The accent pattern resets to the default whenever the time
+signature changes** (confirmed with the user — a pattern sized for one bar length doesn't carry
+over to a different one); a subdivision-only change does not reset it, since subdivision doesn't
+affect the main-beat count the pattern is indexed by.
+
+**This supersedes `Phase6-Metronome-Decisions.md` Item 11** ("No accent customization in Phase
+6... Fixed, not user-configurable"), which deferred exactly this feature and explicitly recorded
+the forward-compatible path taken here (an optional `accentPattern`-shaped field defaulting to
+beat-1-only). It also generalizes the beat-1-specific wording in Item 7/8's click-kind rules and
+in `DESIGN.md` §8.2's segment-visual spec, which were written before this field existed —
+`DESIGN.md` has been updated to describe the visual rule in terms of "the accented beat(s)"
+rather than literally "beat 1."
+
+**Alternatives considered (discussed with the user before implementing).**
+- **Three-state per-beat (silent / standard / accent)** — `Phase6-Metronome-Decisions.md` Item
+  11's "Level 2." Not requested; the user specifically described a binary accent toggle, matching
+  Item 11's "Level 1."
+- **Preserve/remap the accent pattern across a signature change** instead of resetting it (e.g.
+  truncate or pad to the new bar length). Rejected by the user in favor of a plain reset — simpler
+  and avoids inventing a remapping rule nobody asked for.
+
+**Rationale.** Binary toggle matches exactly what was asked for and what Item 11 already scoped
+as the natural v1 extension. Keying the pattern by main-beat index (not raw click index, which
+includes subdivision ticks) keeps it orthogonal to the subdivision setting, consistent with how
+Item 8 already keeps subdivision orthogonal to time signature — a user accenting "beat 2" gets
+beat 2 accented whether or not eighth-note subdivision ticks are also playing.
+
+**Persistence note.** This is the project's first schema addition to an already-shipped DataStore
+file (prior production/beta builds exist per `app/release/app-release.aab` and the `v1.4`/`v1.5`
+git tags). The new `accented_beats` key is treated differently from the other four persisted
+fields' "any invalid field resets the whole config" rule: a `null` value (the key not existing yet
+for an upgrading user) resolves to the default pattern **without** resetting that user's existing
+BPM/signature/subdivision — see `parseAccentedBeats`'s doc in `RawMetronomeConfig.kt` for the full
+reasoning. `requiresRepair` still triggers a one-time write-back in that case, so the file becomes
+fully self-consistent after the first read post-upgrade.
+
+**Consequences.** `MetronomeConfig.kt` (new field + `DEFAULT_ACCENTED_BEATS`), `BeatPattern.kt`
+(`clickKindFor` signature), `BeatScheduler.kt` (passes `config.accentedBeats` through),
+`RawMetronomeConfig.kt` (`accentedBeats` raw field, `encodeAccentedBeats`/`parseAccentedBeats`,
+updated `requiresRepair`/`validateOrDefault`), `MetronomePreferencesImpl.kt` (new DataStore key),
+`MetronomeViewModel.kt` (`onBeatAccentToggled`, signature-change reset), `BeatIndicator.kt`
+(generalized visuals + long-press gesture + `HapticFeedbackType.LongPress`), `MetronomeContent.kt`
+/ `MetronomeScreen.kt` (threaded callback). Test updates: `BeatPatternTest.kt` (7 new tests),
+`ValidateOrDefaultTest.kt` (6 new tests covering parsing, range validation, and the migration
+case), `AudioTrackMetronomePlayerTest.kt`/`BeatScheduler` tests (2 new tests),
+`MetronomeViewModelTest.kt` (5 new tests). Full metronome suite green (187 tests). No Compose UI
+test added for the long-press gesture itself — consistent with the existing project pattern of no
+unit tests for `BeatIndicator`/`MetronomeContent` (not previously covered either); verify manually
+on-device.
+`docs/APP_SPECIFICATION.md` updated to document the toggle and the default/reset behavior.
+
+**Addendum (same day) — accent toggles while running were silently dropped until restart.**
+`AudioTrackMetronomePlayer`'s config-update branch only called `scheduler.onBpmChanged` (BPM
+changed) or `scheduler.onSignatureOrSubdivisionChanged` (signature/subdivision changed) — an
+accent-only change matched neither, so the new config was read off the conflated channel and
+discarded, and `scheduler.config` (hence `currentClickKind()`) kept using the stale accent pattern
+until the player was stopped and restarted from the now-persisted value. Fixed by adding
+`BeatScheduler.updateConfig(newConfig)` — applies the new config in place with **no** re-anchor
+and no `clickIndexInBar` reset (accent membership doesn't affect click timing) — and routing to it
+as the `else` branch of the existing `when`. 2 new tests (`BeatScheduler` `updateConfig` test,
+plus the existing accent-wiring tests already covered the read side). Full metronome suite still
+green (188 tests).
+
+---
+
+## 2026-10-01 (still later) — Metronome: free/custom time signature input
+
+**Decision.** The time-signature dropdown gains a trailing "Custom…" option that opens
+`TimeSignatureInputDialog` — a two-field number-pad dialog (numerator, denominator), mirroring
+`BpmInputDialog`'s structure. Validity is governed by a new `MetronomeConfig.isSupportedTimeSignature(numerator, denominator)`:
+numerator in `1..32`, denominator in `{1, 2, 4, 8, 16, 32}` (every power of two from a whole note
+to a 32nd note). The existing 8-entry `SUPPORTED_SIGNATURES` set is now explicitly documented as
+just the dropdown's curated quick-pick menu — a subset of the broader rule, not a separate
+validity check. `validateOrDefault` and `MetronomeViewModel.onTimeSignatureChanged` both switch
+from the old finite-set membership check to this broader rule.
+
+**Bounds, as confirmed with the user.** Initially discussed as numerator up to 128 (and
+denominators up to 128), but narrowed to 32 for both after working through what a numerator that
+large would do to the beat indicator UI (see the layout entry below) — "32 covers most," in the
+user's words, including odd/complex meters from progressive-rock and metal repertoire, without
+the beat indicator having to support a genuinely enormous bar.
+
+**A pre-existing crash this surfaced.** `BeatIndicatorHeader.beatUnitLabelResId` was a `when`
+over the denominator with only `4` and `8` handled and an `error(...)` (crash) for anything else —
+safe before this change only because `SUPPORTED_SIGNATURES` never contained any other denominator.
+Custom signatures make every denominator in `SUPPORTED_DENOMINATORS` reachable, so this would have
+crashed the screen on e.g. 5/16. Fixed: all six denominators now have a real label (new strings:
+whole/half/16th/32nd notes, alongside the existing quarter/eighth), with a non-crashing fallback
+instead of `error(...)` for defense in depth.
+
+**Consequences.** `MetronomeConfig.kt` (`TIME_SIGNATURE_NUMERATOR_MIN/MAX`,
+`SUPPORTED_DENOMINATORS`, `isSupportedTimeSignature`), `RawMetronomeConfig.kt` / `MetronomeViewModel.kt`
+(switched validation), `BeatIndicatorHeader.kt` (crash fix), new `TimeSignatureInputDialog.kt`,
+`TimeSignatureDropdown.kt` (Custom… entry + dialog wiring), new strings. Test updates: new
+`MetronomeConfigTest.kt` (9 tests for `isSupportedTimeSignature`), `ValidateOrDefaultTest.kt` (6
+new tests; 3 existing tests that used 5/8 or a similar pair as "the unsupported example" updated
+to a genuinely-always-invalid pair, since 5/8 is now valid), `MetronomeViewModelTest.kt` (2 tests
+updated for the same reason). Full suite green (232 metronome tests after this and the layout
+change below; full project suite also green).
+
+---
+
+## 2026-10-01 (even later) — Metronome: beat indicator adapts to large bar lengths
+
+**Decision.** `BeatIndicator` now measures its available width (`BoxWithConstraints`) and picks
+between two layouts: if `numerator` segments at the 44dp accessible minimum (DESIGN.md §13.4) plus
+inter-segment gaps fit the row, it renders exactly as before (`weight(1f)`, fills the row — every
+existing preset, including 12/8, lands here, pixel-identical to pre-change behavior). If they
+don't fit, segments are pinned to a fixed 44dp width and the row becomes horizontally scrollable
+instead of shrinking every segment below the accessible minimum.
+
+**Why this was needed now.** Free time-signature input (previous entry) makes numerators up to 32
+reachable, and the accent-customization feature (earlier same-day entry) made each segment a
+long-press tap target — before that, segment width didn't matter for accessibility since segments
+were purely decorative. Worked through the actual numbers for this entry: even the existing 12/8
+preset's 12 segments already compute to roughly 19dp wide at a typical ~360dp phone width once
+`Tq.Sp.s2` (8dp) inter-segment gaps are accounted for — already below the 44dp minimum. This was
+latent since the accent-toggle gesture shipped earlier today and is fixed by this same change,
+not just the new large-numerator case.
+
+**Alternatives considered (discussed with the user).**
+- **Always segments, never scroll; let them shrink below 44dp for large bars.** Rejected —
+  directly violates `DESIGN.md` §13.4 and makes the long-press gesture physically unreliable on
+  narrow slivers.
+- **Compact text-only fallback ("Beat 3/24") above some numerator threshold, dropping the segment
+  view and accent-toggle UI for large bars.** Rejected by the user — the people asking for large
+  custom signatures are exactly the people who'd want per-beat accent control on those same bars;
+  this would take the feature away from its primary audience.
+- **Horizontally scrollable, fixed-width segments (chosen).** Works identically for every
+  numerator, preserves full accent-toggle functionality at any bar length, and doesn't need a
+  threshold constant to tune or maintain.
+
+**Consequences.** `BeatIndicator.kt` rewritten to use `BoxWithConstraints` with the
+fits-vs-scrolls branch described above; `MIN_SEGMENT_WIDTH` (44dp) named constant. No change to
+`BeatSegment`'s internals (visuals, long-press gesture) — only how its container sizes it. No
+dedicated Compose UI test added, consistent with this composable's existing untested status (see
+the accent-customization entry above); verify manually on-device across a small (4/4), a
+boundary (12/8, the previous max) and a large (e.g. 17/16) signature.
+
+---
+
+## 2026-10-01 (latest) — Metronome: beat indicator auto-scrolls to follow the current beat
+
+**Decision.** In the scrollable-row layout (previous entry), each beat segment now requests to be
+brought into view — via `BringIntoViewRequester`, with an extra `LOOKAHEAD_SEGMENT_COUNT` (2)
+segments of margin ahead of it — the moment it becomes the currently-lit beat. In the non-scrolling
+("fits") layout this is a harmless no-op, since there's no scrollable ancestor for it to act on.
+
+**Problem.** User testing on the Xperia 10 IV with a 17/16 custom signature: the scrollable row
+(previous entry) had no auto-scroll at all — once playback advanced past whatever beats happened
+to be visible when the user last touched the screen, the currently-playing beat went invisible
+off-screen with no way to tell where the metronome actually was without manually scrolling to
+chase it. Reported as "looks kinda broken."
+
+**Rationale.** `BringIntoViewRequester` is the standard Compose mechanism for "keep this
+on-screen" inside a scrollable container, and accepts an optional rect larger than the component's
+own bounds — used here to request a few segments of lookahead so the view scrolls a little ahead
+of the beat instead of snapping reactively right at the edge every time.
+
+**Consequences.** `BeatIndicator.kt`: `BeatSegment` gains a `BringIntoViewRequester` +
+`LaunchedEffect(isLit)`; new `LOOKAHEAD_SEGMENT_COUNT`/`LOOKAHEAD_WIDTH` constants; the pre-existing
+`44.dp` height literal was also replaced with a named `SEGMENT_HEIGHT_DP` constant while in the
+area. No unit test added — this is scroll/animation behavior inside an already-untested composable
+(see the accent-customization entry's note on `BeatIndicator` test coverage); verify manually.
+
+---
+
+## 2026-10-02 — Metronome: subdivision labels now describe a multiplier, not a note value
+
+**Decision.** The subdivide dropdown's labels change from absolute note names to a plain
+multiplier description: "Eighth notes" → "Double (×2)", "Sixteenth notes" → "Quadruple (×4)",
+"Eighth triplets" → "Triplet (×3)" ("None" is unchanged). Only the user-facing string *values*
+change (`strings.xml`); the `Subdivision` enum constant names (`EIGHTHS`, `SIXTEENTHS`,
+`TRIPLETS`) and their persisted `.name` strings are untouched, so this is a pure display change —
+no migration concern, since nothing about how a config is stored or validated changes.
+
+**Problem.** User observation: with a custom 12/16 signature, selecting the "Eighth notes"
+subdivision actually makes the metronome click faster in a way that doesn't match what "eighth
+notes" should mean. Root cause: `Subdivision.multiplier` has always been a flat, denominator-
+agnostic rate multiplier (per `Phase6-Metronome-Decisions.md` Item 8 — "keeps subdivision
+orthogonal to time signature... one set of rules covers every signature," which is correct and
+deliberate), but the *labels* named an absolute note value that's only actually correct when the
+bar's beat unit is a quarter note. For any other denominator the label names the wrong note — e.g.
+a 12/16 bar's beat unit is already a sixteenth note, so "Eighth notes" (×2) subdivision produces
+32nd-note-rate clicks, not eighth notes.
+
+**This was already latently true for existing /8 presets, not just new custom signatures.**
+Worked through the exact numbers for 6/8 (denominator 8): "Eighth notes" (×2) subdivision there
+produces clicks at the *sixteenth*-note rate, not the eighth-note rate its own label claimed —
+confirmed directly against `BeatPatternTest`'s existing `clicksPerBar(6, EIGHTHS) = 12` assertion
+(double the 6 clicks of the unsubdivided bar). That test's own comment claimed this case was "a
+no-op... produces the same output as NONE," copied from `Phase6-Metronome-Decisions.md` Item 8 —
+also wrong, and never caught because denominator 4 and 8 were the only denominators that existed
+until this week, and 8 happened to be the one where the mislabeling was least likely to be
+scrutinized against real note durations. Both the test's comment and the Item 8 text it quoted are
+corrected in place (test renamed and recommented; this entry stands in for an Item 8 correction in
+the phase-specific decisions doc, which is treated as historical and not edited).
+
+**Alternatives considered.**
+- **Keep absolute note-value labels, make them denominator-aware** (e.g. compute "what this
+  multiplier means in note-name terms" dynamically from the current denominator). Rejected — the
+  user explicitly asked for "just change the labels," and a dynamic note-name computation is far
+  more moving parts for a dropdown whose job is just "pick a multiplier"; it would also need a
+  name for every (denominator, multiplier) combination, including ones with no common musical name
+  (e.g. quadrupling a sixteenth-note beat has no single colloquial note name).
+- **Rename the `Subdivision` enum constants themselves** (e.g. `EIGHTHS` → `DOUBLE`). Rejected —
+  the constant names are internal-only (never shown to users) and their `.name` is what's
+  persisted to DataStore; renaming them would require a migration path for existing persisted
+  configs for zero user-visible benefit, since only the display strings needed to change.
+
+**Consequences.** `strings.xml` (3 string values changed, 1 doc comment added), `SubdivideDropdown.kt`
+(doc comment), `Subdivision.kt` (doc comments de-emphasize absolute note names), `BeatPatternTest.kt`
+(1 test renamed/recommented for accuracy, same assertions). `docs/APP_SPECIFICATION.md`'s
+subdivision table and prose updated to match. Full metronome suite green, no behavior change
+(click timing, persistence, and validation are all identical — this is a labels-only fix).
+
+---
+
+## 2026-10-02 — Tuner reference pitch becomes a 430-450Hz slider
+
+**Decision.** The tuner settings sheet's reference-pitch control changes from a binary 440/432Hz
+`SegmentedControl` toggle to a continuous slider over 430–450 Hz in whole-Hz steps, flanked by
+`−`/`+` 1Hz icon buttons (same pattern as the metronome's BPM control), plus a "Reset" text button
+that restores 440 Hz. `TunerPreferences` gains `REFERENCE_PITCH_HZ_MIN`/`MAX`/`DEFAULT` constants
+(430.0/450.0/440.0); `TunerViewModel.onReferencePitchChanged` now clamps to that range so every
+caller (slider, ± buttons, reset) is safe regardless of what value it passes in.
+
+**Why this was low-risk.** The core pitch math (`MusicTheory.frequencyToNote`/`noteToFrequency`,
+`Note.frequencyHz`) and `TunerPreferences.referencePitchHz` were already a free `Double` — the
+440/432 restriction was purely a UI-layer choice (the old KDoc even said so: "other values may be
+stored but are not produced by the UI"). No domain or data-layer math needed to change at all.
+
+**A pre-existing bug this surfaced.** `ReferencePitchKicker` (the `TUNER · A4 = …` header line)
+had a hardcoded `if (referencePitchHz == 432.0) "432 HZ" else "440 HZ"` check — any other value
+(now reachable via the slider) would have silently displayed the wrong number, always showing
+"440 HZ" regardless of the actual setting. Fixed by replacing both hardcoded strings with one
+parameterized format string.
+
+**Consequences.** `TunerPreferences.kt` (new constants, updated KDoc), `TunerViewModel.kt`
+(clamping in `onReferencePitchChanged`), `TunerSettingsSheet.kt` (new `ReferencePitchSliderRow`
+replacing the `SegmentedControl`, "Reset" `TextButton`), `ReferencePitchKicker.kt` (generalized
+format string), `strings.xml` (`tuner_kicker_440`/`432` → one `tuner_kicker_format`;
+`tuner_settings_440`/`432` removed; new reset/±-button strings). 3 new `TunerViewModelTest` cases
+(clamp above max, clamp below min, in-range value passes through unmodified). `DESIGN.md` §8.1 and
+`APP_SPECIFICATION.md`'s reference-pitch descriptions updated to match; the stale "432 Hz toggle
+placement" stop-and-ask bullet in `DESIGN.md`'s intro (long since resolved, and now also outdated
+regardless) removed. Full suite green (no regressions — existing 432.0 Hz test case still passes
+since it's within the new range).
+
+---
+
 ## (Template for future entries)
 
 ## YYYY-MM-DD — Short title of decision

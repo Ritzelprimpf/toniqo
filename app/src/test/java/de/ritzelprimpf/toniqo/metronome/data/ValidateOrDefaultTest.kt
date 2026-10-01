@@ -12,7 +12,8 @@ class ValidateOrDefaultTest {
         numerator: Int? = 4,
         denominator: Int? = 4,
         subdivisionName: String? = Subdivision.NONE.name,
-    ) = RawMetronomeConfig(bpm, numerator, denominator, subdivisionName)
+        accentedBeats: String? = "0",
+    ) = RawMetronomeConfig(bpm, numerator, denominator, subdivisionName, accentedBeats)
 
     // ── Valid input round-trips ───────────────────────────────────────────────
 
@@ -89,8 +90,46 @@ class ValidateOrDefaultTest {
 
     @Test
     fun `unsupported time signature returns DEFAULT`() {
-        // 5/8 is not in SUPPORTED_SIGNATURES
-        assertEquals(MetronomeConfig.DEFAULT, validateOrDefault(raw(numerator = 5, denominator = 8)))
+        // denominator 3 is not a power of two — never valid, preset or custom
+        assertEquals(MetronomeConfig.DEFAULT, validateOrDefault(raw(numerator = 4, denominator = 3)))
+    }
+
+    @Test
+    fun `custom non-preset signature within range is accepted`() {
+        // 5/8 is not one of the 8 curated SUPPORTED_SIGNATURES presets, but is a valid custom signature.
+        val result = validateOrDefault(raw(numerator = 5, denominator = 8, accentedBeats = "0"))
+
+        assertEquals(5, result.timeSignatureNumerator)
+        assertEquals(8, result.timeSignatureDenominator)
+    }
+
+    @Test
+    fun `numerator at TIME_SIGNATURE_NUMERATOR_MAX is valid`() {
+        val result = validateOrDefault(raw(numerator = MetronomeConfig.TIME_SIGNATURE_NUMERATOR_MAX, denominator = 4, accentedBeats = "0"))
+
+        assertEquals(MetronomeConfig.TIME_SIGNATURE_NUMERATOR_MAX, result.timeSignatureNumerator)
+    }
+
+    @Test
+    fun `numerator one above TIME_SIGNATURE_NUMERATOR_MAX returns DEFAULT`() {
+        val result = validateOrDefault(
+            raw(numerator = MetronomeConfig.TIME_SIGNATURE_NUMERATOR_MAX + 1, denominator = 4, accentedBeats = "0"),
+        )
+
+        assertEquals(MetronomeConfig.DEFAULT, result)
+    }
+
+    @Test
+    fun `every supported denominator is individually valid at a fixed numerator`() {
+        MetronomeConfig.SUPPORTED_DENOMINATORS.forEach { denominator ->
+            val result = validateOrDefault(raw(numerator = 4, denominator = denominator, accentedBeats = "0"))
+            assertEquals("denominator $denominator should round-trip", denominator, result.timeSignatureDenominator)
+        }
+    }
+
+    @Test
+    fun `a denominator that is not a power of two returns DEFAULT`() {
+        assertEquals(MetronomeConfig.DEFAULT, validateOrDefault(raw(numerator = 4, denominator = 6)))
     }
 
     @Test
@@ -108,7 +147,7 @@ class ValidateOrDefaultTest {
 
     @Test
     fun `all-null raw config does not require repair`() {
-        val allNull = raw(null, null, null, null)
+        val allNull = raw(null, null, null, null, null)
         assertEquals(false, allNull.requiresRepair(MetronomeConfig.DEFAULT))
     }
 
@@ -120,6 +159,7 @@ class ValidateOrDefaultTest {
             numerator = config.timeSignatureNumerator,
             denominator = config.timeSignatureDenominator,
             subdivisionName = config.subdivision.name,
+            accentedBeats = encodeAccentedBeats(config.accentedBeats),
         )
         assertEquals(false, matching.requiresRepair(config))
     }
@@ -144,7 +184,64 @@ class ValidateOrDefaultTest {
             numerator = config.timeSignatureNumerator,
             denominator = config.timeSignatureDenominator,
             subdivisionName = config.subdivision.name,
+            accentedBeats = encodeAccentedBeats(config.accentedBeats),
         )
         assertEquals(true, mismatched.requiresRepair(config))
+    }
+
+    // ── accentedBeats parsing ─────────────────────────────────────────────────
+
+    @Test
+    fun `valid accentedBeats string round-trips to the matching set`() {
+        val result = validateOrDefault(raw(numerator = 4, accentedBeats = "0,2"))
+
+        assertEquals(setOf(0, 2), result.accentedBeats)
+    }
+
+    @Test
+    fun `empty accentedBeats string means no beat is accented`() {
+        val result = validateOrDefault(raw(accentedBeats = ""))
+
+        assertEquals(emptySet<Int>(), result.accentedBeats)
+    }
+
+    @Test
+    fun `null accentedBeats falls back to the default pattern without resetting the rest of the config`() {
+        // Simulates a config persisted before this field existed: every other field is valid.
+        val result = validateOrDefault(raw(bpm = 90, numerator = 3, denominator = 4, accentedBeats = null))
+
+        assertEquals(MetronomeConfig.DEFAULT_ACCENTED_BEATS, result.accentedBeats)
+        assertEquals(90, result.bpm) // other fields are untouched, not reset to MetronomeConfig.DEFAULT
+        assertEquals(3, result.timeSignatureNumerator)
+    }
+
+    @Test
+    fun `malformed accentedBeats falls back to the default pattern without resetting the rest of the config`() {
+        val result = validateOrDefault(raw(bpm = 90, accentedBeats = "not,a,number"))
+
+        assertEquals(MetronomeConfig.DEFAULT_ACCENTED_BEATS, result.accentedBeats)
+        assertEquals(90, result.bpm)
+    }
+
+    @Test
+    fun `accentedBeats index out of range for the current numerator falls back to the default`() {
+        // numerator=4 → valid indices are 0..3; index 5 is out of range.
+        val result = validateOrDefault(raw(numerator = 4, accentedBeats = "0,5"))
+
+        assertEquals(MetronomeConfig.DEFAULT_ACCENTED_BEATS, result.accentedBeats)
+    }
+
+    @Test
+    fun `requiresRepair is true when accentedBeats is absent but every other field matches`() {
+        val config = MetronomeConfig.DEFAULT
+        val migrating = RawMetronomeConfig(
+            bpm = config.bpm,
+            numerator = config.timeSignatureNumerator,
+            denominator = config.timeSignatureDenominator,
+            subdivisionName = config.subdivision.name,
+            accentedBeats = null,
+        )
+
+        assertEquals(true, migrating.requiresRepair(config))
     }
 }
