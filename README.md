@@ -60,6 +60,10 @@ through [GitHub Sponsors](https://github.com/sponsors/Ritzelprimpf).
 Entirely optional, no perks attached, no strings — Toniqo stays free either
 way.
 
+## Acknowledgements
+
+A big thank you to [GetSongBPM](https://getsongbpm.com) for making their music data and API available to developers. Toniqo uses GetSongBPM to provide song tempo and key information.
+
 ## License
 
 Toniqo is licensed under the [MIT License](LICENSE).
