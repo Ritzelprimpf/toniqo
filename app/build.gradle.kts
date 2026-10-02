@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -21,6 +23,18 @@ android {
         versionName = "1.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // GetSongBPM API key for the Metronome song search, read from the gitignored
+        // local.properties so it never reaches the repository. A build without the entry still
+        // succeeds — the search then reports "unavailable" instead of sending requests.
+        val localProperties = Properties().apply {
+            rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+        }
+        buildConfigField(
+            "String",
+            "GETSONGBPM_API_KEY",
+            "\"${localProperties.getProperty("GETSONGBPM_API_KEY", "")}\"",
+        )
     }
 
     buildTypes {

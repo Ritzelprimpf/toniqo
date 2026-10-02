@@ -49,7 +49,7 @@ import de.ritzelprimpf.toniqo.ui.theme.ToniqoTheme
  *  3. Beat indicator header (BEAT · X / N + beat unit label)
  *  4. Beat indicator segments
  *  5. SIGNATURE / SUBDIVIDE dropdowns, side by side
- *  6. Bottom row: TAP circle + Start/Stop pill
+ *  6. Bottom row: TAP circle + SONG circle (opens the song search sheet) + Start/Stop pill
  */
 @Composable
 internal fun MetronomeContent(
@@ -62,6 +62,7 @@ internal fun MetronomeContent(
     onSubdivisionChanged: (Subdivision) -> Unit,
     onTapTempo: () -> Unit,
     onBeatAccentToggled: (Int) -> Unit,
+    onSongSearchClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showBpmDialog by remember { mutableStateOf(false) }
@@ -162,6 +163,8 @@ internal fun MetronomeContent(
         ) {
             TapTempoButton(onClick = onTapTempo)
             Spacer(Modifier.width(Tq.Sp.s3))
+            SongSearchButton(onClick = onSongSearchClick)
+            Spacer(Modifier.width(Tq.Sp.s3))
             PlayStopButton(
                 isPlaying = state.isPlaying,
                 onClick = onPlayToggled,
@@ -180,7 +183,7 @@ private fun MetronomeContentPreviewStopped() {
         MetronomeContent(
             state = MetronomeUiState(isPlaying = false),
             onPlayToggled = {}, onBpmChanged = {}, onBpmIncrement = {}, onBpmDecrement = {},
-            onTimeSignatureChanged = { _, _ -> }, onSubdivisionChanged = {}, onTapTempo = {}, onBeatAccentToggled = {},
+            onTimeSignatureChanged = { _, _ -> }, onSubdivisionChanged = {}, onTapTempo = {}, onBeatAccentToggled = {}, onSongSearchClick = {},
         )
     }
 }
@@ -196,7 +199,7 @@ private fun MetronomeContentPreviewPlaying() {
                 config = MetronomeConfig(bpm = 120, timeSignatureNumerator = 4, timeSignatureDenominator = 4, subdivision = Subdivision.NONE),
             ),
             onPlayToggled = {}, onBpmChanged = {}, onBpmIncrement = {}, onBpmDecrement = {},
-            onTimeSignatureChanged = { _, _ -> }, onSubdivisionChanged = {}, onTapTempo = {}, onBeatAccentToggled = {},
+            onTimeSignatureChanged = { _, _ -> }, onSubdivisionChanged = {}, onTapTempo = {}, onBeatAccentToggled = {}, onSongSearchClick = {},
         )
     }
 }
@@ -211,7 +214,7 @@ private fun MetronomeContentPreviewStopped78() {
                 config = MetronomeConfig(bpm = 92, timeSignatureNumerator = 7, timeSignatureDenominator = 8, subdivision = Subdivision.NONE),
             ),
             onPlayToggled = {}, onBpmChanged = {}, onBpmIncrement = {}, onBpmDecrement = {},
-            onTimeSignatureChanged = { _, _ -> }, onSubdivisionChanged = {}, onTapTempo = {}, onBeatAccentToggled = {},
+            onTimeSignatureChanged = { _, _ -> }, onSubdivisionChanged = {}, onTapTempo = {}, onBeatAccentToggled = {}, onSongSearchClick = {},
         )
     }
 }

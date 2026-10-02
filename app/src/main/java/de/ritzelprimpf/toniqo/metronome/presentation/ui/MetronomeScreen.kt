@@ -8,7 +8,10 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -16,6 +19,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.ritzelprimpf.toniqo.R
 import de.ritzelprimpf.toniqo.metronome.presentation.viewmodel.MetronomeEvent
 import de.ritzelprimpf.toniqo.metronome.presentation.viewmodel.MetronomeViewModel
+import de.ritzelprimpf.toniqo.metronome.presentation.viewmodel.SongSearchViewModel
 import de.ritzelprimpf.toniqo.ui.theme.Tq
 
 /**
@@ -25,6 +29,10 @@ import de.ritzelprimpf.toniqo.ui.theme.Tq
  * [MetronomeEvent.AudioUnavailable] errors, and delegates layout to the stateless
  * [MetronomeContent].
  *
+ * Also hosts the [SongSearchSheet] with its own [SongSearchViewModel]: the sheet only finds a
+ * song, applying it goes through [MetronomeViewModel.onSongTempoApplied]. The search VM is scoped
+ * to this screen, so reopening the sheet shows the last query and results.
+ *
  * Screen-on management ([KeepScreenOnWhilePlaying]) is registered here as a side effect
  * rather than inside [MetronomeContent] so it stays active for the full lifetime of the
  * screen composition and is not affected by [MetronomeContent] recompositions.
@@ -32,8 +40,11 @@ import de.ritzelprimpf.toniqo.ui.theme.Tq
 @Composable
 internal fun MetronomeScreen(
     viewModel: MetronomeViewModel = hiltViewModel(),
+    songSearchViewModel: SongSearchViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val songSearchState by songSearchViewModel.uiState.collectAsStateWithLifecycle()
+    var showSongSearch by rememberSaveable { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val audioUnavailableMessage = stringResource(R.string.metronome_error_audio_unavailable)
 
@@ -47,6 +58,20 @@ internal fun MetronomeScreen(
     }
 
     KeepScreenOnWhilePlaying(isPlaying = state.isPlaying)
+
+    if (showSongSearch) {
+        SongSearchSheet(
+            state = songSearchState,
+            onQueryChanged = songSearchViewModel::onQueryChanged,
+            onArtistQueryChanged = songSearchViewModel::onArtistQueryChanged,
+            onSearchSubmitted = songSearchViewModel::onSearchSubmitted,
+            onSongSelected = { song ->
+                viewModel.onSongTempoApplied(song)
+                showSongSearch = false
+            },
+            onDismiss = { showSongSearch = false },
+        )
+    }
 
     Scaffold(
         containerColor = Tq.Color.BgBase,
@@ -63,6 +88,7 @@ internal fun MetronomeScreen(
             onSubdivisionChanged = viewModel::onSubdivisionChanged,
             onTapTempo = viewModel::onTapTempo,
             onBeatAccentToggled = viewModel::onBeatAccentToggled,
+            onSongSearchClick = { showSongSearch = true },
             modifier = Modifier.padding(innerPadding),
         )
     }

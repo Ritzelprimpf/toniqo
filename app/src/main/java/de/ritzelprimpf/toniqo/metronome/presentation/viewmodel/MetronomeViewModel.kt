@@ -9,6 +9,7 @@ import de.ritzelprimpf.toniqo.metronome.domain.model.MetronomeConfig
 import de.ritzelprimpf.toniqo.metronome.domain.model.MetronomeConfig.Companion.BPM_MAX
 import de.ritzelprimpf.toniqo.metronome.domain.model.MetronomeConfig.Companion.BPM_MIN
 import de.ritzelprimpf.toniqo.metronome.domain.model.PlayerEvent
+import de.ritzelprimpf.toniqo.metronome.domain.model.SongTempo
 import de.ritzelprimpf.toniqo.metronome.domain.model.Subdivision
 import de.ritzelprimpf.toniqo.metronome.domain.model.tempoDescriptorFor
 import de.ritzelprimpf.toniqo.metronome.domain.usecase.StartMetronomeUseCase
@@ -113,6 +114,36 @@ class MetronomeViewModel @Inject constructor(
                 config.accentedBeats + beatIndex
             }
             config.copy(accentedBeats = updated)
+        }
+    }
+
+    /**
+     * Adopts a song's tempo — and its time signature, when it has a usable one — as found by the
+     * song search. The BPM is applied as listed (no half/double-time correction), clamped to
+     * [BPM_MIN]..[BPM_MAX]. The signature is applied only if it's supported and actually differs
+     * from the current one: only a real signature change resets a custom accent pattern (same
+     * rule as [onTimeSignatureChanged]); re-picking the current signature keeps it. Applies
+     * immediately to a running metronome, like any other config change.
+     *
+     * Subdivision is always reset to [Subdivision.NONE]: a song's listed tempo is its plain beat,
+     * so a leftover subdivision from earlier practice would make it sound wrong (user's call).
+     */
+    fun onSongTempoApplied(song: SongTempo) {
+        updateConfig { config ->
+            val withTempo = config.copy(
+                bpm = song.bpm.coerceIn(BPM_MIN, BPM_MAX),
+                subdivision = Subdivision.NONE,
+            )
+            val signature = song.timeSignature ?: return@updateConfig withTempo
+            val isUsable = MetronomeConfig.isSupportedTimeSignature(signature.numerator, signature.denominator)
+            val isChange = signature.numerator != config.timeSignatureNumerator ||
+                signature.denominator != config.timeSignatureDenominator
+            if (!isUsable || !isChange) return@updateConfig withTempo
+            withTempo.copy(
+                timeSignatureNumerator = signature.numerator,
+                timeSignatureDenominator = signature.denominator,
+                accentedBeats = MetronomeConfig.DEFAULT_ACCENTED_BEATS,
+            )
         }
     }
 

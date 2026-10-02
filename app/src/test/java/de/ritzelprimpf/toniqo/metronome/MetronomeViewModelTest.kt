@@ -4,6 +4,8 @@ import de.ritzelprimpf.toniqo.metronome.data.TapTempoCalculator
 import de.ritzelprimpf.toniqo.metronome.domain.model.MetronomeConfig
 import de.ritzelprimpf.toniqo.metronome.domain.model.PlayerEvent
 import de.ritzelprimpf.toniqo.metronome.domain.model.PlayerFailureReason
+import de.ritzelprimpf.toniqo.metronome.domain.model.SongTempo
+import de.ritzelprimpf.toniqo.metronome.domain.model.SongTimeSignature
 import de.ritzelprimpf.toniqo.metronome.domain.model.Subdivision
 import de.ritzelprimpf.toniqo.metronome.domain.model.TempoDescriptor
 import de.ritzelprimpf.toniqo.metronome.domain.model.tempoDescriptorFor
@@ -349,5 +351,115 @@ class MetronomeViewModelTest {
 
         // Debounce window has elapsed; DataStore now reflects the new value
         assertEquals(initialBpm + 50, fakePrefs.storedConfig.bpm)
+    }
+
+    // ─── Song tempo ───────────────────────────────────────────────────────────
+
+    private fun song(bpm: Int = 140, signature: SongTimeSignature? = null) =
+        SongTempo(id = "id", title = "Song", artist = "Artist", bpm = bpm, timeSignature = signature)
+
+    @Test
+    fun `onSongTempoApplied sets the song's bpm and tempo descriptor`() = runTest {
+        advanceUntilIdle()
+
+        viewModel.onSongTempoApplied(song(bpm = 72))
+
+        assertEquals(72, viewModel.uiState.value.config.bpm)
+        assertEquals(tempoDescriptorFor(72), viewModel.uiState.value.tempoDescriptor)
+    }
+
+    @Test
+    fun `onSongTempoApplied clamps a bpm above BPM_MAX`() = runTest {
+        advanceUntilIdle()
+
+        viewModel.onSongTempoApplied(song(bpm = 999))
+
+        assertEquals(MetronomeConfig.BPM_MAX, viewModel.uiState.value.config.bpm)
+    }
+
+    @Test
+    fun `onSongTempoApplied applies a different supported signature and resets accents`() = runTest {
+        advanceUntilIdle()
+        viewModel.onBeatAccentToggled(2)
+
+        viewModel.onSongTempoApplied(song(signature = SongTimeSignature(6, 8)))
+
+        val config = viewModel.uiState.value.config
+        assertEquals(6, config.timeSignatureNumerator)
+        assertEquals(8, config.timeSignatureDenominator)
+        assertEquals(MetronomeConfig.DEFAULT_ACCENTED_BEATS, config.accentedBeats)
+    }
+
+    @Test
+    fun `onSongTempoApplied keeps custom accents when the signature matches the current one`() = runTest {
+        advanceUntilIdle()
+        viewModel.onBeatAccentToggled(2)
+
+        viewModel.onSongTempoApplied(song(bpm = 90, signature = SongTimeSignature(4, 4)))
+
+        val config = viewModel.uiState.value.config
+        assertEquals(90, config.bpm)
+        assertEquals(setOf(0, 2), config.accentedBeats)
+    }
+
+    @Test
+    fun `onSongTempoApplied applies only the tempo when the signature is unsupported`() = runTest {
+        advanceUntilIdle()
+        viewModel.onBeatAccentToggled(2)
+
+        viewModel.onSongTempoApplied(song(bpm = 90, signature = SongTimeSignature(4, 3)))
+
+        val config = viewModel.uiState.value.config
+        assertEquals(90, config.bpm)
+        assertEquals(4, config.timeSignatureNumerator)
+        assertEquals(4, config.timeSignatureDenominator)
+        assertEquals(setOf(0, 2), config.accentedBeats)
+    }
+
+    @Test
+    fun `onSongTempoApplied applies only the tempo when the song has no signature`() = runTest {
+        advanceUntilIdle()
+        viewModel.onTimeSignatureChanged(7, 8)
+
+        viewModel.onSongTempoApplied(song(bpm = 90, signature = null))
+
+        val config = viewModel.uiState.value.config
+        assertEquals(90, config.bpm)
+        assertEquals(7, config.timeSignatureNumerator)
+        assertEquals(8, config.timeSignatureDenominator)
+    }
+
+    @Test
+    fun `onSongTempoApplied persists the new config after the debounce`() = runTest {
+        advanceUntilIdle()
+
+        viewModel.onSongTempoApplied(song(bpm = 66, signature = SongTimeSignature(3, 4)))
+        advanceUntilIdle()
+
+        assertEquals(66, fakePrefs.storedConfig.bpm)
+        assertEquals(3, fakePrefs.storedConfig.timeSignatureNumerator)
+    }
+
+    @Test
+    fun `onSongTempoApplied resets the subdivision to none`() = runTest {
+        advanceUntilIdle()
+        viewModel.onSubdivisionChanged(Subdivision.TRIPLETS)
+
+        viewModel.onSongTempoApplied(song(bpm = 90, signature = null))
+
+        assertEquals(Subdivision.NONE, viewModel.uiState.value.config.subdivision)
+    }
+
+    @Test
+    fun `onSongTempoApplied resetting the subdivision keeps custom accents when the signature is unchanged`() = runTest {
+        advanceUntilIdle()
+        viewModel.onSubdivisionChanged(Subdivision.EIGHTHS)
+        viewModel.onBeatAccentToggled(2)
+
+        viewModel.onSongTempoApplied(song(bpm = 90, signature = SongTimeSignature(4, 4)))
+
+        val config = viewModel.uiState.value.config
+        assertEquals(Subdivision.NONE, config.subdivision)
+        assertEquals(setOf(0, 2), config.accentedBeats)
     }
 }

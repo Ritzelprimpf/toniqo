@@ -255,6 +255,22 @@ The subdivision value is a flat multiplier on the main beat's click rate, applie
 
 The tap-tempo affordance uses a rolling 5-tap window. If the user waits more than 2 seconds between taps, the window resets. The derived BPM is clamped to [1, 300] before being applied. Stopping playback also resets the tap-tempo window.
 
+### Song tempo search
+
+A **SONG** button next to TAP opens a search sheet that looks up a song's tempo on GetSongBPM (getsongbpm.com) — the only Metronome feature that needs an internet connection.
+
+- Two text fields: **song title** (required) and **artist (optional)**. Title-only is the default search; entering an artist narrows the results (e.g. "Enter Sandman" alone lists many covers, with "Metallica" only the original). The artist alone is not searchable — submitting with a blank title does nothing. Each field shows a × button while it has text that empties just that field. Results stay visible while either field still has text (e.g. clearing only the artist to widen the next search); once both fields are empty the sheet returns to its hint text and any running search is dropped.
+- The search runs **only when the user submits** (keyboard search action), never while typing. The single API key is shared by every install and limited to 3000 requests/hour, so each request counts. Repeated searches for the same title + artist (case-insensitive) within one app session are answered from an in-memory cache without a new request.
+- Each result row shows title, artist (if known), BPM, and time signature (if known).
+- Tapping a result applies it and closes the sheet:
+  - **BPM** is applied exactly as listed — no half/double-time correction — clamped to [1, 300].
+  - **Time signature** is applied too, if the song has one that the metronome supports (see "Custom time signatures") **and** it differs from the current one. A real signature change resets the accent pattern (same rule as any signature change); a song with the current signature, or with a missing/unsupported one, leaves the signature and accents untouched.
+  - **Subdivision** is always reset to None — the listed tempo is the song's plain beat. (This alone does not reset the accent pattern; only a real signature change does.)
+  - Applies immediately while running, like any other change.
+- States: hint text before the first search; spinner while searching; "No songs found."; "Couldn't reach GetSongBPM. Check your connection." (offline/timeout); "Song search is unavailable right now." (rejected/missing API key, rate limit, server error, unreadable response — none user-fixable).
+- A "BPM data by GetSongBPM.com" link (opens getsongbpm.com) is always shown in the sheet — GetSongBPM's terms require a backlink.
+- The last title, artist, and results stay visible when the sheet is reopened during the same visit to the Metronome screen. Nothing about searches is persisted.
+
 ### Persistence
 
 BPM, time signature, and subdivision are persisted to local storage. The last-used values are restored on next launch. Persistence is debounced (changes written no more than once per 200 ms during rapid input) to avoid write storms during slider drags.

@@ -110,6 +110,7 @@
     <string name="metronome_start">Start</string>
     <string name="metronome_stop">Stop</string>
     <string name="metronome_tap_tempo">Tap</string>
+    <string name="metronome_song_search">Song</string>
     <string name="metronome_cd_bpm_decrement">Decrease BPM</string>
     <string name="metronome_cd_bpm_increment">Increase BPM</string>
 
@@ -125,9 +126,24 @@
     <string name="metronome_signature_dialog_denominator_error">Must be 1, 2, 4, 8, 16, or 32</string>
 
     <!-- Metronome screen — info dialog -->
+    <!-- Song BPM search (GetSongBPM) -->
+    <string name="metronome_song_sheet_title">Song tempo</string>
+    <string name="metronome_song_cd_close">Close song search</string>
+    <string name="metronome_song_search_placeholder">Song title</string>
+    <string name="metronome_song_artist_placeholder">Artist (optional)</string>
+    <string name="metronome_song_cd_clear_title">Clear song title</string>
+    <string name="metronome_song_cd_clear_artist">Clear artist</string>
+    <string name="metronome_song_search_hint">Search for a song title (add an artist for more specific results), then tap a result to use its tempo and time signature.</string>
+    <string name="metronome_song_no_results">No songs found.</string>
+    <string name="metronome_song_error_connection">Couldn\'t reach GetSongBPM. Check your connection.</string>
+    <string name="metronome_song_error_unavailable">Song search is unavailable right now.</string>
+    <string name="metronome_song_bpm_format">%1$d BPM</string>
+    <string name="metronome_song_time_signature_format">%1$d/%2$d</string>
+    <string name="metronome_song_attribution">BPM data by GetSongBPM.com</string>
+
     <string name="metronome_cd_info">Metronome info</string>
     <string name="metronome_info_dialog_title">About Metronome</string>
-    <string name="metronome_info_dialog_body">Set a tempo from 1 to 300 BPM by typing a number, dragging the slider, or using the ± buttons — or tap the TAP button a few times in rhythm to set it automatically. Choose a time signature from the presets or enter a custom one, and an optional subdivision to add quieter clicks between the main beats. Beat 1 is accented by default — long-press any beat in the indicator to add, remove, or change which beats are accented. Changing the time signature resets the accent pattern back to beat 1 only.</string>
+    <string name="metronome_info_dialog_body">Set a tempo from 1 to 300 BPM by typing a number, dragging the slider, or using the ± buttons — or tap the TAP button a few times in rhythm to set it automatically. Or tap SONG to look up a song online by title (and optionally artist) and use its tempo and time signature. Choose a time signature from the presets or enter a custom one, and an optional subdivision to add quieter clicks between the main beats. Beat 1 is accented by default — long-press any beat in the indicator to add, remove, or change which beats are accented. Changing the time signature resets the accent pattern back to beat 1 only.</string>
 
     <!-- Tempo descriptor labels (uppercased by composable) -->
     <string name="tempo_adagio">Adagio</string>
@@ -340,7 +356,7 @@
     <string name="help_section_tuner">Guitar Tuner</string>
     <string name="help_placeholder_tuner">Play a string and the needle shows how far off it is — tilted left means flat, right means sharp, centered and lit up means in tune. Pick a tuning from the preset picker (6, 7, or 8 string, standard, dropped, or open) and the tuner steps through your strings from lowest to highest automatically. Tap any string pill to jump to it directly. Once every string is in tune, the tuner switches to chromatic mode so you can fine-tune any string in any order. Needs microphone access to listen to your guitar.</string>
     <string name="help_section_metronome">Metronome</string>
-    <string name="help_placeholder_metronome">Set a tempo from 1 to 300 BPM by typing a number, dragging the slider, or using the +/- buttons — or tap the tempo button a few times in rhythm and let the app work out your BPM. Choose a time signature from the presets, or enter a custom one for any numerator from 1 to 32. Add an optional subdivision to click faster between the main beats. Beat 1 is accented by default, but you can long-press any beat tile to add, remove, or change which beats get the accented click — this resets to beat 1 only whenever you change the time signature. The beat tiles light up in time, scrolling to keep up on bars too long to fit the screen. Start and stop anytime; your settings are remembered for next time.</string>
+    <string name="help_placeholder_metronome">Set a tempo from 1 to 300 BPM by typing a number, dragging the slider, or using the +/- buttons — or tap the tempo button a few times in rhythm and let the app work out your BPM. Want a specific song\'s tempo? Tap SONG, search by title (add the artist to narrow it down), and pick a result to load its BPM and time signature (needs an internet connection). Choose a time signature from the presets, or enter a custom one for any numerator from 1 to 32. Add an optional subdivision to click faster between the main beats. Beat 1 is accented by default, but you can long-press any beat tile to add, remove, or change which beats get the accented click — this resets to beat 1 only whenever you change the time signature. The beat tiles light up in time, scrolling to keep up on bars too long to fit the screen. Start and stop anytime; your settings are remembered for next time.</string>
     <string name="help_section_keyfinder">Key Finder</string>
     <string name="help_placeholder_keyfinder">Add the notes you are playing or hearing — from a riff, a chord, or a whole progression — and Key Finder ranks the scales and modes that fit best. If you know the tonic, the note that feels like home, mark it and matches built on that root are ranked first. Full matches, where every note fits, are flagged so the best candidates stand out.</string>
     <string name="help_section_chordfinder">Chord Finder</string>

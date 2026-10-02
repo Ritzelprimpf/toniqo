@@ -2,12 +2,19 @@ package de.ritzelprimpf.toniqo.metronome.di
 
 import dagger.Binds
 import dagger.Module
+import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import de.ritzelprimpf.toniqo.BuildConfig
 import de.ritzelprimpf.toniqo.metronome.data.AudioTrackMetronomePlayer
 import de.ritzelprimpf.toniqo.metronome.data.MetronomePreferences
 import de.ritzelprimpf.toniqo.metronome.data.MetronomePreferencesImpl
+import de.ritzelprimpf.toniqo.metronome.data.songsearch.GetSongBpmConfig
+import de.ritzelprimpf.toniqo.metronome.data.songsearch.GetSongBpmSongTempoRepository
+import de.ritzelprimpf.toniqo.metronome.data.songsearch.HttpTransport
+import de.ritzelprimpf.toniqo.metronome.data.songsearch.UrlConnectionHttpTransport
 import de.ritzelprimpf.toniqo.metronome.domain.repository.MetronomePlayer
+import de.ritzelprimpf.toniqo.metronome.domain.repository.SongTempoRepository
 import javax.inject.Singleton
 
 /**
@@ -15,6 +22,7 @@ import javax.inject.Singleton
  *
  * [MetronomePlayer] is bound to the `AudioTrack`-backed implementation introduced in Phase 6.2.
  * [MetronomePreferences] is bound to the DataStore-backed implementation (also Phase 6.2).
+ * [SongTempoRepository] is bound to the GetSongBPM-backed implementation (song BPM search).
  *
  * Constructor-injected types need no explicit binding:
  * - [de.ritzelprimpf.toniqo.metronome.data.audio.ClickSynthesizer] — `@Inject constructor()`
@@ -49,4 +57,30 @@ abstract class MetronomeModule {
     abstract fun bindMetronomePreferences(
         impl: MetronomePreferencesImpl,
     ): MetronomePreferences
+
+    /**
+     * Binds [GetSongBpmSongTempoRepository] as the singleton [SongTempoRepository]. Singleton so
+     * its in-memory result cache survives the Metronome screen and saves rate-limited requests.
+     */
+    @Binds
+    @Singleton
+    abstract fun bindSongTempoRepository(
+        impl: GetSongBpmSongTempoRepository,
+    ): SongTempoRepository
+
+    /** Binds the platform `HttpURLConnection` transport as the [HttpTransport]. */
+    @Binds
+    abstract fun bindHttpTransport(
+        impl: UrlConnectionHttpTransport,
+    ): HttpTransport
+
+    companion object {
+        /** GetSongBPM settings; the API key comes from `local.properties` via `BuildConfig`. */
+        @Provides
+        fun provideGetSongBpmConfig(): GetSongBpmConfig = GetSongBpmConfig(
+            baseUrl = GetSongBpmConfig.BASE_URL,
+            apiKey = BuildConfig.GETSONGBPM_API_KEY,
+            resultLimit = GetSongBpmConfig.DEFAULT_RESULT_LIMIT,
+        )
+    }
 }

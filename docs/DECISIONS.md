@@ -2762,6 +2762,114 @@ since it's within the new range).
 
 ---
 
+## 2026-10-02 — Song BPM search in the Metronome (GetSongBPM API)
+
+**Decision.** The Metronome gets a SONG button (60dp circle next to TAP) that opens a bottom
+sheet searching GetSongBPM (`https://api.getsong.co/search/?type=song`) by song title; tapping a
+result applies its BPM and, when usable, its time signature. This is the app's first REST call.
+Decisions taken with the user, in order:
+
+1. **API key storage: `local.properties` → `BuildConfig.GETSONGBPM_API_KEY`.** Read in
+   `app/build.gradle.kts`; `local.properties` is gitignored and was verified never committed, so
+   the key never reaches GitHub. It *is* extractable from the APK — accepted explicitly: it's a
+   free key whose worst-case abuse is a 1-hour block / re-issue, which doesn't justify a server.
+   Sent via the `X-API-KEY` header rather than the URL so it stays out of URL logs. A build
+   without the property still compiles (empty string); the repository then reports
+   "unavailable" without sending a request.
+2. **HTTP: platform `HttpURLConnection` + platform `org.json`, no new dependency.** One GET
+   endpoint with a header doesn't warrant OkHttp/Retrofit (still outside the §11 baseline).
+   `HttpTransport` interface + `UrlConnectionHttpTransport` (`runInterruptible` on the
+   `@IoDispatcher`, 10s connect/read timeouts). Tested against the JDK's built-in
+   `com.sun.net.httpserver.HttpServer` — no MockWebServer dependency needed either.
+3. **Entry point: SONG circle next to TAP**, results in a `ModalBottomSheet` (existing sheet
+   pattern). TAP and SONG share a new `CircleLabelButton`.
+4. **Applying a result:** BPM as listed (no ½×/2× controls — the user fixes octave errors with
+   the existing controls), clamped to 1–300; the time signature is applied too when it parses
+   and passes `MetronomeConfig.isSupportedTimeSignature`. Accents reset only on an *actual*
+   signature change — a song in the current signature keeps the user's custom accents
+   (`MetronomeViewModel.onSongTempoApplied`). Missing/unsupported `time_sig` → tempo only.
+5. **Search: one field, title only (`type=song`), on IME submit only — no search-as-you-type.**
+   All installs share the key's 3000 requests/hour; submit-only is one request per search
+   instead of several. Plus a process-lifetime in-memory cache in
+   `GetSongBpmSongTempoRepository` (singleton), keyed case-insensitively; successes (including
+   empty results) are cached, failures are not, so retrying after reconnecting works.
+6. **Errors** collapse to two user-facing categories (`SongSearchFailure`): `NO_CONNECTION`
+   (any `IOException`, incl. timeouts) and `SERVICE_UNAVAILABLE` (missing key, any non-200
+   status — 401/403/429/5xx — or an unparseable body); the user can't act on the difference
+   between the latter. The underlying `Throwable` is kept on `SongSearchResult.Failure.cause`.
+
+**Result type.** Follows the feature-specific sealed-result precedent (`VoicingLookupResult`)
+rather than a generic `Result<T>`: `SongSearchResult.Success(songs)` /
+`Failure(reason, cause)`, because the UI needs a typed reason, not just a `Throwable`.
+
+**API quirks handled (verified against the live API on 2026-10-02).** `tempo` is documented as
+an integer but sent as a string (`"123"`); `time_sig` is documented as an integer but sent as
+`"4/4"` (and flagged beta); a query with no matches returns HTTP 200 with
+`{"search":{"error":"no result"}}` (an object, not an array). `SongSearchResponseParser` is
+lenient per field: numeric-or-string tempo, rounded, songs without a positive tempo dropped;
+`time_sig` only in `n/d` form, else `null`; non-array `search` → empty list; duplicate ids
+de-duplicated (the result list is keyed by id).
+
+**Attribution.** GetSongBPM's terms require a backlink (website or store listing) or the key is
+suspended. The user added it to the store listing; the sheet additionally always shows a
+"BPM data by GetSongBPM.com" link.
+
+**Alternatives considered.** Own proxy on `toniqo.ritzelprimpf.de` holding the key (key truly
+secret, server-side caching) — rejected for now as disproportionate; only the `data/`
+implementation would change if adopted later. OkHttp/Retrofit — rejected (see 2). Header icon or
+TempoCard ghost-button entry points — rejected for the TAP-adjacent circle, which groups the two
+"set tempo from outside" actions. Title + artist fields / search-as-you-type — rejected (see 5).
+
+**Supersession trigger.** Key abuse or the shared 3000 req/h limit becoming a real constraint →
+move the key behind a proxy. GetSongBPM promoting `time_sig` out of beta with a different format
+→ revisit the parser.
+
+**Consequences.** New: `metronome/domain/model/{SongTempo,SongTimeSignature,SongSearchResult}.kt`,
+`domain/repository/SongTempoRepository.kt`, `domain/usecase/SearchSongTempoUseCase.kt`,
+`data/songsearch/{HttpTransport,UrlConnectionHttpTransport,GetSongBpmConfig,SongSearchResponseParser,GetSongBpmSongTempoRepository}.kt`,
+`presentation/viewmodel/{SongSearchUiState,SongSearchViewModel}.kt`,
+`presentation/ui/{CircleLabelButton,SongSearchButton,SongSearchSheet}.kt`. Changed:
+`MetronomeViewModel` (`onSongTempoApplied`), `MetronomeScreen`/`MetronomeContent` (sheet + button),
+`TapTempoButton` (delegates to `CircleLabelButton`), `MetronomeModule` (bindings + config
+provider), `app/build.gradle.kts` (BuildConfig field), `strings.xml` (sheet strings; Metronome
+info dialog mentions SONG). Tests: parser (14), repository (11), transport (5), use case (4),
+`SongSearchViewModel` (9), `MetronomeViewModel` (+7). **Open for the user:** the privacy text
+(`toniqo.ritzelprimpf.de/datenschutz.txt`) and Play Store data-safety form must disclose that
+search terms are sent to GetSongBPM.
+
+---
+
+## 2026-10-02 — Song BPM search: optional artist field (amends item 5 above)
+
+**Decision.** Tester feedback: title-only searches return too many results (covers, live
+versions). The sheet gets a second, optional **artist** field below the title. Title stays
+required and title-only stays the default; a non-blank artist switches the request to
+`type=both&lookup=song:<title> artist:<artist>` (verified against the live API: "enter sandman"
++ "metallica" → 1 result instead of a long list of covers). Artist without a title is not searchable (the
+use case and ViewModel ignore it), matching "title is the default, artist narrows it".
+
+**Implementation.** New `SongSearchQuery(title, artist?)` domain model replaces the bare title
+string: `SongTempoRepository.searchByTitle(String)` → `search(SongSearchQuery)`;
+`SearchSongTempoUseCase` normalizes both fields (blank artist → `null`); the repository cache is
+keyed by the lower-cased query, so title-only and title+artist results are cached separately.
+`SongSearchUiState.artistQuery` + `SongSearchViewModel.onArtistQueryChanged`. Still on submit
+only — both fields' keyboard Search action submits. Tests: repository +2, use case +3,
+`SongSearchViewModel` +3.
+
+**Addendum (same day, user request).** Selecting a song also resets the subdivision to None
+(always, regardless of the signature outcome): the listed BPM is the song's plain beat, so a
+leftover subdivision would misrepresent it. Accents are still only reset by an actual signature
+change. `MetronomeViewModelTest` +2.
+
+**Addendum 2 (same day, user request): clearing the search.** Chosen by the user over a
+single "Clear both" button: a trailing × in **each** field (shown only while it has text), so the
+artist can be cleared alone to widen a search. Results stay while either field has text; once
+both are empty the status returns to `Idle` (hint) and an in-flight search is cancelled
+(`SongSearchViewModel.resetIfBothFieldsEmpty`, triggered from both field-change handlers —
+so deleting the text by hand behaves the same as the ×). `SongSearchViewModelTest` +5.
+
+---
+
 ## (Template for future entries)
 
 ## YYYY-MM-DD — Short title of decision
